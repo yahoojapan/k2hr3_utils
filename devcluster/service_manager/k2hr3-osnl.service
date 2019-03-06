@@ -1,0 +1,14 @@
+[Unit]
+Description=K2hR3 OpenStack Notification Listener
+After=network-online.target
+
+[Service]
+Type=simple
+User=k2hr3
+PermissionsStartOnly=true
+ExecStart=/usr/local/bin/k2hr3-osnl -c /usr/local/etc/k2hr3/k2hr3-osnl.conf
+Restart=on-failure
+PIDFile=/var/run/k2hr3-osnl.pid
+
+[Install]
+WantedBy=multi-user.target

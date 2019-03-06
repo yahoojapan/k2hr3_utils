@@ -1,0 +1,58 @@
+{
+    "keystone": {
+        "type": "openstackapiv3",
+        "eptype": "list",
+        "epfile": null,
+        "eplist": {
+            "myregion": "https://dummy.keystone.openstack/"
+        }
+    },
+    "corsips": [
+        "::ffff:127.0.0.1",
+        "127.0.0.1"
+    ],
+    "multiproc": true,
+    "scheme": "https",
+    "runuser": "k2hr3",
+    "privatekey": "config/private.key",
+    "cert": "config/public.crt",
+    "ca": "/etc/pki/tls/certs/ca-bundle.crt",
+
+    "logdir": "log",
+    "accesslogname": "access.log",
+    "consolelogname": "error.log",
+    "watcherlogname": "watcher.log",
+    "wconsolelogname": "watchererror.log",
+    "logrotateopt": {
+    "compress": "gzip",
+        "interval": "6h",
+        "initialRotation": true
+    },
+
+    "userdata": {
+        "baseuri": "https://localhost",
+        "cc_templ": "config/k2hr3-cloud-config.txt.templ",
+        "script_templ": "config/k2hr3-init.sh.templ",
+        "errscript_templ": "config/k2hr3-init-error.sh.templ",
+        "algorithm": "aes-256-cbc",
+        "passphrase": "mysecret"
+    },
+
+    "k2hr3admin": {
+        "tenant": "1234",
+        "delhostrole": "delhostrole"
+    },
+
+    "confirmtenant": false,
+
+    "chkipconfig": {
+        "type": "Listener"
+    },
+    "allowcredauth": true,
+
+    "k2hdkc": {
+        "config": "/etc/k2hdkc/slave.ini",
+        "port": 8031
+    }
+}
+

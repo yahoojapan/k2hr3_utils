@@ -1,0 +1,760 @@
+# -*-Shell-script-*-
+#
+# K2HR3 Utilities
+#
+# Copyright 2018 Yahoo! Japan Corporation.
+#
+# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers 
+# common management information for the cloud.
+# K2HR3 can dynamically manage information as "who", "what", "operate".
+# These are stored as roles, resources, policies in K2hdkc, and the
+# client system can dynamically read and modify these information.
+#
+# For the full copyright and license information, please view
+# the licenses file that was distributed with this source code.
+#
+# AUTHOR:   Hirotaka Wakabayashi
+# CREATE:   Mon Jul 9 2018 
+# REVISION:
+#
+
+#
+# cluster_functions defines functions to be used by most or all shell scripts
+# in this directory.
+#
+
+# an unset parameter expansion will fail
+set -u
+
+usage () {
+    echo "usage : $(basename $0) [-d] [-f file] [-h] [-v]"
+    echo "    -d        print debug messages"
+    echo "    -f file   k2hr3_${COMPONENT} file path(or URL)"
+    echo "    -h        display this message and exit"
+    echo "    -v        display version and exit"
+    echo ""
+    exit 1
+}
+
+usage_app_node_module () {
+    echo "usage : $(basename $0) [-d] [-f file] [-h] [-v]"
+    echo "    -d        print debug messages"
+    echo "    -f file   k2hr3_${COMPONENT} file path(or URL)"
+    echo "    -h        display this message and exit"
+    echo "    -t tag    tag name"
+    echo "    -v        display version and exit"
+    echo ""
+    exit 1
+}
+
+usage_api () {
+    echo "usage : $(basename $0) [-d] [-f file] [-h] [-v]"
+    echo "    -d        print debug messages"
+    echo "    -i url    OpenStack Identity Service Endpoint"
+    echo "    -f file   k2hr3_${COMPONENT} file path(or URL)"
+    echo "    -h        display this message and exit"
+    echo "    -v        display version and exit"
+    echo ""
+    exit 1
+}
+
+usage_dkc () {
+    echo "usage : $(basename $0) [-d] [-h] [-v]"
+    echo "    -d        print debug messages"
+    echo "    -h        display this message and exit"
+    echo "    -v        display version and exit"
+    echo ""
+    exit 1
+}
+
+usage_osnl () {
+    echo "usage : $(basename $0) [-d] [-f file] [-h] [-t url] [-v]"
+    echo "    -d        print debug messages"
+    echo "    -f file   k2hr3-osnl package file path(or URL)"
+    echo "    -h        display this message and exit"
+    echo "    -t url    TransportURL(Default: 'rabbit://guest:guest@127.0.0.1:5672/')"
+    echo "    -v        display version and exit"
+    echo ""
+    exit 1
+}
+
+version() {
+    echo "$(basename $0) ${VERSION}"
+    exit 1
+}
+
+# Determines the current OS and the service manager
+#
+# Params::
+#   no params
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+setup_os_env() {
+    if test -f "/etc/os-release"; then
+        . /etc/os-release
+        OS_NAME=$ID
+        OS_VERSION=$VERSION_ID
+        SERVICE_MANAGER=systemd
+    else
+        logger -t ${TAG} -p user.err "unknown OS, no /etc/os-release and /etc/centos-release"
+        return 1
+    fi
+
+    if test "${OS_NAME}" = "fedora"; then
+        if test "${OS_VERSION}" != "28" -a "${OS_VERSION}" != "29"; then
+            logger -t ${TAG} -p user.err "fedora 28 or 29 only currently supported, not ${OS_NAME} ${OS_VERSION}"
+            return 1
+        fi
+    elif test "${OS_NAME}" = "ubuntu"; then
+        logger -t ${TAG} -p user.notice "ubuntu configurations are currently equal to debian one"
+        OS_NAME=debian
+    elif test "${OS_NAME}" = "centos"; then
+        if test "${OS_VERSION}" != "7"; then
+            logger -t ${TAG} -p user.err "centos7 only currently supported, not ${OS_NAME} ${OS_VERSION}"
+            return 1
+        fi
+    fi
+
+    HOSTNAME=$(hostname)
+    logger -t ${TAG} -p user.debug "HOSTNAME=${HOSTNAME} OS_NAME=${OS_NAME} OS_VERSION=${OS_VERSION}"
+
+    return 0
+}
+
+
+# Loads default settings
+#
+# Params::
+#   no params
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+setup_ini_env() {
+    if ! test -f "${SRCDIR}/setup_${COMPONENT}_default.ini"; then
+        logger -t ${TAG} -p user.err "No ${SRCDIR}/setup_${COMPONENT}_default.ini"
+        return 1
+    fi
+
+    logger -t ${TAG} -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_default.ini"
+    . ${SRCDIR}/setup_${COMPONENT}_default.ini
+
+    if test "${OS_NAME}" = "fedora"; then
+        if test -f "${SRCDIR}/setup_${COMPONENT}_fedora.ini"; then
+            logger -t ${TAG} -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_fedora.ini"
+            . ${SRCDIR}/setup_${COMPONENT}_fedora.ini
+        else
+            logger -t ${TAG} -p user.warn "No ${SRCDIR}/setup_${COMPONENT}_fedora.ini. Installation continues with setup_default.ini"
+        fi
+    elif test "${OS_NAME}" = "debian" -o "${OS_NAME}" = "ubuntu"; then
+        if test -f "${SRCDIR}/setup_${COMPONENT}_debian.ini"; then
+            logger -t ${TAG} -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_debian.ini"
+            . ${SRCDIR}/setup_${COMPONENT}_debian.ini
+        else
+            logger -t ${TAG} -p user.warn "No ${SRCDIR}/setup_${COMPONENT}_debian.ini Installation continues with setup_default.ini"
+        fi
+    elif test "${OS_NAME}" = "centos"; then
+        if test "${OS_VERSION}" = "7"; then
+            if test -f "${SRCDIR}/setup_${COMPONENT}_centos7.ini"; then
+                logger -t ${TAG} -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_centos7.ini"
+                . ${SRCDIR}/setup_${COMPONENT}_centos7.ini
+            elif test -f "${SRCDIR}/setup_${COMPONENT}_centos.ini"; then
+                logger -t ${TAG} -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_centos.ini"
+                . ${SRCDIR}/setup_${COMPONENT}_centos.ini
+            else
+                logger -t ${TAG} -p user.warn "No ${SRCDIR}/setup_${COMPONENT}_fedora.ini. Installation continues with setup_default.ini"
+            fi
+        else
+            logger -t ${TAG} -p user.warn "OS_VERSION should be 7 or 6, not ${OS_VERSION}, Installation continues with setup_default.ini"
+        fi
+    else
+        logger -t ${TAG} -p user.warn "OS must be either fedora or centos or debian or ubuntu, not ${OS_NAME}, but Installation continues with setup_default.ini"
+    fi
+    return 0
+}
+
+# Set package repository
+#
+# Params::
+#   $1(optional) a rpm package repository url
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+# Note::
+#   This function is designed for CentOS, which uses packages provided by
+#   https://www.softwarecollections.org/
+#
+#   Some OS images have CentOS-SCLo-scl.repo file. In this situation, no
+#   centos-release-scl is needed because the repository setting already exists.
+#   Some OS images contains centos-release-scl in centos-extra repository.
+#   In this situation, centos-releae-scl should be installed.
+#
+#   This function takes an optimistic approach for other possible situations.
+#
+#   1) Try installing centos-releae-scl
+#   2) No centos-releae-scl is not failure.
+#   3) Users define an additional repository(copr_url), try adding it.
+#   4) No centos-releae-scl in this stage is failure.
+#
+#   This function returns 1 if copr_url is defined because the users need to
+#   install centos-releae-scl package explicitly.
+#
+#   See details on centos-releae-scl package
+#   https://github.com/sclorg/centos-release-scl#package-centos-release-scl-for-rhel-users
+#
+setup_package_repository() {
+    _copr_url="${1-}"
+
+    if test "${OS_NAME}" = "centos"; then
+        logger -t ${TAG} -p user.debug "sudo yum install -y centos-releae-scl"
+        sudo yum install -q -y centos-release-scl
+        RESULT=$?
+        if test "${RESULT}" -ne 0; then
+            logger -t ${TAG} -p user.warn "No centos-releae-scl package, ${RESULT}"
+            if test -n "${_copr_url}"; then
+                sudo yum-config-manager -q --add-repo="${_copr_url}"
+                sudo yum install -q -y centos-release-scl
+                RESULT=$?
+                if test "${RESULT}" -ne 0; then
+                    logger -t ${TAG} -p user.err "No centos-releae-scl package, ${RESULT}"
+                    return 1
+                fi
+            else
+                logger -t ${TAG} -p user.warn "copr_url is not defined"
+            fi
+        fi
+    fi
+    return 0
+}
+
+# Installs system packages
+#
+# Params::
+#   $1(optional) rpm package(s) as a string variable
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+# Note::
+#   An empty augment will install nothing
+#
+setup_install_os_packages() {
+    _package_install_pkgs="${1-}"
+
+    if test -n "${_package_install_pkgs}"; then
+        if test "${OS_NAME}" = "centos" -o "${OS_NAME}" = "fedora" ; then
+            logger -t ${TAG} -p user.debug "sudo yum install -y perl ${_package_install_pkgs}"
+            sudo yum install -q -y ${_package_install_pkgs}
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        elif test "${OS_NAME}" = "debian" -o "${OS_NAME}" = "ubuntu"; then
+            logger -t ${TAG} -p user.debug "sudo apt install -y perl ${package_install_pkgs}"
+            sudo apt install -y ${_package_install_pkgs}
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        else
+            logger -t ${TAG} -p user.err "OS_NAME should be debian, ubuntu, fedora, centos not ${OS_NAME}"
+            return 1
+        fi
+    else
+        logger -t ${TAG} -p user.warn "package_install_pkgs is not defined"
+    fi
+    return 0
+}
+
+# Configure a *.conf
+#
+# Params::
+#   $1 a configuration file path
+#   $2 a configuration parameter name
+#   $3(optional) a prefix of the configuration parameter name of $2
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+configure_conf_file() {
+    _conf_file="${1:?"conf file should not be zero"}"
+    _varname="${2:?"varname should not be zero"}"
+    _varname_prefix="${3-}"
+
+    if test -f "${_conf_file}"; then
+        if test -n "${_varname_prefix}"; then
+            varval=$(eval echo "\${${_varname_prefix}${_varname}}"|perl -nle 's/@/\\@/g; print $_')
+        else
+            varval=$(eval echo "\${$_varname}"|perl -nle 's/@/\\@/g; print $_')
+        fi
+        if test -n "${varval}"; then
+            logger -t ${TAG} -p user.debug "perl -pi -e \"s|${_varname}.*|${_varname} = ${varval}|g\" ${_conf_file}"
+            perl -pi -e "s|${_varname}.*|${_varname} = ${varval}|g" ${_conf_file}
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        else
+            logger -t ${TAG} -p user.warn "${_varname} should be nonzero, ${varval}"
+        fi
+    else
+        logger -t ${TAG} -p user.err "${_conf_file} should exist"
+        return 1
+    fi
+    return 0
+}
+
+# Configure a *.ini
+#
+# Params::
+#   $1 a configuration file path
+#   $2 a configuration parameter name
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+configure_ini_file() {
+    _conf_file="${1:?"conf file should not be zero"}"
+    _varname="${2:?"varname should not be zero"}"
+
+    if test -f "${_conf_file}"; then
+        varval=$(eval echo "\${$_varname}"|perl -nle 's/@/\\@/g; print $_')
+        if test -n "${varval}"; then
+            logger -t ${TAG} -p user.debug "perl -pi -e \"s|${_varname}.*|${_varname}=${varval}|g\" ${_conf_file}"
+            perl -pi -e "s|${_varname}.*|${_varname}=${varval}|g" ${_conf_file}
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        else
+            logger -t ${TAG} -p user.warn "${_varname} should be nonzero, ${varval}"
+        fi
+    else
+        logger -t ${TAG} -p user.err "${_conf_file} should exist"
+        return 1
+    fi
+    return 0
+}
+
+# Installs *.conf
+#
+# Params::
+#   $1 a source file path to be copied
+#   $2 a destination file path to be copied
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+install_conf() {
+    _src_conf_file="${1:?"_src_conf_file should be nonzero"}"
+    _dst_conf_file="${2:?"_dst_conf_file should be nonzero"}"
+
+    if test -n "${_dst_conf_file}" -a -n "${_src_conf_file}"; then
+        logger -t ${TAG} -p user.debug "sudo install -CD -m 0644 -o root -v ${_src_conf_file} ${_dst_conf_file}"
+        sudo install -CD -m 0644 -o root -v ${_src_conf_file} ${_dst_conf_file}
+        RESULT=$?
+        if test "${RESULT}" -ne 0; then
+            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            return 1
+        fi
+    else
+        logger -t ${TAG} -p user.err "${_dst_conf_file} and ${_src_conf_file} should be nonzero, ${_dst_conf_file}, ${_src_conf_file}"
+        return 1
+    fi
+    return 0
+}
+
+# Enables the scl's python path
+#
+# Params::
+#   no params
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+# Note::
+#   This function is for centos using software collection(scl) python package.
+#   This function must be called after installing the scl's python package.
+#   Python version is hardcoding.
+#
+enable_scl_python_path() {
+    if test "${OS_NAME}" = "centos"; then
+        if test "${OS_VERSION}" = "7"; then
+            if test -f "/opt/rh/rh-python36/enable"; then
+                logger -t ${TAG} -p user.debug "source /opt/rh/rh-python36/enable"
+                set +u
+                source /opt/rh/rh-python36/enable
+                set -u
+            else
+                logger -t ${TAG} -p user.warn "/opt/rh/rh-python36/enable not found"
+            fi
+        else
+            logger -t ${TAG} -p user.err "OS_VERSION should be 7, not ${OS_VERSION}"
+            return 1
+        fi
+    fi
+    return 0
+}
+
+# Installs a service manager conf
+#
+# Params::
+#   $1 service management file path
+#   $2 service name
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+install_service_manager_conf() {
+    _service_manager="${1:?"service_manager should be nonzero"}"
+    _service_name="${2:?"service_name should be nonzero"}"
+
+    if test "${_service_manager}" = "systemd"; then
+        if test -f "${SERVICE_MANAGER_DIR}/${_service_name}.service"; then
+            logger -t ${TAG} -p user.debug "sudo install -C -m 0644 -o root -v ${_service_manager} /etc/systemd/system/${_service_name}.service"
+            sudo install -C -m 0644 -o root -v ${SERVICE_MANAGER_DIR}/${_service_name}.service /etc/systemd/system/${_service_name}.service
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+            logger -t ${TAG} -p user.debug "sudo systemctl daemon-reload"
+            sudo systemctl daemon-reload
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+            logger -t ${TAG} -p user.debug "sudo systemctl enable ${_service_name}.service"
+            sudo systemctl enable ${_service_name}.service
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+
+        else
+            logger -t ${TAG} -p user.err "${SERVICE_MANAGER_DIR}/${_service_name}.service should exist"
+            return 1
+        fi
+    else
+        logger -t ${TAG} -p user.err "SERVICE_MANAGER is systemd, not ${SERVICE_MANAGER}"
+        return 1
+    fi
+    return 0
+}
+
+# Adds packagecloud.io as a new package repository
+#
+# Params::
+#   $1 the packagecloud package script base url
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+# Uses globals::
+#   OS_NAME
+#
+enable_packagecloud_io_repository() {
+    _package_script_base_url=${1:?" package_script_base_url should be nonzero"}
+
+    if test -n "${_package_script_base_url}"; then
+        if test "${OS_NAME}" = "fedora" -o "${OS_NAME}" = "centos"; then
+            package_script_url=${_package_script_base_url}/script.rpm.sh
+            sudo yum install -q -y curl
+            RESULT=$?
+            logger -t ${TAG} -p user.debug "sudo yum install -y curl, RESULT=${RESULT}"
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        elif test "${OS_NAME}" = "debian" -o "${OS_NAME}" = "ubuntu"; then
+            package_script_url=${_package_script_base_url}/script.deb.sh
+            logger -t ${TAG} -p user.debug "sudo apt install -q -y curl"
+            sudo apt install -q -y curl
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        else
+            logger -t ${TAG} -p user.err "OS_NAME should be debian, ubuntu, fedora, centos not ${OS_NAME}"
+            return 1
+        fi
+        if test -n "${package_script_url}"; then
+            logger -t ${TAG} -p user.debug "curl -S -s ${package_script_url} | sudo bash"
+            curl -S -s "${package_script_url}" | sudo bash
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        else
+            logger -t ${TAG} -p user.err "package_script_url must be nonzero"
+            return 1
+        fi
+    else
+        logger -t ${TAG} -p user.err "package_script_base_url should be nonzero"
+        return 1
+    fi
+    return 0
+}
+
+# Adds nodesource.com as a new package repository
+#
+# Params::
+#   $1 the nodesource package url
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+# Uses globals::
+#   OS_NAME
+#
+enable_nodesource_repository() {
+    _nodesource_url=${1:?"nodesource_url should be nonzero"}
+
+    if test -n "${_nodesource_url}"; then
+        if test "${OS_NAME}" = "fedora" -o "${OS_NAME}" = "centos"; then
+            logger -t ${TAG} -p user.debug "curl -S -sL ${_nodesource_url} | sudo bash -"
+            curl -S -sL "${_nodesource_url}" | sudo bash -
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        elif test "${OS_NAME}" = "debian" -o "${OS_NAME}" = "ubuntu"; then
+            logger -t ${TAG} -p user.debug "curl -S -sL ${_nodesource_url} | sudo bash -"
+            curl -S -sL "${_nodesource_url}" | sudo bash -
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        else
+            logger -t ${TAG} -p user.info "No repository from nodesource, ${OS_NAME}"
+            return 1
+        fi
+    else
+        logger -t ${TAG} -p user.info "_nodesource_url should be defined"
+        return 1
+    fi
+    return 0
+}
+
+# Installs k2hr3 node module local.json
+#
+# Params::
+#   $1 The user which owns k2hr3 node modules installed directory
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+install_npm_local_json() {
+    _npm_default_user=${1:?"npm_default_user should be nonzero"}
+
+    npm_user_home=$(eval echo "~${npm_default_user}")
+
+    if ! test -d "${npm_user_home}/etc/k2hr3-${COMPONENT}"; then
+        logger -t ${TAG} -p user.debug "install -o \"${npm_default_user}\" -d \"${npm_user_home}/etc/k2hr3-${COMPONENT}\""
+        install -o "${npm_default_user}" -d "${npm_user_home}/etc/k2hr3-${COMPONENT}"
+        RESULT=$?
+        if test "${RESULT}" -ne 0; then
+            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            return 1
+        fi
+    fi
+    if ! test -f "${npm_user_home}/etc/k2hr3-${COMPONENT}/default.json"; then
+        logger -t ${TAG} -p user.debug "ln -s ${npm_user_home}/node_modules/k2hr3-${COMPONENT}/config/default.json ${npm_user_home}/etc/k2hr3-${COMPONENT}"
+        ln -s ${npm_user_home}/node_modules/k2hr3-${COMPONENT}/config/default.json ${npm_user_home}/etc/k2hr3-${COMPONENT}/default.json
+        RESULT=$?
+        if test "${RESULT}" -ne 0; then
+            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            return 1
+        fi
+    else
+        logger -t ${TAG} -p user.debug "${npm_user_home}/etc/k2hr3-${COMPONENT}/default.json exists, skip installing."
+    fi
+    if test -f "./local_${COMPONENT}.json"; then
+        logger -t ${TAG} -p user.debug "install -C -D -m 0644 -o ${_npm_default_user} -v ./local_${COMPONENT}.json ${npm_user_home}/etc/k2hr3-${COMPONENT}/local.json"
+        install -C -D -m 0644 -o "${_npm_default_user}" -v ./local_${COMPONENT}.json "${npm_user_home}"/etc/k2hr3-${COMPONENT}/local.json
+        RESULT=$?
+        if test "${RESULT}" -ne 0; then
+            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            return 1
+        fi
+    else
+        logger -t ${TAG} -p user.debug "no ./local_${COMPONENT}.json, skip installing."
+    fi
+    return 0
+}
+
+# Find the node path
+#
+# Params::
+#   $1(optional) The OS dependent package names
+#
+# Returns::
+#   0 when node path was found
+#   1 when node path was not found
+#
+# Uses globals::
+#   OS_NAME, OS_VERSION
+#
+find_node_path() {
+    _package_install_pkgs=${1-}
+
+    if test "${OS_NAME}" = "centos" -a "${OS_VERSION}" != "6"; then
+        logger -t ${TAG} -p user.debug  'Checks rh-nodejs? only if rh-nodejs? exists in the package_install_pkgs directive.'
+        if test -n "_package_install_pkgs"; then
+            for rhnode in rh-nodejs10 rh-nodejs8 rh-nodejs6 rh-nodejs4; do
+                logger -t ${TAG} -p user.debug "echo ${package_install_pkgs} | grep ${rhnode}"
+                echo ${_package_install_pkgs} | grep ${rhnode} > /dev/null 2>&1
+                RESULT=$?
+                if test "${RESULT}" -eq 0; then
+                    if test -f "/opt/rh/${rhnode}/enable"; then
+                        logger -t ${TAG} -p user.debug "source /opt/rh/${rhnode}/enable"
+
+                        set +u
+                        source /opt/rh/${rhnode}/enable
+                        set -u
+                        break
+                    fi
+                fi
+                # No rhnode exists in ${package_install_pkgs} is not a fatal error,
+                # because users could select the "nodejs" package, not rh-nodejs.
+            done
+        else
+            logger -t ${TAG} -p user.warn "_package_install_pkgs is zero, but no problem because rh-node is not always required"
+        fi
+    fi
+
+    # Empty result of $(which node) is a fatal error.
+    NODE_PATH=$(which node)
+    if test "${NODE_PATH}" = ""; then
+        logger -t ${TAG} -p user.err "[NO] no node found"
+        return 1
+    fi
+    return 0
+}
+
+# Configures npm environment
+#
+# Params::
+#   $1 The npm global directory path
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+setup_npm_environment() {
+
+    _npm_global_dir=${1:?"npm_global_dir should be nonzero"}
+
+    logger -t ${TAG} -p user.debug "npm config get prefix"
+    NPM_PREFIX=$(npm config get prefix)
+    if test "${NPM_PREFIX}" != "${_npm_global_dir}"; then
+        if ! test -d "${_npm_global_dir}"; then
+            logger -t ${TAG} -p user.debug "install -d ${_npm_global_dir}"
+            install -d "${_npm_global_dir}"
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        fi
+        logger -t ${TAG} -p user.debug "npm config set prefix ${_npm_global_dir}"
+        npm config set prefix "${_npm_global_dir}"
+        RESULT=$?
+        if test "${RESULT}" -ne 0; then
+            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            return 1
+        fi
+    fi
+    return 0
+}
+
+npm_init() {
+    # Running this program by root will fail
+    if test "$(id -u)" -eq 0; then
+        logger -t ${TAG} -p user.err "EACCES error. See https://docs.npmjs.com/getting-started/fixing-npm-permissions."
+        return 1
+    fi
+
+    ########
+    # 1. Initializes environments.
+    # Detects the OS_NAME of the target host and load deploy configuration for the ${OS_NAME} if exists.
+    #
+    logger -t ${TAG} -p user.info "1. Initializes environments"
+
+    if ! test -r "${SRCDIR}/cluster_functions"; then
+        logger -t ${TAG} -p user.err "${SRCDIR}/cluster_functions should exist"
+        return 1
+    fi
+
+    logger -t ${TAG} -p user.info ". ${SRCDIR}/cluster_functions"
+    . ${SRCDIR}/cluster_functions
+
+    # Determines the current OS and service manager
+    logger -t ${TAG} -p user.debug "setup_os_env"
+    setup_os_env
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "setup_os_env should return zero, not ${RET}"
+        return 1
+    fi
+
+    # Loads default settings
+    logger -t ${TAG} -p user.debug "setup_ini_env"
+    setup_ini_env
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "setup_ini_env should return zero, not ${RET}"
+        return 1
+    fi
+
+    # Check if the node command exists in PATH dirs.
+    logger -t ${TAG} -p user.debug "find_node_path ${package_install_pkgs-}"
+    find_node_path ${package_install_pkgs-}
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "find_node_path should return zero, not ${RET}"
+        return 1
+    fi
+
+    # Setup npm environment
+    logger -t ${TAG} -p user.debug "setup_npm_environment ${npm_global_dir}"
+    setup_npm_environment ${npm_global_dir}
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "setup_npm_environment should return zero, not ${RET}"
+        return 1
+    fi
+
+    return 0
+}
+
+#
+# VIM modelines
+#
+# vim:set ts=4 fenc=utf-8:
+#

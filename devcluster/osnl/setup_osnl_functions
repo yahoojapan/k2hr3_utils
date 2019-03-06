@@ -1,0 +1,115 @@
+# -*-Shell-script-*-
+#
+# K2HR3 Utilities
+#
+# Copyright 2018 Yahoo! Japan Corporation.
+#
+# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers 
+# common management information for the cloud.
+# K2HR3 can dynamically manage information as "who", "what", "operate".
+# These are stored as roles, resources, policies in K2hdkc, and the
+# client system can dynamically read and modify these information.
+#
+# For the full copyright and license information, please view
+# the licenses file that was distributed with this source code.
+#
+# AUTHOR:   Hirotaka Wakabayashi
+# CREATE:   Mon Jul 9 2018 
+# REVISION:
+#
+
+# Installs a pypi packages for osnl component only.
+#
+# Params::
+#   $1(optinal) an alternative local package file path
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+setup_osnl_pypi_module() {
+    _alternative_tgz="${1-}"
+
+    if test -n "${_alternative_tgz}"; then
+        if test "${OS_NAME}" != "centos"; then
+            logger -t ${TAG} -p user.debug "sudo /usr/bin/python3 -m pip install ${_alternative_tgz}"
+            sudo /usr/bin/python3 -m pip -q install ${_alternative_tgz}
+        else
+            if test "${OS_VERSION}" = "7"; then
+                logger -t ${TAG} -p user.debug "sudo sh -c \"source /opt/rh/rh-python36/enable && python3 -m pip install ${_alternative_tgz}\""
+                sudo sh -c "source /opt/rh/rh-python36/enable && python3 -m pip -q install ${_alternative_tgz}"
+            else
+                logger -t ${TAG} -p user.err "OS_VERSION should be 7, not ${OS_VERSION}"
+                return 1
+            fi
+        fi
+    else
+        if test "${OS_NAME}" != "centos"; then
+            logger -t ${TAG} -p user.debug "sudo /usr/bin/python3 -m pip -q install k2hr3-osnl"
+            sudo /usr/bin/python3 -m pip -q install k2hr3-osnl
+        else
+            if test "${OS_VERSION}" = "7"; then
+                logger -t ${TAG} -p user.debug "sudo sh -c \"source /opt/rh/rh-python36/enable && python3 -m pip install k2hr3_osnl\""
+                sudo sh -c "source /opt/rh/rh-python36/enable && python3 -m pip -q install k2hr3_osnl"
+            else
+                logger -t ${TAG} -p user.err "OS_VERSION should be 7, not ${OS_VERSION}"
+                return 1
+            fi
+        fi
+    fi
+    RESULT=$?
+    if test "${RESULT}" -ne 0; then
+        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+        return 1
+    fi
+    return 0
+}
+
+# Configures osnl service manager conf
+#
+# Params::
+#   $1 service management file path
+#   $2 service name
+#   $3 username of k2hr3-osnl process privilege
+#   $4 k2hr3-osnl conf file path
+#   $5 k2hr3-osnl file path
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+# Note::
+#   This function is designed for unit tests.
+#
+configure_osnl_service_manager_conf() {
+    _service_manager="${1:?"service_manager should be nonzero"}"
+    _service_name="${2:?"service_name should be nonzero"}"
+    _k2hr3_osnl_runuser="${3:?"k2hr3_osnl_runner should be nonzero. Check if it is defined in setup_osnl_*.ini"}"
+    _k2hr3_osnl_conf_file="${4:?"k2hr3_osnl_conf_file should be nonzero. Check if it is defined in setup_osnl_*.ini"}"
+    _k2hr3_osnl_file="${5:?"k2hr3_osnl_file should be nonzero. Check if it is defined in setup_osnl_*.ini"}"
+
+    if test "${_service_manager}" = "systemd"; then
+        if test -f "${SERVICE_MANAGER_DIR}/${_service_name}.service"; then
+            # ExecStart=/usr/bin/k2hr3-osnl -c /etc/k2hr3/k2hr3-osnl.conf
+            logger -t ${TAG} -p user.debug "perl -pi -e \"s|^ExecStart=/usr/bin/k2hr3-osnl.*$|ExecStart=${k2hr3_osnl_file} -c ${k2hr3_osnl_conf_file}|g\" ${SERVICE_MANAGER_DIR}/${_service_name}.service"
+            perl -pi -e "s|^ExecStart=/usr/bin/k2hr3-osnl.*$|ExecStart=${k2hr3_osnl_file} -c ${k2hr3_osnl_conf_file}|g" ${SERVICE_MANAGER_DIR}/${_service_name}.service
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        else
+            logger -t ${TAG} -p user.err "${SERVICE_MANAGER_DIR}/${_service_name}.service should exist"
+            return 1
+        fi
+    else
+        logger -t ${TAG} -p user.err "SERVICE_MANAGER is either systemd, not ${SERVICE_MANAGER}"
+    fi
+    return 0
+}
+
+#
+# VIM modelines
+#
+# vim:set ts=4 fenc=utf-8:
+#

@@ -1,0 +1,29 @@
+//
+// [KEY-VALUE]
+//     scheme : F/E server scheme(http or https)
+//     port : F/E server port
+//     multiproc : flag for multi process of F/E servers
+//     runuser : user name for F/E server process
+//     privatekey : Private key file for HTTPS
+//     cert : Certification file for HTTPS
+//     validator : user validator object type
+//     apischeme : API server scheme(http or https) for accessing React
+//     apihost : API server hostname for accessing React
+//     apiport : API server port for accessing React
+//     appmenu : Application menu list on React
+//     userdata : User Data Script
+//
+{
+    "scheme": "https",
+    "port": 443,
+    "multiproc": true,
+    "runuser": "k2hr3",
+    "privatekey": "config/private.key",
+    "cert": "config/public.crt",
+    "ca": "/etc/pki/tls/certs/ca-bundle.crt",
+    "validator": "userValidateCredential",
+    "apischeme": "https",
+    "apihost": "myhost",
+    "apiport": 443,
+    "rejectUnauthorized": false
+}

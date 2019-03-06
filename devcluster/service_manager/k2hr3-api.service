@@ -1,0 +1,18 @@
+[Unit]
+Description=k2hr3-api
+Requires=chmpx-slave.service
+After=chmpx-slave.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/k2hr3
+Environment=HOME=/home/k2hr3
+Environment=NODE_CONFIG_DIR=/home/k2hr3/etc/k2hr3-api
+Environment=NODE_DEBUG=LOGLEVEL_ERR
+Environment=NODE_ENV=development
+ExecStart=/usr/bin/node /home/k2hr3/node_modules/k2hr3-api/bin/www
+Restart=on-failure
+PIDFile=/var/run/k2hr3-api.pid
+
+[Install]
+WantedBy=multi-user.target

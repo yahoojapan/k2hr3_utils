@@ -1,0 +1,15 @@
+[Unit]
+Description=chmpx
+After=network-online.target
+
+[Service]
+Type=simple
+User=k2hr3
+PermissionsStartOnly=true
+ExecStartPre=/sbin/sysctl fs.mqueue.msg_max=1024
+ExecStart=/usr/bin/chmpx -conf /etc/k2hdkc/slave.ini -d err
+Restart=on-failure
+PIDFile=/var/run/chmpx.pid
+
+[Install]
+WantedBy=multi-user.target
