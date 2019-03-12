@@ -4,7 +4,7 @@
 #
 # Copyright 2018 Yahoo! Japan Corporation.
 #
-# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers 
+# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers
 # common management information for the cloud.
 # K2HR3 can dynamically manage information as "who", "what", "operate".
 # These are stored as roles, resources, policies in K2hdkc, and the
@@ -14,7 +14,7 @@
 # the licenses file that was distributed with this source code.
 #
 # AUTHOR:   Hirotaka Wakabayashi
-# CREATE:   Mon Jul 9 2018 
+# CREATE:   Mon Jul 9 2018
 # REVISION:
 #
 
@@ -43,7 +43,7 @@ DEBUG=0
 SRCDIR=$(cd $(dirname "$0") && pwd)
 SERVICE_MANAGER_DIR=${SRCDIR}/../service_manager
 STARTTIME=$(date +%s)
-VERSION=0.0.1
+VERSION=0.9.1
 PYPI_ARCHIVE_FILE=
 TRANSPORT_URL=
 
@@ -59,6 +59,7 @@ while true; do
         -d) DEBUG=1;;
         -f) shift; PYPI_ARCHIVE_FILE="${1-}";;
         -h) usage_osnl;;
+        -r) DRYRUN=1;;
         -t) shift; TRANSPORT_URL="${1-}";;
         -v) version;;
         *) break;;
@@ -111,11 +112,13 @@ logger -t ${TAG} -p user.info "2. Adds a new package repository"
 
 # Set package repository(optional)
 #
-setup_package_repository ${corp_url-}
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "setup_package_repository should return zero, not ${RET}"
-    exit 1
+if test -z "${DRYRUN}"; then
+    setup_package_repository ${corp_url-}
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "setup_package_repository should return zero, not ${RET}"
+        exit 1
+    fi
 fi
 
 ########
@@ -126,11 +129,13 @@ logger -t ${TAG} -p user.info "3. Installs system packages"
 
 # Install system packages
 #
-setup_install_os_packages "${package_install_pkgs-}"
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
-    exit 1
+if test -z "${DRYRUN}"; then
+    setup_install_os_packages "${package_install_pkgs-}"
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
+        exit 1
+    fi
 fi
 
 ########
@@ -141,20 +146,22 @@ logger -t ${TAG} -p user.info "4. Installs the k2hr3-osnl pypi package"
 
 # Install pypi packages
 #
-if ! test -r "${SRCDIR}/setup_${COMPONENT}_functions"; then
-    logger -t ${TAG} -p user.err "${SRCDIR}/setup_${COMPONENT}_functions should exist"
-o    exit 1
-fi
-. ${SRCDIR}/setup_${COMPONENT}_functions
+if test -z "${DRYRUN}"; then
+    if ! test -r "${SRCDIR}/setup_${COMPONENT}_functions"; then
+        logger -t ${TAG} -p user.err "${SRCDIR}/setup_${COMPONENT}_functions should exist"
+        exit 1
+    fi
+    . ${SRCDIR}/setup_${COMPONENT}_functions
 
-# Adds the PYPI_ARCHIVE_FILE option if PYPI_ARCHIVE_FILE defined
-# Note: PYPI_ARCHIVE_FILE might be a URL.
-setup_osnl_pypi_module ${PYPI_ARCHIVE_FILE}
+    # Adds the PYPI_ARCHIVE_FILE option if PYPI_ARCHIVE_FILE defined
+    # Note: PYPI_ARCHIVE_FILE might be a URL.
+    setup_osnl_pypi_module ${PYPI_ARCHIVE_FILE}
 
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "setup_osnl_pypi_module should return zero, not ${RET}"
-    exit 1
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "setup_osnl_pypi_module should return zero, not ${RET}"
+        exit 1
+    fi
 fi
 
 ########
@@ -165,24 +172,26 @@ logger -t ${TAG} -p user.info "5. Configures the k2hr3-onsl.conf and Installs it
 
 # Configures k2hr3-onsl.conf
 #
-for varname in api_url transport_url; do
-    logger -t ${TAG} -p user.debug "configure_conf_file ${varname}"
-    configure_conf_file ${SRCDIR}/k2hr3-osnl.conf ${varname} k2hr3_osnl_
+if test -z "${DRYRUN}"; then
+    for varname in api_url transport_url; do
+        logger -t ${TAG} -p user.debug "configure_conf_file ${varname}"
+        configure_conf_file ${SRCDIR}/k2hr3-osnl.conf ${varname} k2hr3_osnl_
+        RET=$?
+        if test "${RET}" -ne 0; then
+            logger -t ${TAG} -p user.err "setup_osnl_conf ${varname} should return zero, not ${RET}"
+            exit 1
+        fi
+    done
+
+    #
+    # Installs k2hr3-onsl.conf
+    #
+    install_conf ${SRCDIR}/k2hr3-osnl.conf ${k2hr3_osnl_conf_file}
     RET=$?
     if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "setup_osnl_conf ${varname} should return zero, not ${RET}"
+        logger -t ${TAG} -p user.err "install_conf k2hr3_osnl.conf ${k2hr3_osnl_conf_file} should return zero, not ${RET}"
         exit 1
     fi
-done
-
-#
-# Installs k2hr3-onsl.conf
-#
-install_conf ${SRCDIR}/k2hr3-osnl.conf ${k2hr3_osnl_conf_file}
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "install_conf k2hr3_osnl.conf ${k2hr3_osnl_conf_file} should return zero, not ${RET}"
-    exit 1
 fi
 
 ########
@@ -190,49 +199,54 @@ fi
 # We recommend the k2hr3_osnl Python process works as a service by systemd.
 logger -t ${TAG} -p user.info "6. Installs a systemd configuration for k2hr3_osnl"
 
-enable_scl_python_path
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "enable_scl_python_path should return zero, not ${RET}"
-    exit 1
-fi
+if test -z "${DRYRUN}"; then
+    enable_scl_python_path
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "enable_scl_python_path should return zero, not ${RET}"
+        exit 1
+    fi
 
-logger -t ${TAG} -p user.debug "which k2hr3-osnl"
-k2hr3_osnl_file=$(which k2hr3-osnl)
-if test "${k2hr3_osnl_file}" = ""; then
-    logger -t ${TAG} -p user.err "k2hr3-osnl should found, not ${k2hr3_osnl_file}"
-    exit 1
-fi
+    logger -t ${TAG} -p user.debug "which k2hr3-osnl"
+    k2hr3_osnl_file=$(which k2hr3-osnl)
+    if test "${k2hr3_osnl_file}" = ""; then
+        logger -t ${TAG} -p user.err "k2hr3-osnl should found, not ${k2hr3_osnl_file}"
+        exit 1
+    fi
 
-configure_osnl_service_manager_conf ${SERVICE_MANAGER} k2hr3-osnl ${k2hr3_osnl_runuser-} ${k2hr3_osnl_conf_file-} ${k2hr3_osnl_file-}
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "configure_osnl_service_manager_conf should return zero, not ${RET}"
-    exit 1
+    configure_osnl_service_manager_conf ${SERVICE_MANAGER} k2hr3-osnl ${k2hr3_osnl_runuser-} ${k2hr3_osnl_conf_file-} ${k2hr3_osnl_file-}
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "configure_osnl_service_manager_conf should return zero, not ${RET}"
+        exit 1
+    fi
 fi
-
 
 ########
 # 7. Registers and enables k2hr3_osnl to systemd
 # systemd controls k2hr3_osnl Python process.
 logger -t ${TAG} -p user.info "7. Registers and enables k2hr3_osnl to systemd"
 
-install_service_manager_conf ${SERVICE_MANAGER} k2hr3-osnl
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
-    exit 1
+if test -z "${DRYRUN}"; then
+    install_service_manager_conf ${SERVICE_MANAGER} k2hr3-osnl
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
+        exit 1
+    fi
 fi
 
 ########
 # Start the service!
 #
 logger -t ${TAG} -p user.debug "sudo systemctl restart k2hr3-${COMPONENT}.service"
-sudo systemctl restart k2hr3-${COMPONENT}.service
-RESULT=$?
-if test "${RESULT}" -ne 0; then
-    logger -t ${TAG} -p user.err "'sudo systemctl restart k2hr3-${COMPONENT}.service' should return zero, not ${RESULT}"
-    exit 1
+if test -z "${DRYRUN}"; then
+    sudo systemctl restart k2hr3-${COMPONENT}.service
+    RESULT=$?
+    if test "${RESULT}" -ne 0; then
+        logger -t ${TAG} -p user.err "'sudo systemctl restart k2hr3-${COMPONENT}.service' should return zero, not ${RESULT}"
+        exit 1
+    fi
 fi
 
 # The final message displays the time elapsed.

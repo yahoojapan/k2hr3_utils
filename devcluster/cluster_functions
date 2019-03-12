@@ -27,51 +27,55 @@
 set -u
 
 usage () {
-    echo "usage : $(basename $0) [-d] [-f file] [-h] [-v]"
-    echo "    -d        print debug messages"
+    echo "usage : $(basename $0) [-d] [-f file] [-h] [-r] [-v]"
+    echo "    -d        run in debug mode"
     echo "    -f file   k2hr3_${COMPONENT} file path(or URL)"
     echo "    -h        display this message and exit"
+    echo "    -r        run in dry run mode"
     echo "    -v        display version and exit"
     echo ""
     exit 1
 }
 
 usage_app_node_module () {
-    echo "usage : $(basename $0) [-d] [-f file] [-h] [-v]"
-    echo "    -d        print debug messages"
+    echo "usage : $(basename $0) [-d] [-f file] [-h] [-r] [-v]"
+    echo "    -d        run in debug mode"
     echo "    -f file   k2hr3_${COMPONENT} file path(or URL)"
     echo "    -h        display this message and exit"
-    echo "    -t tag    tag name"
+    echo "    -r        run in dry run mode"
     echo "    -v        display version and exit"
     echo ""
     exit 1
 }
 
 usage_api () {
-    echo "usage : $(basename $0) [-d] [-f file] [-h] [-v]"
-    echo "    -d        print debug messages"
-    echo "    -i url    OpenStack Identity Service Endpoint"
+    echo "usage : $(basename $0) [-d] [-f file] [-i url] [-h] [-r] [-v]"
+    echo "    -d        run in debug mode"
     echo "    -f file   k2hr3_${COMPONENT} file path(or URL)"
     echo "    -h        display this message and exit"
+    echo "    -i url    OpenStack Identity Service Endpoint"
+    echo "    -r        run in dry run mode"
     echo "    -v        display version and exit"
     echo ""
     exit 1
 }
 
 usage_dkc () {
-    echo "usage : $(basename $0) [-d] [-h] [-v]"
-    echo "    -d        print debug messages"
+    echo "usage : $(basename $0) [-d] [-h] [-r] [-v]"
+    echo "    -d        run in debug mode"
     echo "    -h        display this message and exit"
+    echo "    -r        run in dry run mode"
     echo "    -v        display version and exit"
     echo ""
     exit 1
 }
 
 usage_osnl () {
-    echo "usage : $(basename $0) [-d] [-f file] [-h] [-t url] [-v]"
-    echo "    -d        print debug messages"
+    echo "usage : $(basename $0) [-d] [-f file] [-h] [-r] [-t url] [-v]"
+    echo "    -d        run in debug mode"
     echo "    -f file   k2hr3-osnl package file path(or URL)"
     echo "    -h        display this message and exit"
+    echo "    -r        run in dry run mode"
     echo "    -t url    TransportURL(Default: 'rabbit://guest:guest@127.0.0.1:5672/')"
     echo "    -v        display version and exit"
     echo ""
@@ -749,6 +753,30 @@ npm_init() {
         logger -t ${TAG} -p user.err "setup_npm_environment should return zero, not ${RET}"
         return 1
     fi
+
+    # Create package.json if not exists
+    #if ! test -f "${HOME}/package.json"; then
+    #    logger -t ${TAG} -p user.debug "npm init -y"
+    #    npm init -y
+    #    RET=$?
+    #    if test "${RET}" -ne 0; then
+    #        logger -t ${TAG} -p user.err "npm init should return zero, not ${RET}"
+    #        return 1
+    #    fi
+    #else
+    #    logger -t ${TAG} -p user.debug "${HOME}/package.json already exists"
+    #fi
+
+    # Install publish-please
+    # To prevent from interactive publish-please post-install.js installation,
+    # we install publish-release "--only=dev" option.
+    #logger -t ${TAG} -p user.debug "npx publish-please"
+    #npx publish-please
+    #RET=$?
+    #if test "${RET}" -ne 0; then
+    #    logger -t ${TAG} -p user.err "npx publish-please should return zero, not ${RET}"
+    #    return 1
+    #fi
 
     return 0
 }

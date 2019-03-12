@@ -44,7 +44,7 @@ DEBUG=0
 SRCDIR=$(cd $(dirname "$0") && pwd)
 SERVICE_MANAGER_DIR=${SRCDIR}/../service_manager
 STARTTIME=$(date +%s)
-VERSION=0.0.1
+VERSION=0.9.1
 NPM_ARCHIVE_FILE=
 
 # Parses cli args
