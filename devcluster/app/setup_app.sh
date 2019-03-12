@@ -109,7 +109,7 @@ fi
 #
 logger -t ${TAG} -p user.info "2. Adds a new package repository"
 
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     # Enables the packagecloud.io repo for the future usage
     enable_packagecloud_io_repository ${package_script_base_url-}
     RET=$?
@@ -143,7 +143,7 @@ fi
 #
 logger -t ${TAG} -p user.info "3. Installs OS dependent packages"
 
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     # Some distros pre-install k2hr3_app's required packages. In this case, users might
     # define empty ${package_install_pkg} value in their initial configuration file.
     # We call the setup_install_os_packages function if package_install_pkgs defined.
@@ -165,7 +165,7 @@ fi
 #
 logger -t ${TAG} -p user.info "4. Install the k2hr3-app npm package"
 
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     if ! test -n "${npm_default_user}"; then
         logger -t ${TAG} -p user.err "npm_default_user should be nonzero, ${npm_default_user}"
         exit 1
@@ -258,7 +258,7 @@ fi
 # A workaround::
 #   Changes the file owner to the "right" owner, ${npm_default_user} again.
 #
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     service_log_dir=${NPM_USER_HOME}/node_modules/k2hr3-${COMPONENT}/log
     if sudo test -d "${service_log_dir}"; then
         logger -t ${TAG} -p user.warn "sudo chown -R ${npm_default_user} ${service_log_dir}"
@@ -302,7 +302,7 @@ fi
 # Switches 'k2hr3' user and fork a new shell process::
 #   $ sudo su - k2hr3 sh -c "sh ./setup_app_node_module.sh -d"
 logger -t ${TAG} -p user.info "sudo su - ${npm_default_user} sh -c \"${app_node_module_sh}\""
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     sudo su - ${npm_default_user} sh -c "sh ${app_node_module_sh}"
     RESULT=$?
     if test "${RESULT}" -ne 0; then
@@ -320,7 +320,7 @@ fi
 # A workaround::
 #   Changes the file owner to the "right" owner, ${npm_default_user} again.
 #
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     logger -t ${TAG} -p user.info "sudo su - ${npm_default_user} sh -c \"${app_node_module_sh}\""
     if ! sudo test -d "${service_log_dir}"; then
         logger -t ${TAG} -p user.debug "sudo -u ${npm_default_user} mkdir -p ${service_log_dir}"
@@ -386,7 +386,7 @@ fi
 # We recommend k2hr3-app processes work as a service by systemd.
 #
 logger -t ${TAG} -p user.info "7. Configures the k2hr3-app's service manager default configuration"
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     if ! test -r "${SRCDIR}/setup_${COMPONENT}_functions"; then
         logger -t ${TAG} -p user.err "${SRCDIR}/setup_${COMPONENT}_functions should exist"
         exit 1
@@ -415,7 +415,7 @@ fi
 #
 logger -t ${TAG} -p user.info "8. Installs the k2hr3-app service manager configuration and enables it"
 
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     install_service_manager_conf ${SERVICE_MANAGER} k2hr3-app
     RET=$?
     if test "${RET}" -ne 0; then
@@ -428,7 +428,7 @@ fi
 # Start the service!
 #
 logger -t ${TAG} -p user.debug "sudo systemctl restart k2hr3-${COMPONENT}.service"
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     sudo systemctl restart k2hr3-${COMPONENT}.service
     RESULT=$?
     if test "${RESULT}" -ne 0; then

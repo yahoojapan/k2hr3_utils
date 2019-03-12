@@ -44,6 +44,12 @@ export LC_ALL
 # Sets PATH. setup_*.sh uses useradd command
 PATH=${PATH}:/usr/sbin:/sbin
 
+# an unset parameter expansion will fail
+set -u
+
+# umask 022 is enough
+umask 022
+
 # Defines environments
 API_NPM_ARCHIVE_FILE=
 APP_NPM_ARCHIVE_FILE=
@@ -91,10 +97,10 @@ logger -t $(basename $0) -s -p user.info "$(basename $0) ${VERSION}"
 for component in dkc api app osnl; do
     SCRIPT=${component}/setup_${component}.sh
     if test -f "${SCRIPT}"; then
-        if test -n "${DEBUG}"; then
+        if test -n "${DEBUG-}"; then
             SCRIPT="${SCRIPT} -d"
         fi
-        if test -n "${DRYRUN}"; then
+        if test -n "${DRYRUN-}"; then
             SCRIPT="${SCRIPT} -r"
         fi
         case "${component}" in

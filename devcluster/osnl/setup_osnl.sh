@@ -112,7 +112,7 @@ logger -t ${TAG} -p user.info "2. Adds a new package repository"
 
 # Set package repository(optional)
 #
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     setup_package_repository ${corp_url-}
     RET=$?
     if test "${RET}" -ne 0; then
@@ -129,7 +129,7 @@ logger -t ${TAG} -p user.info "3. Installs system packages"
 
 # Install system packages
 #
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     setup_install_os_packages "${package_install_pkgs-}"
     RET=$?
     if test "${RET}" -ne 0; then
@@ -146,7 +146,7 @@ logger -t ${TAG} -p user.info "4. Installs the k2hr3-osnl pypi package"
 
 # Install pypi packages
 #
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     if ! test -r "${SRCDIR}/setup_${COMPONENT}_functions"; then
         logger -t ${TAG} -p user.err "${SRCDIR}/setup_${COMPONENT}_functions should exist"
         exit 1
@@ -172,7 +172,7 @@ logger -t ${TAG} -p user.info "5. Configures the k2hr3-onsl.conf and Installs it
 
 # Configures k2hr3-onsl.conf
 #
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     for varname in api_url transport_url; do
         logger -t ${TAG} -p user.debug "configure_conf_file ${varname}"
         configure_conf_file ${SRCDIR}/k2hr3-osnl.conf ${varname} k2hr3_osnl_
@@ -199,7 +199,7 @@ fi
 # We recommend the k2hr3_osnl Python process works as a service by systemd.
 logger -t ${TAG} -p user.info "6. Installs a systemd configuration for k2hr3_osnl"
 
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     enable_scl_python_path
     RET=$?
     if test "${RET}" -ne 0; then
@@ -227,7 +227,7 @@ fi
 # systemd controls k2hr3_osnl Python process.
 logger -t ${TAG} -p user.info "7. Registers and enables k2hr3_osnl to systemd"
 
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     install_service_manager_conf ${SERVICE_MANAGER} k2hr3-osnl
     RET=$?
     if test "${RET}" -ne 0; then
@@ -240,7 +240,7 @@ fi
 # Start the service!
 #
 logger -t ${TAG} -p user.debug "sudo systemctl restart k2hr3-${COMPONENT}.service"
-if test -z "${DRYRUN}"; then
+if test -z "${DRYRUN-}"; then
     sudo systemctl restart k2hr3-${COMPONENT}.service
     RESULT=$?
     if test "${RESULT}" -ne 0; then
