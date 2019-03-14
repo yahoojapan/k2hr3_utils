@@ -638,7 +638,7 @@ install_npm_local_json() {
             return 1
         fi
     fi
-    if ! test -f "${npm_user_home}/etc/k2hr3-${COMPONENT}/default.json"; then
+    if ! test -h "${npm_user_home}/etc/k2hr3-${COMPONENT}/default.json"; then
         logger -t ${TAG} -p user.debug "ln -s ${npm_user_home}/node_modules/k2hr3-${COMPONENT}/config/default.json ${npm_user_home}/etc/k2hr3-${COMPONENT}"
         ln -s ${npm_user_home}/node_modules/k2hr3-${COMPONENT}/config/default.json ${npm_user_home}/etc/k2hr3-${COMPONENT}/default.json
         RESULT=$?
