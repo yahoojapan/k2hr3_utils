@@ -166,7 +166,7 @@ if ! test -n "${npm_default_user}"; then
     exit 1
 fi
 
-add_npm_user"${npm_default_user}"
+add_npm_user "${npm_default_user}"
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "add_npm_user should return zero, not ${RET}"
