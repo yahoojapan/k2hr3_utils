@@ -255,7 +255,7 @@ else
     exit 1
 fi
 # Configures the k2hr3-app's service manager default configuration
-configure_k2hr3_app_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_app_runuser}
+configure_k2hr3_app_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_app_runuser} ${node_debug}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "configure_k2hr3_app_service_manager_file should return zero, not ${RET}"

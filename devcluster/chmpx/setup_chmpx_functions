@@ -145,6 +145,7 @@ install_chmpx_ini() {
 #   $4 a chmpx configuration file
 #   $5 POSIX mqueue max size
 #   $6(optional) a flag to distinguish k2hdkc or not
+#   $7(optional) loglevel(default value is "err")
 #
 # Returns::
 #   0 on success
@@ -160,8 +161,9 @@ configure_chmpx_service_manager_file() {
     _chmpx_conf_file=${4:?"chmpx_conf_file must be nonzero"}
     _chmpx_msg_max=${5:?"chmpx_msg_max must be nonzero"}
     _is_k2hdkc=${6:-}
+    _loglevel=${7:-err}
 
-    logger -t ${TAG} -p user.debug "_service_manager=${_service_manager} _service_manager_file=${_service_manager_file} _k2hr3_dkc_runuser=${_k2hr3_dkc_runuser} _chmpx_conf_file=${_chmpx_conf_file} _chmpx_msg_max=${_chmpx_msg_max} _is_k2hdkc=${_is_k2hdkc}"
+    logger -t ${TAG} -p user.debug "_service_manager=${_service_manager} _service_manager_file=${_service_manager_file} _k2hr3_dkc_runuser=${_k2hr3_dkc_runuser} _chmpx_conf_file=${_chmpx_conf_file} _chmpx_msg_max=${_chmpx_msg_max} _is_k2hdkc=${_is_k2hdkc} _loglevel=${_loglevel}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -200,11 +202,11 @@ configure_chmpx_service_manager_file() {
             # Replaces "/etc/k2hdkc/server.ini" with a user defined value
             if test -n "${_chmpx_conf_file}"; then
                 if test -n "${_is_k2hdkc}"; then
-                    logger -t ${TAG} -p user.debug "perl -pi -e \"s|ExecStart=.*$|ExecStart=/usr/bin/k2hdkc -conf ${_chmpx_conf_file} -d err|g\" ${_service_manager_file}"
-                    perl -pi -e "s|ExecStart=.*$|ExecStart=/usr/bin/k2hdkc -conf ${_chmpx_conf_file} -d err|g" ${_service_manager_file}
+                    logger -t ${TAG} -p user.debug "perl -pi -e \"s|ExecStart=.*$|ExecStart=/usr/bin/k2hdkc -conf ${_chmpx_conf_file} -d ${_loglevel}|g\" ${_service_manager_file}"
+                    perl -pi -e "s|ExecStart=.*$|ExecStart=/usr/bin/k2hdkc -conf ${_chmpx_conf_file} -d ${_loglevel}|g" ${_service_manager_file}
                 else
-                    logger -t ${TAG} -p user.debug "perl -pi -e \"s|ExecStart=.*$|ExecStart=/usr/bin/k2hdkc -conf ${_chmpx_conf_file} -d err|g\" ${_service_manager_file}"
-                    perl -pi -e "s|ExecStart=.*$|ExecStart=/usr/bin/chmpx -conf ${_chmpx_conf_file} -d err|g" ${_service_manager_file}
+                    logger -t ${TAG} -p user.debug "perl -pi -e \"s|ExecStart=.*$|ExecStart=/usr/bin/k2hdkc -conf ${_chmpx_conf_file} -d ${_loglevel}|g\" ${_service_manager_file}"
+                    perl -pi -e "s|ExecStart=.*$|ExecStart=/usr/bin/chmpx -conf ${_chmpx_conf_file} -d ${_loglevel}|g" ${_service_manager_file}
                 fi
                 RESULT=$?
                 if test "${RESULT}" -ne 0; then
@@ -216,7 +218,6 @@ configure_chmpx_service_manager_file() {
                 return 1
             fi
         else
-            logger -t ${TAG} -p user.err "chmpx_msg_max should be nonzero, ${_chmpx_msg_max}"
             logger -t ${TAG} -p user.err "${_service_manager_file} should exists"
             return 1
         fi

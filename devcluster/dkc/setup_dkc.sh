@@ -206,7 +206,8 @@ else
     exit 1
 fi
 # Configures the chmpx's service manager default configuration
-configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max}
+is_k2hdkc=0
+configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max} ${is_k2hdkc} ${chmpx_loglevel}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
@@ -240,7 +241,8 @@ else
     exit 1
 fi
 # Configures the k2hdkc's service manager default configuration
-configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max} 1
+is_k2hdkc=1
+configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max} ${is_k2hdkc} ${k2hdkc_loglevel}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"

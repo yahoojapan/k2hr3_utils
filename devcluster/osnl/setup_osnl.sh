@@ -166,7 +166,7 @@ logger -t ${TAG} -p user.info "5. Configures the k2hr3-onsl.conf and Installs it
 
 # Configures k2hr3-onsl.conf
 #
-for varname in api_url transport_url; do
+for varname in api_url transport_url debug_level; do
     logger -t ${TAG} -p user.debug "configure_conf_file ${varname}"
     configure_conf_file ${SRCDIR}/k2hr3-osnl.conf ${varname} k2hr3_osnl_
     RET=$?

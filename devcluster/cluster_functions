@@ -320,8 +320,8 @@ configure_conf_file() {
             varval=$(eval echo "\${$_varname}"|perl -nle 's/@/\\@/g; print $_')
         fi
         if test -n "${varval}"; then
-            logger -t ${TAG} -p user.debug "perl -pi -e \"s|${_varname}.*|${_varname} = ${varval}|g\" ${_conf_file}"
-            perl -pi -e "s|${_varname}.*|${_varname} = ${varval}|g" ${_conf_file}
+            logger -t ${TAG} -p user.debug "perl -pi -e \"s|^${_varname}.*|${_varname} = ${varval}|g\" ${_conf_file}"
+            perl -pi -e "s|^${_varname}.*|${_varname} = ${varval}|g" ${_conf_file}
             RESULT=$?
             if test "${RESULT}" -ne 0; then
                 logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
@@ -360,8 +360,8 @@ configure_ini_file() {
     if test -f "${_conf_file}"; then
         varval=$(eval echo "\${$_varname}"|perl -nle 's/@/\\@/g; print $_')
         if test -n "${varval}"; then
-            logger -t ${TAG} -p user.debug "perl -pi -e \"s|${_varname}.*|${_varname}=${varval}|g\" ${_conf_file}"
-            perl -pi -e "s|${_varname}.*|${_varname}=${varval}|g" ${_conf_file}
+            logger -t ${TAG} -p user.debug "perl -pi -e \"s|^${_varname}.*|${_varname}=${varval}|g\" ${_conf_file}"
+            perl -pi -e "s|^${_varname}.*|${_varname}=${varval}|g" ${_conf_file}
             RESULT=$?
             if test "${RESULT}" -ne 0; then
                 logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
