@@ -14,36 +14,38 @@ $ sh cluster.sh \
 ```
 
 As you see, you must pass two arguments at least:
-* An OpenStack Identity Endpoint URL. For example, 'http://127.0.0.1/identity' which means an identity server works in localhost.
-* An OpenStack Message Broker Server URL. For example, 'rabbit://guest:guest@127.0.0.1:5672/' means a RabbitMQ server works in localhost. The user 'guest' with the password 'guest' can login.
+* An OpenStack Identity Endpoint URL  
+  For example, 'http://127.0.0.1/identity' which means an identity server works in localhost.
+* An OpenStack Message Broker Server URL  
+  For example, 'rabbit://guest:guest@127.0.0.1:5672/' means a RabbitMQ server works in localhost. The user 'guest' with the password 'guest' can login.  
 
 ## k2hr3 architecture overview
 
 This chapter describes the k2hr3 system overview. k2hr3 consists of the following 5 components.
 
-* k2hr3_app
+* k2hr3_app  
   provides an interactive UIs for human operators to configure their ACL roles, rules and resources.
-* k2hr3_api
+* k2hr3_api  
   provides REST APIs which are used by k2hr3_app and k2hr3_osnl to save ACL roles, rules and resources and load them in k2hr3_dkc.
-* k2hr3_dkc
+* k2hr3_dkc  
   stores ACL roles, rules, resources and other k2hr3 system data.
-* OpenStack
+* OpenStack  
   [OpenStack](https://www.openstack.org/) is a software platform for cloud  computing developed by the [OpenStack](https://www.openstack.org/) community.
-* k2hr3_osnl
+* k2hr3_osnl  
   is a plugin for [OpenStack](https://www.openstack.org/) Notification Listener which looks at incomming messages from  [OpenStack](https://www.openstack.org/) services and invokes the k2hr3_api delete API with parameters of a removed instance-id and its ip-addresses.
-* k2hr3 system overview figure
+* k2hr3 system overview figure  
 ![deploy-k2hr3_overview](img/k2hr3_utils_1.png)
 
 ## k2hr3 system requirements
 
 Please note follwoing requirements of each components.
 
-| Component | number of hosts(production recommendation at least) | OS(Linux) | others |
-|:-----------|:-----|:------------|:------------|
-| k2hr3_dkc | 1(3) | Debian-9, Fedora-29(28), CentOS-7, Ubuntu-18.04 | |
-| k2hr3_api | 1(2) | Debian-9, Fedora-29(28), CentOS-7, Ubuntu-18.04| Node.js v10 or higher |
-| k2hr3_app | 1(2) | Debian-9, Fedora-29(28), CentOS-7, Ubuntu-18.04| Node.js v10 or higher |
-| k2hr3_osnl | 1(2) | Debian-9, Fedora-29(28), CentOS-7, Ubuntu-18.04 | Python3.5 or higher |
+| Component  | Mininum hosts(for production) | OS(Linux)                                       | others                |
+|:-----------|:------------------------------|:------------------------------------------------|:----------------------|
+| k2hr3_dkc  | 1(3)                          | Debian-9, Fedora-29(28), CentOS-7, Ubuntu-18.04 |                       |
+| k2hr3_api  | 1(2)                          | Debian-9, Fedora-29(28), CentOS-7, Ubuntu-18.04 | Node.js v10 or higher |
+| k2hr3_app  | 1(2)                          | Debian-9, Fedora-29(28), CentOS-7, Ubuntu-18.04 | Node.js v10 or higher |
+| k2hr3_osnl | 1(2)                          | Debian-9, Fedora-29(28), CentOS-7, Ubuntu-18.04 | Python3.5 or higher   |
 
 ## k2hr3 components installation order
 
@@ -53,17 +55,17 @@ This chapter instructs the installation order of k2hr3 components.
 
 We recommend the following installation order:
 
-* 1 OpenStack or k2hr3_dkc
-* 2 k2hr3_api
-* 3 k2hr3_app or k2hr3_osnl
+* 1 OpenStack or k2hr3_dkc  
+* 2 k2hr3_api  
+* 3 k2hr3_app or k2hr3_osnl  
 
 ### Rationale
 
 [OpenStack](https://www.openstack.org/) services should start before k2hr3_api starts, because k2hr3_api use [OpenStack](https://www.openstack.org/) Service Endpoints. That means [OpenStack](https://www.openstack.org/) should be installed before k2hr3_api. k2hr3_api reads and writes data in k2hr3_dkc. Thant means k2hr3_dkc should be installed before k2h3r_api and k2hr3_api should be installed before k2hr3_app and k2hr3_osnl. k2hr3_dkc is an independent component from [OpenStack](https://www.openstack.org/). k2hr3_app and k2hr3_osnl are independent of each other. Therefore you need not to think their installation orders. As a result, following installation order is recommended.
 
-* OpenStack or k2hr3_dkc
-* k2hr3_api
-* k2hr3_app or k2hr3_osnl
+* OpenStack or k2hr3_dkc  
+* k2hr3_api  
+* k2hr3_app or k2hr3_osnl  
 
 ## (1) OpenStack configuration
 
@@ -129,33 +131,33 @@ $ sh dkc/setup_dkc_main.sh
 ```
 
 k2hr3_dkc consists of 3 subcomponents.
-* [chmpx](https://github.com/yahoojapan/chmpx/wiki) is a transparent proxy server that coordinate read and write requests from clents to [k2hdkc](https://github.com/yahoojapan/k2hdkc/wiki).
-* [k2hdkc](https://github.com/yahoojapan/k2hdkc/wiki) is a distributed KVS cluster that receives client requests via [chmpx](https://github.com/yahoojapan/chmpx/wiki). The backend is [k2hash](https://github.com/yahoojapan/k2hash/wiki).
-* [k2hash](https://github.com/yahoojapan/k2hash/wiki) is a key-value database file.
+* [chmpx](https://github.com/yahoojapan/chmpx/wiki) is a transparent proxy server that coordinate read and write requests from clents to [k2hdkc](https://github.com/yahoojapan/k2hdkc/wiki).  
+* [k2hdkc](https://github.com/yahoojapan/k2hdkc/wiki) is a distributed KVS cluster that receives client requests via [chmpx](https://github.com/yahoojapan/chmpx/wiki). The backend is [k2hash](https://github.com/yahoojapan/k2hash/wiki).  
+* [k2hash](https://github.com/yahoojapan/k2hash/wiki) is a key-value database file.  
 
 Here are summary of installation procedures:
 
-1. Initializes environments
+1. Initializes environments  
   Detects the OS_NAME of the target host and loads installation configurations.
-2. Ensures that the k2hdkc data directory exists
+2. Ensures that the k2hdkc data directory exists  
   k2hr3_dkc requires a directory for saving data
-3. Ensures that the k2hdkc configuration directory exists
+3. Ensures that the k2hdkc configuration directory exists  
   k2hr3_dkc requires a directory for its configuration file
-4. Adds a new package repository
+4. Adds a new package repository  
   k2hr3_dkc needs binary packages on https://packagecloud.io/antpickax/.
-5. Installs binary packages
+5. Installs binary packages  
   k2hr3_dkc needs the k2htpdtor, libfullock, k2hash, chmpx and k2hdkc.
-6. Configures the chmpx default configuratoin
+6. Configures the chmpx default configuratoin  
   The default server.ini contains dummy server name. You need to change it.
-7. Installs the configured chmpx config file
+7. Installs the configured chmpx config file  
   k2hr3_dkc uses a configuration file(for instance /etc/k2hdkc/server.ini) for [chmpx](https://github.com/yahoojapan/chmpx).
-8. Configures the chmpx's service manager default configuration
+8. Configures the chmpx's service manager default configuration  
   We recommend [chmpx](https://github.com/yahoojapan/chmpx) processes work as a service by [systemd](https://freedesktop.org/wiki/Software/systemd/).
-9. Installs the chmpx service manager configuration and enables it
+9. Installs the chmpx service manager configuration and enables it  
   [systemd](https://freedesktop.org/wiki/Software/systemd/) controls [chmpx](https://github.com/yahoojapan/chmpx).
-10. Configures the k2hdkc's service manager default configuration
+10. Configures the k2hdkc's service manager default configuration  
   We recommend [k2hdkc](https://github.com/yahoojapan/k2hdkc) processes work as a service by [systemd](https://freedesktop.org/wiki/Software/systemd/).
-11. Installs the k2hdkc service manager configuration and enables it
+11. Installs the k2hdkc service manager configuration and enables it  
   [systemd](https://freedesktop.org/wiki/Software/systemd/) controls [k2hdkc](https://github.com/yahoojapan/k2hdkc).
 
 
@@ -174,43 +176,43 @@ $ sh api/setup_api_main.sh -f https:github.com/yahoojapan/k2hr3_api#semver:0.0.1
 ```
 
 k2hr3_api primarily consists of 2 subcomponents.
-* [chmpx](https://github.com/yahoojapan/chmpx/wiki) is a transparent proxy server that coordinate read and write requests from clents to [k2hdkc](https://github.com/yahoojapan/k2hdkc/wiki).
-* [Node.js](https://nodejs.org) is a HTTP server, which accepts HTTP request from k2hr3-app and k2hr3-osnl.
+* [chmpx](https://github.com/yahoojapan/chmpx/wiki) is a transparent proxy server that coordinate read and write requests from clents to [k2hdkc](https://github.com/yahoojapan/k2hdkc/wiki).  
+* [Node.js](https://nodejs.org) is a HTTP server, which accepts HTTP request from k2hr3-app and k2hr3-osnl.  
 
 Here are summary of installation procedures:
 
-1. Initializes environments
+1. Initializes environments  
    Detects the OS_NAME of the target host and loads installation configurations.
-2. Ensures that the k2hdkc data directory exists
+2. Ensures that the k2hdkc data directory exists  
   k2hr3_dkc requires a directory for saving data
-3. Ensures that the k2hdkc configuration directory exists
+3. Ensures that the k2hdkc configuration directory exists  
   k2hr3_dkc requires a directory for its configuration file
-4. Adds new package repositories
+4. Adds new package repositories  
   k2hr3_api needs Debian and RPM packages on https://packagecloud.io/antpickax/.
   [nodesource](https://github.com/nodesource/distributions) provides the nodejs and npm.
   [softwarecollections](http://softwarecollections.org/) provides the devtoolset package for centos.
-5. Installs binary packages
+5. Installs binary packages  
   k2hr3_api needs the nodejs, k2htpdtor, libfullock, k2hash, chmpx and k2hdkc.
-6. Configures the chmpx slave default configuration
+6. Configures the chmpx slave default configuration  
   The default slave.ini contains dummy server name. You need to change it.
-7. Installs the configured chmpx slave config file
+7. Installs the configured chmpx slave config file  
   k2hr3_api uses a configuration file(for instance /etc/k2hdkc/slave.ini) for [chmpx](https://github.com/yahoojapan/chmpx).
-8. Configures the chmpx slave's service manager default configuration
+8. Configures the chmpx slave's service manager default configuration  
   We recommend [chmpx](https://github.com/yahoojapan/chmpx) process works as a service by [systemd](https://freedesktop.org/wiki/Software/systemd/).
-9. Configures the chmpx slave's service manager default configuration
+9. Configures the chmpx slave's service manager default configuration  
   [systemd](https://freedesktop.org/wiki/Software/systemd/)) controls [chmpx](https://github.com/yahoojapan/chmpx).
-10. Installs devel packages to build the k2hdkc node module
+10. Installs devel packages to build the k2hdkc node module  
   The k2hdkc node module requires header files of libfullock, k2hash, chmpx and k2hdkc.
-11. Installs npm packages
+11. Installs npm packages  
   The k2hdkc npm package is a node addon package which provides the k2hdkc driver functions.
   The k2hr3-api package provies the REST APIs.
-12. Configures the default local.json of the k2hr3-api package.
+12. Configures the default local.json of the k2hr3-api package.  
   You need to change SSL certs path and add frontend server ip-addresses to the local.json.
-13. Installs the configured local.json of the k2hr3-api package.
+13. Installs the configured local.json of the k2hr3-api package.  
   k2hr3_api node module uses it.
-14. Configures the k2hr3-api's service manager default configuration
+14. Configures the k2hr3-api's service manager default configuration  
   We recommend k2hr3-api processes work as a service by [systemd](https://freedesktop.org/wiki/Software/systemd/).
-15. Installs the k2hr3-api service manager configuration and enables it
+15. Installs the k2hr3-api service manager configuration and enables it  
   [systemd](https://freedesktop.org/wiki/Software/systemd/) controls k2hr3-api.
 
 
@@ -229,25 +231,25 @@ $ sh app/setup_app_main.sh sh -f https:github.com/yahoojapan/k2hr3_app#semver:0.
 ```
 
 k2hr3_api primarily consists of one subcomponents.
-* [Node.js](https://nodejs.org) is a HTTP server process.
+* [Node.js](https://nodejs.org) is a HTTP server process.  
 
 Here are summary of installation procedures:
 
-1. Initializes environments
+1. Initializes environments  
   Detects the OS_NAME of the target host and loads installation configurations.
-2. Adds a new package repository
+2. Adds a new package repository  
   [nodesource](https://github.com/nodesource/distributions) provides the nodejs and npm.
-3. Installs binary packages
+3. Installs binary packages  
   k2hr3_app needs the nodejs.
-4. Install the k2hr3-app npm package
+4. Install the k2hr3-app npm package  
   The k2hr3-app package provides an interactive UIs.
-5. Configures the default local.json of the k2hr3-app package
+5. Configures the default local.json of the k2hr3-app package  
   You need to change SSL certs path and add API server ip-addresses to the local.json.
-6. Installs the configured local.json of the k2hr3-app package
+6. Installs the configured local.json of the k2hr3-app package  
   k2hr3_app node module uses it.
-7. Configures the k2hr3-app's service manager default configuration
+7. Configures the k2hr3-app's service manager default configuration  
   We recommend k2hr3-api processes work as a service by [systemd](https://freedesktop.org/wiki/Software/systemd/).
-8. Installs the k2hr3-app service manager configuration and enables it
+8. Installs the k2hr3-app service manager configuration and enables it  
   [systemd](https://freedesktop.org/wiki/Software/systemd/) controls k2hr3-app nodejs process.
 
 (5) k2hr3_osnl
@@ -265,22 +267,22 @@ $ sh osnl/setup_osnl.sh -t rabbit://stackrabbit:devstack@127.0.0.1:5672/
 ```
 
 k2hr3_osnl primarily consists of two subcomponents.
-* [OpenStack Oslo.messaging](https://github.com/openstack/oslo.messaging) is an OpenStack library for messaging.
-* Python3. [OpenStack Oslo.messaging](https://github.com/openstack/oslo.messaging) is a Python module. We select Python3 because [OpenStack Technical Committee](https://governance.openstack.org/tc/) stated that All OpenStack projects must complete the work for Python 3 support by the end of the T cycle which I believe means the middle of 2019. Please see the [2018-05-29 Python2 Deprecation Timeline](https://governance.openstack.org/tc/resolutions/20180529-python2-deprecation-timeline.html) for details.
+* [OpenStack Oslo.messaging](https://github.com/openstack/oslo.messaging) is an OpenStack library for messaging.  
+* Python3. [OpenStack Oslo.messaging](https://github.com/openstack/oslo.messaging) is a Python module. We select Python3 because [OpenStack Technical Committee](https://governance.openstack.org/tc/) stated that All OpenStack projects must complete the work for Python 3 support by the end of the T cycle which I believe means the middle of 2019. Please see the [2018-05-29 Python2 Deprecation Timeline](https://governance.openstack.org/tc/resolutions/20180529-python2-deprecation-timeline.html) for details.  
 
 Here are summary of installation procedures:
 
-1. Initializes environments.
+1. Initializes environments.  
   Detects the OS_NAME of the target host and loads installation configurations.
-2. Adds a new package repository.
+2. Adds a new package repository.  
   [SCLo](https://www.softwarecollections.org/en/scls/user/rhscl/) provides the [rh-python35](https://www.softwarecollections.org/en/scls/rhscl/rh-python35/) pkg for CentOS6 and the [rh-python36](https://www.softwarecollections.org/en/scls/rhscl/rh-python36/) pkg for CentOS7.
-3. Installs the system package(python3).
+3. Installs the system package(python3).  
   python3 provides library to run k2hr3_osnl.
-4. Installs the k2hr3-osnl pypi package.
+4. Installs the k2hr3-osnl pypi package.  
   k2hr3_osnl provides to listen to notification messages from OpenStack.
-5. Configures the k2hr3_onsl.conf.
+5. Configures the k2hr3_onsl.conf.  
   You need to change the K2hr3 API server and OpenStack Message Queue server.
-6. Installs a systemd configuration for k2hr3_osnl
+6. Installs a systemd configuration for k2hr3_osnl  
   We recommend the k2hr3_osnl Python process works as a service by [systemd](https://freedesktop.org/wiki/Software/systemd/).
-7. Registers and enables k2hr3_osnl to systemd.
+7. Registers and enables k2hr3_osnl to systemd.  
   [systemd](https://freedesktop.org/wiki/Software/systemd/) controls k2hr3_osnl Python process.
