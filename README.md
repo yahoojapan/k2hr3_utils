@@ -4,6 +4,7 @@ K2HR3 Utilities(k2hr3-utils)
 [![GitHub forks](https://img.shields.io/github/forks/yahoojapan/k2hr3_utils.svg)](https://github.com/yahoojapan/k2hr3_utils/network)
 [![GitHub stars](https://img.shields.io/github/stars/yahoojapan/k2hr3_utils.svg)](https://github.com/yahoojapan/k2hr3_utils/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/yahoojapan/k2hr3_utils.svg)](https://github.com/yahoojapan/k2hr3_utils/issues)
+[![CodeFactor](https://www.codefactor.io/repository/github/yahoojapan/k2hr3_utils/badge)](https://www.codefactor.io/repository/github/yahoojapan/k2hr3_utils)
 
 This repository contains utilities for [K2HR3](https://k2hr3.antpick.ax/), which is a role-based ACL system developed in [Yahoo Japan Corporation](https://about.yahoo.co.jp/info/en/company/)
 
