@@ -215,7 +215,7 @@ setup_ini_env() {
 setup_package_repository() {
     _copr_url="${1-}"
 
-    logger -t ${TAG} -p user.debug "_copr_url=${_copr_url}"
+    logger -t ${TAG} -p user.debug "setup_package_repository _copr_url=${_copr_url}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -258,7 +258,7 @@ setup_package_repository() {
 setup_install_os_packages() {
     _package_install_pkgs="${1-}"
 
-    logger -t ${TAG} -p user.debug "_package_install_pkgs=${_package_install_pkgs}"
+    logger -t ${TAG} -p user.debug "setup_install_os_packages _package_install_pkgs=${_package_install_pkgs}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -307,11 +307,7 @@ configure_conf_file() {
     _varname="${2:?"varname should not be zero"}"
     _varname_prefix="${3-}"
 
-    logger -t ${TAG} -p user.debug "_conf_file=${_conf_file} _varname=${_varname} _varname_prefix=${_varname_prefix}"
-    # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
-        return 0
-    fi
+    logger -t ${TAG} -p user.debug "configure_conf_file _conf_file=${_conf_file} _varname=${_varname} _varname_prefix=${_varname_prefix}"
 
     if test -f "${_conf_file}"; then
         if test -n "${_varname_prefix}"; then
@@ -351,11 +347,7 @@ configure_ini_file() {
     _conf_file="${1:?"conf file should not be zero"}"
     _varname="${2:?"varname should not be zero"}"
 
-    logger -t ${TAG} -p user.debug "_conf_file=${_conf_file} _varname=${_varname}"
-    # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
-        return 0
-    fi
+    logger -t ${TAG} -p user.debug "configure_ini_file _conf_file=${_conf_file} _varname=${_varname}"
 
     if test -f "${_conf_file}"; then
         varval=$(eval echo "\${$_varname}"|perl -nle 's/@/\\@/g; print $_')
@@ -391,7 +383,7 @@ install_conf() {
     _src_conf_file="${1:?"_src_conf_file should be nonzero"}"
     _dst_conf_file="${2:?"_dst_conf_file should be nonzero"}"
 
-    logger -t ${TAG} -p user.debug "_src_conf_file=${_src_conf_file} _dst_conf_file=${_dst_conf_file}"
+    logger -t ${TAG} -p user.debug "install_conf _src_conf_file=${_src_conf_file} _dst_conf_file=${_dst_conf_file}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -464,7 +456,7 @@ install_service_manager_conf() {
     _service_manager="${1:?"service_manager should be nonzero"}"
     _service_name="${2:?"service_name should be nonzero"}"
 
-    logger -t ${TAG} -p user.debug "_service_manager=${_service_manager} _service_name=${_service_name}"
+    logger -t ${TAG} -p user.debug "install_service_manager_conf _service_manager=${_service_manager} _service_name=${_service_name}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -520,7 +512,7 @@ install_service_manager_conf() {
 enable_packagecloud_io_repository() {
     _package_script_base_url=${1:?" package_script_base_url should be nonzero"}
 
-    logger -t ${TAG} -p user.debug "_package_script_base_url=${_package_script_base_url}"
+    logger -t ${TAG} -p user.debug "enable_packagecloud_io_repository _package_script_base_url=${_package_script_base_url}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -583,7 +575,7 @@ enable_packagecloud_io_repository() {
 enable_nodesource_repository() {
     _nodesource_url=${1:?"nodesource_url should be nonzero"}
 
-    logger -t ${TAG} -p user.debug "_nodesource_url=${_nodesource_url}"
+    logger -t ${TAG} -p user.debug "enable_nodesource_repository _nodesource_url=${_nodesource_url}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -631,7 +623,7 @@ install_npm_local_json() {
 
     npm_user_home=$(eval echo "~${npm_default_user}")
 
-    logger -t ${TAG} -p user.debug "_npm_default_user=${_npm_default_user} npm_user_home=${npm_user_home}"
+    logger -t ${TAG} -p user.debug "install_npm_local_json _npm_default_user=${_npm_default_user} npm_user_home=${npm_user_home}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -686,7 +678,7 @@ install_npm_local_json() {
 find_node_path() {
     _package_install_pkgs=${1-}
 
-    logger -t ${TAG} -p user.debug "_package_install_pkgs=${_package_install_pkgs}"
+    logger -t ${TAG} -p user.debug "find_node_path _package_install_pkgs=${_package_install_pkgs}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -738,7 +730,7 @@ find_node_path() {
 setup_npm_environment() {
     _npm_global_dir=${1:?"npm_global_dir should be nonzero"}
 
-    logger -t ${TAG} -p user.debug "_npm_global_dir=${_npm_global_dir}"
+    logger -t ${TAG} -p user.debug "setup_npm_environment _npm_global_dir=${_npm_global_dir}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -786,7 +778,7 @@ setup_npm_environment() {
 patch_for_change_logdir_owner() {
     _npm_default_user=${1:?"npm_default_user should be nonzero"}
 
-    logger -t ${TAG} -p user.debug "npm_default_user=${_npm_default_user}"
+    logger -t ${TAG} -p user.debug "patch_for_change_logdir_owner npm_default_user=${_npm_default_user}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -866,7 +858,7 @@ patch_for_change_logdir_owner() {
 setup_npm_userhome() {
     _npm_default_user=${1:?"npm_default_user should be nonzero"}
 
-    logger -t ${TAG} -p user.debug "npm_default_user=${_npm_default_user}"
+    logger -t ${TAG} -p user.debug "setup_npm_userhome npm_default_user=${_npm_default_user}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -958,7 +950,7 @@ setup_npm_userhome() {
 add_npm_user() {
     _npm_default_user=${1:?"npm_default_user should be nonzero"}
 
-    logger -t ${TAG} -p user.debug "npm_default_user=${_npm_default_user}"
+    logger -t ${TAG} -p user.debug "add_npm_user npm_default_user=${_npm_default_user}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0

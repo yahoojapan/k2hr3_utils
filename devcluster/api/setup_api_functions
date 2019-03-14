@@ -39,11 +39,7 @@ configure_k2hr3_api_service_manager_file() {
     _k2hr3_api_runuser=${3:?"k2hr3_api_runner should be nonzero. Check if it is defined in setup_api_*.ini"}
     _node_debug=${4:-LOGLEVEL_ERR}
 
-    logger -t ${TAG} -p user.debug "_service_manager=${_service_manager} _service_manager_file=${_service_manager_file} _k2hr3_api_runuser=${_k2hr3_api_runuser}"
-    # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
-        return 0
-    fi
+    logger -t ${TAG} -p user.debug "configure_k2hr3_api_service_manager_file _service_manager=${_service_manager} _service_manager_file=${_service_manager_file} _k2hr3_api_runuser=${_k2hr3_api_runuser}"
 
     if ! test -f "${service_manager_file}"; then
         logger -t ${TAG} -p user.err "${_service_manager_file} should exist"

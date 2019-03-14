@@ -39,10 +39,13 @@ configure_k2hr3_app_service_manager_file() {
     _k2hr3_app_runuser=${3:?"k2hr3_app_runner should be nonzero. Check if it is defined in setup_app_*.ini"}
     _node_debug=${4:-LOGLEVEL_ERR}
 
+    logger -t ${TAG} -p user.debug "configure_k2hr3_app_service_manager_file _service_manager=${_service_manager} _service_manager_file=${_service_manager_file} _k2hr3_app_runuser=${_k2hr3_app_runuser} _node_debug=${_node_debug}"
+
     if ! test -f "${service_manager_file}"; then
         logger -t ${TAG} -p user.err "${_service_manager_file} should exist"
         return 1
     fi
+
     if test "${_service_manager}" = "systemd"; then
         if test -n "${_k2hr3_app_runuser}"; then
             NPM_USER_HOME=$(eval echo "~${_k2hr3_app_runuser}")

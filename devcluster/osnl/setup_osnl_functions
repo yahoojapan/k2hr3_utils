@@ -30,7 +30,7 @@
 setup_osnl_pypi_module() {
     _alternative_tgz="${1-}"
 
-    logger -t ${TAG} -p user.debug "alternative_tgz=${_alternative_tgz}"
+    logger -t ${TAG} -p user.debug "setup_osnl_pypi_module _alternative_tgz=${_alternative_tgz}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -94,11 +94,7 @@ configure_osnl_service_manager_conf() {
     _k2hr3_osnl_conf_file="${4:?"k2hr3_osnl_conf_file should be nonzero. Check if it is defined in setup_osnl_*.ini"}"
     _k2hr3_osnl_file="${5:?"k2hr3_osnl_file should be nonzero. Check if it is defined in setup_osnl_*.ini"}"
 
-    logger -t ${TAG} -p user.debug "service_manager=${_service_manager} service_name=${_service_name} _k2hr3_osnl_runuser=${_k2hr3_osnl_runuser} k2hr3_osnl_conf_file=${_k2hr3_osnl_conf_file} k2hr3_osnl_file=${_k2hr3_osnl_file}"
-    # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
-        return 0
-    fi
+    logger -t ${TAG} -p user.debug "configure_osnl_service_manager_conf service_manager=${_service_manager} service_name=${_service_name} _k2hr3_osnl_runuser=${_k2hr3_osnl_runuser} k2hr3_osnl_conf_file=${_k2hr3_osnl_conf_file} k2hr3_osnl_file=${_k2hr3_osnl_file}"
 
     if test "${_service_manager}" = "systemd"; then
         if test -f "${SERVICE_MANAGER_DIR}/${_service_name}.service"; then
