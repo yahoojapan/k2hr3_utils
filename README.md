@@ -33,7 +33,7 @@ The following figure shows the K2HR3 system overview.
 
 ## K2HR3 Utilities
 
-We provides the following utilities for [K2HR3](https://k2hr3.antpick.ax/).
+We provide the following utilities for [K2HR3](https://k2hr3.antpick.ax/).
 
 - [devcluster/](/devcluster)  
   A tool to quickly bring up a complete K2HR3 system in a Linux(Debian9, Ubuntu18.04, Fedora29 or CentOS7) host.
