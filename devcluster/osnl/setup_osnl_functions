@@ -99,8 +99,8 @@ configure_osnl_service_manager_conf() {
     if test "${_service_manager}" = "systemd"; then
         if test -f "${SERVICE_MANAGER_DIR}/${_service_name}.service"; then
             # ExecStart=/usr/bin/k2hr3-osnl -c /etc/k2hr3/k2hr3-osnl.conf
-            logger -t ${TAG} -p user.debug "perl -pi -e \"s|^ExecStart=/usr/bin/k2hr3-osnl.*$|ExecStart=${k2hr3_osnl_file} -c ${k2hr3_osnl_conf_file}|g\" ${SERVICE_MANAGER_DIR}/${_service_name}.service"
-            perl -pi -e "s|^ExecStart=/usr/bin/k2hr3-osnl.*$|ExecStart=${k2hr3_osnl_file} -c ${k2hr3_osnl_conf_file}|g" ${SERVICE_MANAGER_DIR}/${_service_name}.service
+            logger -t ${TAG} -p user.debug "perl -pi -e \"s|^ExecStart=.*$|ExecStart=${k2hr3_osnl_file} -c ${k2hr3_osnl_conf_file}|g\" ${SERVICE_MANAGER_DIR}/${_service_name}.service"
+            perl -pi -e "s|^ExecStart=.*$|ExecStart=${k2hr3_osnl_file} -c ${k2hr3_osnl_conf_file}|g" ${SERVICE_MANAGER_DIR}/${_service_name}.service
             RESULT=$?
             if test "${RESULT}" -ne 0; then
                 logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
