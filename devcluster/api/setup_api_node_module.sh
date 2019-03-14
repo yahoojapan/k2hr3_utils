@@ -225,6 +225,10 @@ if test "${RET}" -ne 0; then
     exit 1
 fi
 
+# The final message displays the time elapsed.
+ELAPSED=$(expr $(date +%s) - ${STARTTIME})
+logger -t $(basename $0) -s -p user.info "completed in ${ELAPSED} seconds"
+
 exit 0
 
 #
