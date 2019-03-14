@@ -320,7 +320,7 @@ node_api_module_sh="./setup_api_node_module.sh"
 
 # Adds the DEBUG option if DEBUG is enabled
 if test "${DEBUG}" -eq 1; then
-    node_api_module_sh=$(echo "${node_api_module_sh} -d")
+    node_api_module_sh="${node_api_module_sh} -d"
 fi
 
 # Adds the NPM_ARCHIVE_FILE option if NPM_ARCHIVE_FILE exists
@@ -328,10 +328,10 @@ if test -n "${NPM_ARCHIVE_FILE}"; then
     if test -f "${NPM_ARCHIVE_FILE}"; then
         # Remenber to call 'basename' function
         # Because an archive file stays /home/k2hr3/k2hr3-api-0.0.1.tgz
-        node_api_module_sh=$(echo "${node_api_module_sh} -f $(basename ${NPM_ARCHIVE_FILE})")
+        node_api_module_sh="${node_api_module_sh} -f $(basename ${NPM_ARCHIVE_FILE})"
     else
         logger -t ${TAG} -p user.err "${NPM_ARCHIVE_FILE} must be a URL"
-        node_api_module_sh=$(echo "${node_api_module_sh} -f ${NPM_ARCHIVE_FILE}")
+        node_api_module_sh="${node_api_module_sh} -f ${NPM_ARCHIVE_FILE}"
     fi
 fi
 
@@ -452,7 +452,7 @@ rmsub yrn:yahoo::::keystone all
 quit
 EOF
 
-    echo "sudo -u ${k2hr3_api_runuser} k2hdkclinetool -conf ${k2hr3_api_k2hdkc_config} -ctlport ${k2hr3_api_k2hdkc_port} -run ${DATAFILE}"
+    logger -t ${TAG} -p user.debug "sudo -u ${k2hr3_api_runuser} k2hdkclinetool -conf ${k2hr3_api_k2hdkc_config} -ctlport ${k2hr3_api_k2hdkc_port} -run ${DATAFILE}"
     sudo -u ${k2hr3_api_runuser} k2hdkclinetool -conf ${k2hr3_api_k2hdkc_config} -ctlport ${k2hr3_api_k2hdkc_port} -run ${DATAFILE}
     RESULT=$?
     if test "${RESULT}" -ne 0; then

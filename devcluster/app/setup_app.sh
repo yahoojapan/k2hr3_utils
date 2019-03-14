@@ -185,7 +185,7 @@ app_node_module_sh="./setup_app_node_module.sh -t ${TAG}"
 
 # Adds the DEBUG option if DEBUG is enabled
 if test "${DEBUG}" -eq 1; then
-    app_node_module_sh=$(echo "${app_node_module_sh} -d")
+    app_node_module_sh="${app_node_module_sh} -d"
 fi
 
 # Adds the NPM_ARCHIVE_FILE option if NPM_ARCHIVE_FILE exists
@@ -193,10 +193,10 @@ if test -n "${NPM_ARCHIVE_FILE}"; then
     if test -f "${NPM_ARCHIVE_FILE}"; then
         # Remenber to call 'basename' function
         # Because an archive file stays /home/k2hr3/k2hr3-app-0.0.1.tgz
-        app_node_module_sh=$(echo "${app_node_module_sh} -f $(basename ${NPM_ARCHIVE_FILE})")
+        app_node_module_sh="${app_node_module_sh} -f $(basename ${NPM_ARCHIVE_FILE})"
     else
         logger -t ${TAG} -p user.debug "${NPM_ARCHIVE_FILE} must be a URL"
-        app_node_module_sh=$(echo "${app_node_module_sh} -f ${NPM_ARCHIVE_FILE}")
+        app_node_module_sh="${app_node_module_sh} -f ${NPM_ARCHIVE_FILE}"
     fi
 fi
 

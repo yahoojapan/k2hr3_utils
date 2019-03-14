@@ -199,10 +199,10 @@ if test "${RET}" -ne 0; then
 fi
 
 logger -t ${TAG} -p user.debug "which k2hr3-osnl"
-k2hr3_osnl_file=$(which k2hr3-osnl)
+k2hr3_osnl_file=$(which k2hr3-osnl 2>/dev/null)
 if test "${k2hr3_osnl_file}" = ""; then
-    logger -t ${TAG} -p user.err "k2hr3-osnl should found, not ${k2hr3_osnl_file}"
-    exit 1
+    logger -t ${TAG} -p user.warn "k2hr3-osnl should found, use /usr/local/bin/k2hr3-osnl instead"
+    k2hr3_osnl_file="/usr/local/bin/k2hr3-osnl"
 fi
 
 configure_osnl_service_manager_conf ${SERVICE_MANAGER} k2hr3-osnl ${k2hr3_osnl_runuser-} ${k2hr3_osnl_conf_file-} ${k2hr3_osnl_file-}
