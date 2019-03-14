@@ -112,13 +112,11 @@ logger -t ${TAG} -p user.info "2. Adds a new package repository"
 
 # Set package repository(optional)
 #
-if test -z "${DRYRUN-}"; then
-    setup_package_repository ${corp_url-}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "setup_package_repository should return zero, not ${RET}"
-        exit 1
-    fi
+setup_package_repository ${corp_url-}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "setup_package_repository should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -129,13 +127,11 @@ logger -t ${TAG} -p user.info "3. Installs system packages"
 
 # Install system packages
 #
-if test -z "${DRYRUN-}"; then
-    setup_install_os_packages "${package_install_pkgs-}"
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
-        exit 1
-    fi
+setup_install_os_packages "${package_install_pkgs-}"
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -146,22 +142,20 @@ logger -t ${TAG} -p user.info "4. Installs the k2hr3-osnl pypi package"
 
 # Install pypi packages
 #
-if test -z "${DRYRUN-}"; then
-    if ! test -r "${SRCDIR}/setup_${COMPONENT}_functions"; then
-        logger -t ${TAG} -p user.err "${SRCDIR}/setup_${COMPONENT}_functions should exist"
-        exit 1
-    fi
-    . ${SRCDIR}/setup_${COMPONENT}_functions
+if ! test -r "${SRCDIR}/setup_${COMPONENT}_functions"; then
+    logger -t ${TAG} -p user.err "${SRCDIR}/setup_${COMPONENT}_functions should exist"
+    exit 1
+fi
+. ${SRCDIR}/setup_${COMPONENT}_functions
 
-    # Adds the PYPI_ARCHIVE_FILE option if PYPI_ARCHIVE_FILE defined
-    # Note: PYPI_ARCHIVE_FILE might be a URL.
-    setup_osnl_pypi_module ${PYPI_ARCHIVE_FILE}
+# Adds the PYPI_ARCHIVE_FILE option if PYPI_ARCHIVE_FILE defined
+# Note: PYPI_ARCHIVE_FILE might be a URL.
+setup_osnl_pypi_module ${PYPI_ARCHIVE_FILE}
 
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "setup_osnl_pypi_module should return zero, not ${RET}"
-        exit 1
-    fi
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "setup_osnl_pypi_module should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -172,26 +166,24 @@ logger -t ${TAG} -p user.info "5. Configures the k2hr3-onsl.conf and Installs it
 
 # Configures k2hr3-onsl.conf
 #
-if test -z "${DRYRUN-}"; then
-    for varname in api_url transport_url; do
-        logger -t ${TAG} -p user.debug "configure_conf_file ${varname}"
-        configure_conf_file ${SRCDIR}/k2hr3-osnl.conf ${varname} k2hr3_osnl_
-        RET=$?
-        if test "${RET}" -ne 0; then
-            logger -t ${TAG} -p user.err "setup_osnl_conf ${varname} should return zero, not ${RET}"
-            exit 1
-        fi
-    done
-
-    #
-    # Installs k2hr3-onsl.conf
-    #
-    install_conf ${SRCDIR}/k2hr3-osnl.conf ${k2hr3_osnl_conf_file}
+for varname in api_url transport_url; do
+    logger -t ${TAG} -p user.debug "configure_conf_file ${varname}"
+    configure_conf_file ${SRCDIR}/k2hr3-osnl.conf ${varname} k2hr3_osnl_
     RET=$?
     if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "install_conf k2hr3_osnl.conf ${k2hr3_osnl_conf_file} should return zero, not ${RET}"
+        logger -t ${TAG} -p user.err "setup_osnl_conf ${varname} should return zero, not ${RET}"
         exit 1
     fi
+done
+
+#
+# Installs k2hr3-onsl.conf
+#
+install_conf ${SRCDIR}/k2hr3-osnl.conf ${k2hr3_osnl_conf_file}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "install_conf k2hr3_osnl.conf ${k2hr3_osnl_conf_file} should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -199,27 +191,25 @@ fi
 # We recommend the k2hr3_osnl Python process works as a service by systemd.
 logger -t ${TAG} -p user.info "6. Installs a systemd configuration for k2hr3_osnl"
 
-if test -z "${DRYRUN-}"; then
-    enable_scl_python_path
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "enable_scl_python_path should return zero, not ${RET}"
-        exit 1
-    fi
+enable_scl_python_path
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "enable_scl_python_path should return zero, not ${RET}"
+    exit 1
+fi
 
-    logger -t ${TAG} -p user.debug "which k2hr3-osnl"
-    k2hr3_osnl_file=$(which k2hr3-osnl)
-    if test "${k2hr3_osnl_file}" = ""; then
-        logger -t ${TAG} -p user.err "k2hr3-osnl should found, not ${k2hr3_osnl_file}"
-        exit 1
-    fi
+logger -t ${TAG} -p user.debug "which k2hr3-osnl"
+k2hr3_osnl_file=$(which k2hr3-osnl)
+if test "${k2hr3_osnl_file}" = ""; then
+    logger -t ${TAG} -p user.err "k2hr3-osnl should found, not ${k2hr3_osnl_file}"
+    exit 1
+fi
 
-    configure_osnl_service_manager_conf ${SERVICE_MANAGER} k2hr3-osnl ${k2hr3_osnl_runuser-} ${k2hr3_osnl_conf_file-} ${k2hr3_osnl_file-}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "configure_osnl_service_manager_conf should return zero, not ${RET}"
-        exit 1
-    fi
+configure_osnl_service_manager_conf ${SERVICE_MANAGER} k2hr3-osnl ${k2hr3_osnl_runuser-} ${k2hr3_osnl_conf_file-} ${k2hr3_osnl_file-}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "configure_osnl_service_manager_conf should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -227,13 +217,11 @@ fi
 # systemd controls k2hr3_osnl Python process.
 logger -t ${TAG} -p user.info "7. Registers and enables k2hr3_osnl to systemd"
 
-if test -z "${DRYRUN-}"; then
-    install_service_manager_conf ${SERVICE_MANAGER} k2hr3-osnl
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
-        exit 1
-    fi
+install_service_manager_conf ${SERVICE_MANAGER} k2hr3-osnl
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
+    exit 1
 fi
 
 ########

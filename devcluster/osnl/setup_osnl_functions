@@ -4,9 +4,9 @@
 #
 # Copyright 2018 Yahoo! Japan Corporation.
 #
-# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers 
+# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers
 # common management information for the cloud.
-# K2HR3 can dynamically manage information as "who", "what", "operate".
+n# K2HR3 can dynamically manage information as "who", "what", "operate".
 # These are stored as roles, resources, policies in K2hdkc, and the
 # client system can dynamically read and modify these information.
 #
@@ -14,7 +14,7 @@
 # the licenses file that was distributed with this source code.
 #
 # AUTHOR:   Hirotaka Wakabayashi
-# CREATE:   Mon Jul 9 2018 
+# CREATE:   Mon Jul 9 2018
 # REVISION:
 #
 
@@ -29,6 +29,12 @@
 #
 setup_osnl_pypi_module() {
     _alternative_tgz="${1-}"
+
+    logger -t ${TAG} -p user.debug "alternative_tgz=${_alternative_tgz}"
+    # A dry run returns 0
+    if test -n "${DRYRUN-}"; then
+        return 0
+    fi
 
     if test -n "${_alternative_tgz}"; then
         if test "${OS_NAME}" != "centos"; then
@@ -87,6 +93,12 @@ configure_osnl_service_manager_conf() {
     _k2hr3_osnl_runuser="${3:?"k2hr3_osnl_runner should be nonzero. Check if it is defined in setup_osnl_*.ini"}"
     _k2hr3_osnl_conf_file="${4:?"k2hr3_osnl_conf_file should be nonzero. Check if it is defined in setup_osnl_*.ini"}"
     _k2hr3_osnl_file="${5:?"k2hr3_osnl_file should be nonzero. Check if it is defined in setup_osnl_*.ini"}"
+
+    logger -t ${TAG} -p user.debug "service_manager=${_service_manager} service_name=${_service_name} _k2hr3_osnl_runuser=${_k2hr3_osnl_runuser} k2hr3_osnl_conf_file=${_k2hr3_osnl_conf_file} k2hr3_osnl_file=${_k2hr3_osnl_file}"
+    # A dry run returns 0
+    if test -n "${DRYRUN-}"; then
+        return 0
+    fi
 
     if test "${_service_manager}" = "systemd"; then
         if test -f "${SERVICE_MANAGER_DIR}/${_service_name}.service"; then

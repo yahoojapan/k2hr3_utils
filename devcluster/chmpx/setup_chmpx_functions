@@ -4,7 +4,7 @@
 #
 # Copyright 2018 Yahoo! Japan Corporation.
 #
-# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers 
+# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers
 # common management information for the cloud.
 # K2HR3 can dynamically manage information as "who", "what", "operate".
 # These are stored as roles, resources, policies in K2hdkc, and the
@@ -14,7 +14,7 @@
 # the licenses file that was distributed with this source code.
 #
 # AUTHOR:   Hirotaka Wakabayashi
-# CREATE:   Mon Jul 9 2018 
+# CREATE:   Mon Jul 9 2018
 # REVISION:
 #
 
@@ -33,6 +33,12 @@ configure_chmpx_server_ini() {
     _chmpx_server_ini_file=${1:?"chmpx_server_ini_file must be nonzero"}
     _chmpx_server_name=${2:?"chmpx_server_name must be nonzero"}
     _k2hdkc_data_dir=${3:?"k2hdkc_data_dir must be nonzero"}
+
+    logger -t ${TAG} -p user.debug "_chmpx_server_ini_file=${_chmpx_server_ini_file} _chmpx_server_name=${_chmpx_server_name} _k2hdkc_data_dir=${_k2hdkc_data_dir}"
+    # A dry run returns 0
+    if test -n "${DRYRUN-}"; then
+        return 0
+    fi
 
     if test -f "${_chmpx_server_ini_file}" -a -n "${_chmpx_server_name}" -a -n "${_k2hdkc_data_dir}"; then
         logger -t ${TAG} -p user.debug "perl -pi -e \"BEGIN{undef $/;} s|\[SVRNODE\].*\nPORT|[SVRNODE]\nNAME                           = ${_chmpx_server_name}\nPORT|smg\" ${_chmpx_server_ini_file}"
@@ -72,6 +78,12 @@ configure_chmpx_slave_ini() {
     _chmpx_slave_ini_file=${1:?"chmpx_slave_ini_file must be nonzero"}
     _chmpx_server_name=${2:?"chmpx_server_name must be nonzero"}
 
+    logger -t ${TAG} -p user.debug "_chmpx_slave_ini_file=${_chmpx_slave_ini_file} _chmpx_server_name=${_chmpx_server_name}"
+    # A dry run returns 0
+    if test -n "${DRYRUN-}"; then
+        return 0
+    fi
+
     if test -f "${_chmpx_slave_ini_file}" -a -n "${_chmpx_server_name}"; then
         logger -t ${TAG} -p user.debug "perl -pi -e \"BEGIN{undef $/;} s|\[SVRNODE\].*\\nPORT|[SVRNODE]\\nNAME                = ${_chmpx_server_name}\\nPORT|smg\" ${_chmpx_slave_ini_file}\n"
         perl -pi -e "BEGIN{undef $/;} s|\[SVRNODE\].*\nPORT|[SVRNODE]\nNAME                = ${_chmpx_server_name}\nPORT|smg" ${_chmpx_slave_ini_file}
@@ -101,6 +113,12 @@ configure_chmpx_slave_ini() {
 install_chmpx_ini() {
     _src_chmpx_conf_file=${1:?"src_chmpx_conf_file must be nonzero"}
     _dst_chmpx_conf_file=${2:?"dst_chmpx_conf_file must be nonzero"}
+
+    logger -t ${TAG} -p user.debug "_src_chmpx_conf_file=${_src_chmpx_conf_file} _dst_chmpx_conf_file=${_dst_chmpx_conf_file}"
+    # A dry run returns 0
+    if test -n "${DRYRUN-}"; then
+        return 0
+    fi
 
     if test -n "${_src_chmpx_conf_file}" -a -n "${_dst_chmpx_conf_file}"; then
         logger -t ${TAG} -p user.debug "sudo install -C -m 0644 -o root -v ${_src_chmpx_conf_file} ${_dst_chmpx_conf_file}"
@@ -142,6 +160,12 @@ configure_chmpx_service_manager_file() {
     _chmpx_conf_file=${4:?"chmpx_conf_file must be nonzero"}
     _chmpx_msg_max=${5:?"chmpx_msg_max must be nonzero"}
     _is_k2hdkc=${6:-}
+
+    logger -t ${TAG} -p user.debug "_service_manager=${_service_manager} _service_manager_file=${_service_manager_file} _k2hr3_dkc_runuser=${_k2hr3_dkc_runuser} _chmpx_conf_file=${_chmpx_conf_file} _chmpx_msg_max=${_chmpx_msg_max} _is_k2hdkc=${_is_k2hdkc}"
+    # A dry run returns 0
+    if test -n "${DRYRUN-}"; then
+        return 0
+    fi
 
     if test "${_service_manager}" = "systemd"; then
         if test -f "${_service_manager_file}"; then
@@ -219,6 +243,12 @@ configure_chmpx_service_manager_file() {
 make_k2hdkc_data_dir() {
     _runuser=${1:?"runuser must be nonzero"}
     _k2hdkc_data_dir=${2:?"k2hdkc_data_dir must be nonzero"}
+
+    logger -t ${TAG} -p user.debug "_runuser=${_runuser} _k2hdkc_data_dir=${_k2hdkc_data_dir}"
+    # A dry run returns 0
+    if test -n "${DRYRUN-}"; then
+        return 0
+    fi
 
     if test -n "${_k2hdkc_data_dir}" -a -n ${_runuser}; then
         logger -t ${TAG} -p user.debug "id ${_runuser}"

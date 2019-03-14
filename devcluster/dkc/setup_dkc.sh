@@ -109,15 +109,13 @@ fi
 . ./chmpx/setup_chmpx_functions
 
 # Makes the k2hrkc data directory
-if test -z "${DRYRUN-}"; then
-    runuser_varname=k2hr3_${COMPONENT}_runuser
-    runuser=$(eval echo "\${$runuser_varname}")
-    make_k2hdkc_data_dir ${runuser} ${k2hdkc_data_dir}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "make_k2hdkc_data_dir should return zero, not ${RET}"
-        exit 1
-    fi
+runuser_varname=k2hr3_${COMPONENT}_runuser
+runuser=$(eval echo "\${$runuser_varname}")
+make_k2hdkc_data_dir ${runuser} ${k2hdkc_data_dir}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "make_k2hdkc_data_dir should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -127,14 +125,12 @@ fi
 logger -t ${TAG} -p user.info "3. Ensures that the k2hdkc configuration directory exists"
 
 # Makes the k2hdkc configuration directory
-if test -z "${DRYRUN-}"; then
-    k2hdkc_conf_dir=$(dirname ${chmpx_conf_file})
-    make_k2hdkc_conf_dir ${k2hdkc_conf_dir}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "make_k2hdkc_conf_dir should return zero, not ${RET}"
-        exit 1
-    fi
+k2hdkc_conf_dir=$(dirname ${chmpx_conf_file})
+make_k2hdkc_conf_dir ${k2hdkc_conf_dir}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "make_k2hdkc_conf_dir should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -144,13 +140,11 @@ fi
 logger -t ${TAG} -p user.info "4. Adds a new package repository"
 
 # Enables the packagecloud.io repo
-if test -z "${DRYRUN-}"; then
-    enable_packagecloud_io_repository ${package_script_base_url}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "enable_packagecloud_io_repository should return zero, not ${RET}"
-        exit 1
-    fi
+enable_packagecloud_io_repository ${package_script_base_url}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "enable_packagecloud_io_repository should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -161,14 +155,12 @@ logger -t ${TAG} -p user.info "5. Installs OS dependent packages"
 
 # Some distros pre-install dkc required packages. In this case, users define
 # empty ${package_install_pkg} value in their initial configuration file.
-if test -z "${DRYRUN-}"; then
-    if test -n "${package_install_pkgs-}"; then
-        setup_install_os_packages "${package_install_pkgs-}"
-        RET=$?
-        if test "${RET}" -ne 0; then
-            logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
-            exit 1
-        fi
+if test -n "${package_install_pkgs-}"; then
+    setup_install_os_packages "${package_install_pkgs-}"
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
+        exit 1
     fi
 fi
 
@@ -179,13 +171,11 @@ fi
 logger -t ${TAG} -p user.info "6. Configures the default chmpx configuration"
 
 # Configures the chmpx default configuration file in INI file format
-if test -z "${DRYRUN-}"; then
-    configure_chmpx_server_ini ${SRCDIR}/../chmpx/server.ini ${chmpx_server_name} ${k2hdkc_data_dir}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "configure_chmpx_server_ini should return zero, not ${RET}"
-        exit 1
-    fi
+configure_chmpx_server_ini ${SRCDIR}/../chmpx/server.ini ${chmpx_server_name} ${k2hdkc_data_dir}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "configure_chmpx_server_ini should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -195,13 +185,11 @@ fi
 logger -t ${TAG} -p user.info "7. Installs the configured chmpx config file"
 
 # Installs the configured chmpx config file in INI format to ${chmpx_conf_file}
-if test -z "${DRYRUN-}"; then
-    install_chmpx_ini ${SRCDIR}/../chmpx/server.ini ${chmpx_conf_file}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "install_chmpx_ini should return zero, not ${RET}"
-        exit 1
-    fi
+install_chmpx_ini ${SRCDIR}/../chmpx/server.ini ${chmpx_conf_file}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "install_chmpx_ini should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -210,21 +198,19 @@ fi
 #
 logger -t ${TAG} -p user.info "8. Configures the chmpx's service manager default configuration"
 
-if test -z "${DRYRUN-}"; then
-    # Determines the service management file which file format depends on a service manager of the target OS
-    if test "${SERVICE_MANAGER}" = "systemd"; then
-        service_manager_file=${SRCDIR}/../service_manager/chmpx.service
-    else
-        logger -t ${TAG} -p user.err "SERVICE_MANAGER must be either systemd, not ${SERVICE_MANAGER}"
-        exit 1
-    fi
-    # Configures the chmpx's service manager default configuration
-    configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
-        exit 1
-    fi
+# Determines the service management file which file format depends on a service manager of the target OS
+if test "${SERVICE_MANAGER}" = "systemd"; then
+    service_manager_file=${SRCDIR}/../service_manager/chmpx.service
+else
+    logger -t ${TAG} -p user.err "SERVICE_MANAGER must be either systemd, not ${SERVICE_MANAGER}"
+    exit 1
+fi
+# Configures the chmpx's service manager default configuration
+configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -233,13 +219,11 @@ fi
 #
 logger -t ${TAG} -p user.info "9. Installs the chmpx service manager configuration and enables it"
 
-if test -z "${DRYRUN-}"; then
-    install_service_manager_conf ${SERVICE_MANAGER} chmpx
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
-        exit 1
-    fi
+install_service_manager_conf ${SERVICE_MANAGER} chmpx
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -248,21 +232,19 @@ fi
 #
 logger -t ${TAG} -p user.info "10. Configures the k2hdkc's service manager default configuration"
 
-if test -z "${DRYRUN-}"; then
-    # Determines the service management file which file format depends on a service manager of the target OS
-    if test "${SERVICE_MANAGER}" = "systemd"; then
-        service_manager_file=${SRCDIR}/../service_manager/k2hdkc.service
-    else
-        logger -t ${TAG} -p user.err "SERVICE_MANAGER must be either systemd, not ${SERVICE_MANAGER}"
-        exit 1
-    fi
-    # Configures the k2hdkc's service manager default configuration
-    configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max} 1
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
-        exit 1
-    fi
+# Determines the service management file which file format depends on a service manager of the target OS
+if test "${SERVICE_MANAGER}" = "systemd"; then
+    service_manager_file=${SRCDIR}/../service_manager/k2hdkc.service
+else
+    logger -t ${TAG} -p user.err "SERVICE_MANAGER must be either systemd, not ${SERVICE_MANAGER}"
+    exit 1
+fi
+# Configures the k2hdkc's service manager default configuration
+configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max} 1
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -271,13 +253,11 @@ fi
 #
 logger -t ${TAG} -p user.info "11. Installs the k2hdkc service manager configuration and enables it"
 
-if test -z "${DRYRUN-}"; then
-    install_service_manager_conf ${SERVICE_MANAGER} k2hdkc
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
-        exit 1
-    fi
+install_service_manager_conf ${SERVICE_MANAGER} k2hdkc
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
