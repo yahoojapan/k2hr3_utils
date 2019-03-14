@@ -34,11 +34,7 @@ configure_chmpx_server_ini() {
     _chmpx_server_name=${2:?"chmpx_server_name must be nonzero"}
     _k2hdkc_data_dir=${3:?"k2hdkc_data_dir must be nonzero"}
 
-    logger -t ${TAG} -p user.debug "_chmpx_server_ini_file=${_chmpx_server_ini_file} _chmpx_server_name=${_chmpx_server_name} _k2hdkc_data_dir=${_k2hdkc_data_dir}"
-    # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
-        return 0
-    fi
+    logger -t ${TAG} -p user.debug "configure_chmpx_server_ini _chmpx_server_ini_file=${_chmpx_server_ini_file} _chmpx_server_name=${_chmpx_server_name} _k2hdkc_data_dir=${_k2hdkc_data_dir}"
 
     if test -f "${_chmpx_server_ini_file}" -a -n "${_chmpx_server_name}" -a -n "${_k2hdkc_data_dir}"; then
         logger -t ${TAG} -p user.debug "perl -pi -e \"BEGIN{undef $/;} s|\[SVRNODE\].*\nPORT|[SVRNODE]\nNAME                           = ${_chmpx_server_name}\nPORT|smg\" ${_chmpx_server_ini_file}"
@@ -78,11 +74,7 @@ configure_chmpx_slave_ini() {
     _chmpx_slave_ini_file=${1:?"chmpx_slave_ini_file must be nonzero"}
     _chmpx_server_name=${2:?"chmpx_server_name must be nonzero"}
 
-    logger -t ${TAG} -p user.debug "_chmpx_slave_ini_file=${_chmpx_slave_ini_file} _chmpx_server_name=${_chmpx_server_name}"
-    # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
-        return 0
-    fi
+    logger -t ${TAG} -p user.debug "configure_chmpx_slave_ini _chmpx_slave_ini_file=${_chmpx_slave_ini_file} _chmpx_server_name=${_chmpx_server_name}"
 
     if test -f "${_chmpx_slave_ini_file}" -a -n "${_chmpx_server_name}"; then
         logger -t ${TAG} -p user.debug "perl -pi -e \"BEGIN{undef $/;} s|\[SVRNODE\].*\\nPORT|[SVRNODE]\\nNAME                = ${_chmpx_server_name}\\nPORT|smg\" ${_chmpx_slave_ini_file}\n"
@@ -114,7 +106,7 @@ install_chmpx_ini() {
     _src_chmpx_conf_file=${1:?"src_chmpx_conf_file must be nonzero"}
     _dst_chmpx_conf_file=${2:?"dst_chmpx_conf_file must be nonzero"}
 
-    logger -t ${TAG} -p user.debug "_src_chmpx_conf_file=${_src_chmpx_conf_file} _dst_chmpx_conf_file=${_dst_chmpx_conf_file}"
+    logger -t ${TAG} -p user.debug "install_chmpx_ini _src_chmpx_conf_file=${_src_chmpx_conf_file} _dst_chmpx_conf_file=${_dst_chmpx_conf_file}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
@@ -163,11 +155,7 @@ configure_chmpx_service_manager_file() {
     _is_k2hdkc=${6:-}
     _loglevel=${7:-err}
 
-    logger -t ${TAG} -p user.debug "_service_manager=${_service_manager} _service_manager_file=${_service_manager_file} _k2hr3_dkc_runuser=${_k2hr3_dkc_runuser} _chmpx_conf_file=${_chmpx_conf_file} _chmpx_msg_max=${_chmpx_msg_max} _is_k2hdkc=${_is_k2hdkc} _loglevel=${_loglevel}"
-    # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
-        return 0
-    fi
+    logger -t ${TAG} -p user.debug "configure_chmpx_service_manager_file _service_manager=${_service_manager} _service_manager_file=${_service_manager_file} _k2hr3_dkc_runuser=${_k2hr3_dkc_runuser} _chmpx_conf_file=${_chmpx_conf_file} _chmpx_msg_max=${_chmpx_msg_max} _is_k2hdkc=${_is_k2hdkc} _loglevel=${_loglevel}"
 
     if test "${_service_manager}" = "systemd"; then
         if test -f "${_service_manager_file}"; then
@@ -201,11 +189,11 @@ configure_chmpx_service_manager_file() {
 
             # Replaces "/etc/k2hdkc/server.ini" with a user defined value
             if test -n "${_chmpx_conf_file}"; then
-                if test -n "${_is_k2hdkc}"; then
+                if test "${_is_k2hdkc}" -eq 1; then
                     logger -t ${TAG} -p user.debug "perl -pi -e \"s|ExecStart=.*$|ExecStart=/usr/bin/k2hdkc -conf ${_chmpx_conf_file} -d ${_loglevel}|g\" ${_service_manager_file}"
                     perl -pi -e "s|ExecStart=.*$|ExecStart=/usr/bin/k2hdkc -conf ${_chmpx_conf_file} -d ${_loglevel}|g" ${_service_manager_file}
                 else
-                    logger -t ${TAG} -p user.debug "perl -pi -e \"s|ExecStart=.*$|ExecStart=/usr/bin/k2hdkc -conf ${_chmpx_conf_file} -d ${_loglevel}|g\" ${_service_manager_file}"
+                    logger -t ${TAG} -p user.debug "perl -pi -e \"s|ExecStart=.*$|ExecStart=/usr/bin/chmpx -conf ${_chmpx_conf_file} -d ${_loglevel}|g\" ${_service_manager_file}"
                     perl -pi -e "s|ExecStart=.*$|ExecStart=/usr/bin/chmpx -conf ${_chmpx_conf_file} -d ${_loglevel}|g" ${_service_manager_file}
                 fi
                 RESULT=$?
@@ -245,7 +233,7 @@ make_k2hdkc_data_dir() {
     _runuser=${1:?"runuser must be nonzero"}
     _k2hdkc_data_dir=${2:?"k2hdkc_data_dir must be nonzero"}
 
-    logger -t ${TAG} -p user.debug "_runuser=${_runuser} _k2hdkc_data_dir=${_k2hdkc_data_dir}"
+    logger -t ${TAG} -p user.debug "make_k2hdkc_data_dir _runuser=${_runuser} _k2hdkc_data_dir=${_k2hdkc_data_dir}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
