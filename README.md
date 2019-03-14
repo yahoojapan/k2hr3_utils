@@ -1,5 +1,5 @@
 K2HR3 Utilities(k2hr3-utils)
-----------------------------
+============================
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/yahoojapan/k2hr3_utils/blob/master/COPYING)
 [![GitHub forks](https://img.shields.io/github/forks/yahoojapan/k2hr3_utils.svg)](https://github.com/yahoojapan/k2hr3_utils/network)
 [![GitHub stars](https://img.shields.io/github/stars/yahoojapan/k2hr3_utils.svg)](https://github.com/yahoojapan/k2hr3_utils/stargazers)
@@ -12,61 +12,40 @@ This repository contains utilities for [K2HR3](https://k2hr3.antpick.ax/), which
 
 ![K2HR3 system](https://k2hr3.antpick.ax/images/top_k2hr3.png)
 
-### K2HR3 system overview
-**K2HR3** (**K2H**dkc based **R**esource and **R**oles and policy **R**ules) is one of extended **RBAC** (**R**ole **B**ased **A**ccess **C**ontrol) system.  
-K2HR3 works as RBAC in cooperation with **OpenStack** which is one of **IaaS**(Infrastructure as a Service), and also provides useful functions for using RBAC.  
+[K2HR3](https://k2hr3.antpick.ax/) is a RBAC (Role Based Access Control) system. [K2HR3](https://k2hr3.antpick.ax/) is designed to primarily work in a private cloud environment, which is dedicated to deliver services to a single organization. [K2HR3](https://k2hr3.antpick.ax/)-0.9.0 works with [OpenStack](https://www.openstack.org/).
 
-K2HR3 is a system that defines and controls **HOW**(policy Rule), **WHO**(Role), **WHAT**(Resource), as RBAC.  
-Users of K2HR3 can define **Role**(WHO) groups to access freely defined **Resource**(WHAT) and control access by **policy Rule**(HOW).  
-By defining the information and assets required for any system as a **Resource**(WHAT), K2HR3 system can give the opportunity to provide access control in every situation.  
+The primary feature is called **+SERVICE** that enables service owners in cloud environments to control their resources. [K2HR3](https://k2hr3.antpick.ax/) as a RBAC system defines the three primary elements: role, rule(or policy rule) and resource. Every host is defined as a member of roles in [K2HR3](https://k2hr3.antpick.ax/) and a host can access resources in a way followed by rules.
 
-K2HR3 provides **+SERVICE** feature, it **strongly supports** user system, function and information linkage.
+* Role  
+  Defines a collection of a host(or an IP address) that access assets in a service.
+* Rule(or Policy Rule)  
+  Defines a group of actions(read and write) over assets in a service and a permission(allow or deny) to the group of actions.
+* Resource  
+  Defines a value(string or object) as an asset in a service. A value can contains data in any form: text or binary. A text data can be a key, a token or an URL.
 
 ![K2HR3 system overview](https://k2hr3.antpick.ax/images/overview_abstract.png)
 
-K2HR3 is built [k2hdkc](https://github.com/yahoojapan/k2hdkc), [k2hash](https://github.com/yahoojapan/k2hash), [chmpx](https://github.com/yahoojapan/chmpx) and [k2hash transaction plugin](https://github.com/yahoojapan/k2htp_dtor) components by [AntPickax](https://antpick.ax/).
+### K2HR3 System Overview
 
-### K2HR3 Utilities
-**K2HR3 Utilities** is a utility for the quick setup K2HR3 system.  
-This will easily set up all the subcomponents of the K2HR3 system([K2HR3 Web Application](https://k2hr3.antpick.ax/usage_app.html) and Web Server, [K2HR3 REST API](https://k2hr3.antpick.ax/api.html), K2HR3 Data Server([k2hdkc](https://github.com/yahoojapan/k2hdkc)), [K2HR3 OpenStack Notification Listener](https://k2hr3.antpick.ax/detail_osnl.html)).
-You can test the K2HR3 system in this environment.
-**Before using K2HR3 Utilities**, OpenStack must be set up in the your environment.
+The following figure shows the K2HR3 system overview.
 
-**How to use K2HR3 Utilities** is explained in [K2HR3 Setup](https://k2hr3.antpick.ax/setup.html).
+![K2HR3 Setup overview](https://k2hr3.antpick.ax/images/setup_overview.png)
+
+## K2HR3 Utilities
+
+We provides the following utilities for [K2HR3](https://k2hr3.antpick.ax/).
+
 - [devcluster/](/devcluster)  
-  A tool to create a `K2HR3` system in localhost
+  A tool to quickly bring up a complete K2HR3 system in a Linux(Debian9, Ubuntu18.04, Fedora29 or CentOS7) host.
 
-### Documents
-[K2HR3 Document](https://k2hr3.antpick.ax/indexja.html)  
-[K2HR3 Web Application Usage](https://k2hr3.antpick.ax/usage_app.html)  
-[K2HR3 REST API Usage](https://k2hr3.antpick.ax/api.html)  
-[K2HR3 OpenStack Notification Listener Usage](https://k2hr3.antpick.ax/detail_osnl.html)  
-[K2HR3 Watcher Usage](https://k2hr3.antpick.ax/tools.html)  
-[K2HR3 Utilities for Setup](https://k2hr3.antpick.ax/setup.html)  
+## Documents
 
-[About k2hdkc](https://k2hdkc.antpick.ax/)  
-[About k2hash](https://k2hash.antpick.ax/)  
-[About chmpx](https://chmpx.antpick.ax/)  
-[About k2hash transaction plugin](https://k2htpdtor.antpick.ax/)  
+https://k2hr3.antpick.ax/
 
-[About AntPickax](https://antpick.ax/)  
+## License
 
-### Repositories
-[K2HR3 main repository](https://github.com/yahoojapan/k2hr3)  
-[K2HR3 Web Application repository](https://github.com/yahoojapan/k2hr3_app)  
-[K2HR3 REST API repository](https://github.com/yahoojapan/k2hr3_api)  
-[K2HR3 OpenStack Notification Listener](https://github.com/yahoojapan/k2hr3_osnl)  
-[K2HR3 Utilities](https://github.com/yahoojapan/k2hr3_utils)  
+MIT License
 
-[k2hdkc](https://github.com/yahoojapan/k2hdkc)  
-[k2hash](https://github.com/yahoojapan/k2hash)  
-[chmpx](https://github.com/yahoojapan/chmpx)  
-[k2hash transaction plugin](https://github.com/yahoojapan/k2htp_dtor)  
+## AntPickax
 
-### License
-This software is released under the MIT License, see the license file.
-
-### AntPickax
-K2HR3 is one of [AntPickax](https://antpick.ax/) products.
-
-Copyright(C) 2018 Yahoo Japan Corporation.
+[AntPickax](https://antpick.ax/) is an open source team in [Yahoo Japan Corporation](https://about.yahoo.co.jp/info/en/company/).
