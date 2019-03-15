@@ -27,7 +27,7 @@ The primary feature is called **+SERVICE** that enables service owners in cloud 
 
 ### K2HR3 System Overview
 
-The following figure shows the K2HR3 system overview.
+The following figure shows the [K2HR3](https://k2hr3.antpick.ax/) system overview.
 
 ![K2HR3 Setup overview](https://k2hr3.antpick.ax/images/setup_overview.png)
 
