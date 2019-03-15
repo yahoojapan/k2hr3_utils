@@ -1,3 +1,10 @@
+k2hr3-utils (0.9.1) unstable; urgency=low
+
+  * [devcluster] Added a command line option, -r, which devcluster runs in dry
+    run mode.
+
+ -- Hirotaka Wakabayashi <hiwakaba@yahoo-corp.jp>  Fri, 15 Mar 2019 03:12:25 +0000
+
 k2hr3-utils (0.9.0) unstable; urgency=low
 
   * First release on Git.

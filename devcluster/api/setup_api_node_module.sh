@@ -44,7 +44,7 @@ DEBUG=0
 SRCDIR=$(cd $(dirname "$0") && pwd)
 SERVICE_MANAGER_DIR=${SRCDIR}/../service_manager
 STARTTIME=$(date +%s)
-VERSION=0.0.1
+VERSION=0.9.1
 NPM_ARCHIVE_FILE=
 
 # Parses cli args
@@ -224,6 +224,10 @@ if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "install_npm_local_json should return zero, not ${RET}"
     exit 1
 fi
+
+# The final message displays the time elapsed.
+ELAPSED=$(expr $(date +%s) - ${STARTTIME})
+logger -t $(basename $0) -s -p user.info "completed in ${ELAPSED} seconds"
 
 exit 0
 

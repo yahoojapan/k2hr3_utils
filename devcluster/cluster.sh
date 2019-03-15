@@ -4,7 +4,7 @@
 #
 # Copyright 2018 Yahoo! Japan Corporation.
 #
-# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers 
+# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers
 # common management information for the cloud.
 # K2HR3 can dynamically manage information as "who", "what", "operate".
 # These are stored as roles, resources, policies in K2hdkc, and the
@@ -14,7 +14,7 @@
 # the licenses file that was distributed with this source code.
 #
 # AUTHOR:   Hirotaka Wakabayashi
-# CREATE:   Mon Jul 9 2018 
+# CREATE:   Mon Jul 9 2018
 # REVISION:
 #
 
@@ -44,22 +44,29 @@ export LC_ALL
 # Sets PATH. setup_*.sh uses useradd command
 PATH=${PATH}:/usr/sbin:/sbin
 
+# an unset parameter expansion will fail
+set -u
+
+# umask 022 is enough
+umask 022
+
 # Defines environments
 API_NPM_ARCHIVE_FILE=
 APP_NPM_ARCHIVE_FILE=
 OSNL_PYPI_ARCHIVE_FILE=
 IDENTITY_ENDPOINT=
 TRANSPORT_URL=
-VERSION=0.0.1
+VERSION=0.9.1
 CLUSTER_STARTTIME=$(date +%s)
 
 usage_cluster() {
-    echo "usage : $(basename $0) [-d] [-f file] [-o file] [-p file] [-h] [-t url] [-v]"
-    echo "    -d        print debug messages"
+    echo "usage : $(basename $0) [-d] [-h] [-i file] [-o file] [-p file] [-r] [-s openstack_url] [-t message_queue_url] [-v]"
+    echo "    -d        run in debug mode"
+    echo "    -h        display this message and exit"
     echo "    -i file   k2hr3-api package file path(or URL)"
     echo "    -o file   k2hr3-osnl package file path(or URL)"
     echo "    -p file   k2hr3-app package file path(or URL)"
-    echo "    -h        display this message and exit"
+    echo "    -r        run in dry run mode"
     echo "    -s url    OpenStack Identity Service Endpoint(Default: 'http://127.0.0.1/identity')"
     echo "    -t url    TransportURL(Default: 'rabbit://guest:guest@127.0.0.1:5672/')"
     echo "    -v        display version and exit"
@@ -75,6 +82,7 @@ while true; do
         -i) shift; API_NPM_ARCHIVE_FILE="${1-}";;
         -o) shift; OSNL_PYPI_ARCHIVE_FILE="${1-}";;
         -p) shift; APP_NPM_ARCHIVE_FILE="${1-}";;
+        -r) DRYRUN=1;;
         -s) shift; IDENTITY_ENDPOINT="${1-}";;
         -t) shift; TRANSPORT_URL="${1-}";;
         -v) version;;
@@ -89,8 +97,11 @@ logger -t $(basename $0) -s -p user.info "$(basename $0) ${VERSION}"
 for component in dkc api app osnl; do
     SCRIPT=${component}/setup_${component}.sh
     if test -f "${SCRIPT}"; then
-        if test -n "${DEBUG}"; then
+        if test -n "${DEBUG-}"; then
             SCRIPT="${SCRIPT} -d"
+        fi
+        if test -n "${DRYRUN-}"; then
+            SCRIPT="${SCRIPT} -r"
         fi
         case "${component}" in
             dkc)
@@ -98,16 +109,43 @@ for component in dkc api app osnl; do
                 sh ${SCRIPT}
             ;;
             api)
-                logger -t $(basename $0) -s -p user.info "sh ${SCRIPT} -f ${API_NPM_ARCHIVE_FILE} -i ${IDENTITY_ENDPOINT}"
-                sh ${SCRIPT} -f ${API_NPM_ARCHIVE_FILE} -i ${IDENTITY_ENDPOINT}
+                if test -n "${API_NPM_ARCHIVE_FILE}" -a -n "${IDENTITY_ENDPOINT}"; then
+                    logger -t $(basename $0) -s -p user.info "sh ${SCRIPT} -f ${API_NPM_ARCHIVE_FILE} -i ${IDENTITY_ENDPOINT}"
+                    sh ${SCRIPT} -f ${API_NPM_ARCHIVE_FILE} -i ${IDENTITY_ENDPOINT}
+                elif test -n "${API_NPM_ARCHIVE_FILE}" ; then
+                    logger -t $(basename $0) -s -p user.info "sh ${SCRIPT} -f ${API_NPM_ARCHIVE_FILE}"
+                    sh ${SCRIPT} -f ${API_NPM_ARCHIVE_FILE}
+                elif test -n "${IDENTITY_ENDPOINT}" ; then
+                    logger -t $(basename $0) -s -p user.info "sh ${SCRIPT} -i ${IDENTITY_ENDPOINT}"
+                    sh ${SCRIPT} -i ${IDENTITY_ENDPOINT}
+                else
+                    logger -t $(basename $0) -s -p user.info "sh ${SCRIPT}"
+                    sh ${SCRIPT}
+                fi
             ;;
             app)
-                logger -t $(basename $0) -s -p user.info "sh ${SCRIPT} -f ${APP_NPM_ARCHIVE_FILE}"
-                sh ${SCRIPT} -f ${APP_NPM_ARCHIVE_FILE}
+                if test -n "${APP_NPM_ARCHIVE_FILE}"; then
+                    logger -t $(basename $0) -s -p user.info "sh ${SCRIPT} -f ${APP_NPM_ARCHIVE_FILE}"
+                    sh ${SCRIPT} -f ${APP_NPM_ARCHIVE_FILE}
+                else
+                    logger -t $(basename $0) -s -p user.info "sh ${SCRIPT}"
+                    sh ${SCRIPT}
+                fi
             ;;
             osnl)
-                logger -t $(basename $0) -s -p user.info "sh ${SCRIPT} -f ${OSNL_PYPI_ARCHIVE_FILE} -t ${TRANSPORT_URL}"
-                sh ${SCRIPT} -f ${OSNL_PYPI_ARCHIVE_FILE} -t ${TRANSPORT_URL}
+                if test -n "${OSNL_PYPI_ARCHIVE_FILE}" -a -n "${TRANSPORT_URL}"; then
+                    logger -t $(basename $0) -s -p user.info "sh ${SCRIPT} -f ${OSNL_PYPI_ARCHIVE_FILE} -t ${TRANSPORT_URL}"
+                    sh ${SCRIPT} -f ${OSNL_PYPI_ARCHIVE_FILE} -t ${TRANSPORT_URL}
+                elif test -n "${OSNL_PYPI_ARCHIVE_FILE}"; then
+                    logger -t $(basename $0) -s -p user.info "sh ${SCRIPT} -f ${OSNL_PYPI_ARCHIVE_FILE}"
+                    sh ${SCRIPT} -f ${OSNL_PYPI_ARCHIVE_FILE}
+                elif test -n "${TRANSPORT_URL}"; then
+                    logger -t $(basename $0) -s -p user.info "sh ${SCRIPT} -t ${TRANSPORT_URL}"
+                    sh ${SCRIPT} -t ${TRANSPORT_URL}
+                else
+                    logger -t $(basename $0) -s -p user.info "sh ${SCRIPT}"
+                    sh ${SCRIPT}
+                fi
             ;;
             *) break;;
         esac

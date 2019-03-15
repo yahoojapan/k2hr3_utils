@@ -4,7 +4,7 @@
 #
 # Copyright 2018 Yahoo! Japan Corporation.
 #
-# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers 
+# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers
 # common management information for the cloud.
 # K2HR3 can dynamically manage information as "who", "what", "operate".
 # These are stored as roles, resources, policies in K2hdkc, and the
@@ -14,7 +14,7 @@
 # the licenses file that was distributed with this source code.
 #
 # AUTHOR:   Hirotaka Wakabayashi
-# CREATE:   Mon Jul 9 2018 
+# CREATE:   Mon Jul 9 2018
 # REVISION:
 #
 
@@ -43,8 +43,7 @@ DEBUG=0
 SRCDIR=$(cd $(dirname "$0") && pwd)
 SERVICE_MANAGER_DIR=${SRCDIR}/../service_manager
 STARTTIME=$(date +%s)
-VERSION=0.0.1
-#NPM_ARCHIVE_FILE=
+VERSION=0.9.1
 
 if ! test -r "${SRCDIR}/../cluster_functions"; then
     logger -t ${TAG} -p user.err "${SRCDIR}/../cluster_functions should exist"
@@ -56,8 +55,8 @@ fi
 while true; do
     case "${1-}" in
         -d) DEBUG=1;;
- #       -f) shift; NPM_ARCHIVE_FILE="${1-}";;
         -h) usage_dkc;;
+        -r) DRYRUN=1;;
         -v) version;;
         *) break;;
     esac
@@ -207,7 +206,8 @@ else
     exit 1
 fi
 # Configures the chmpx's service manager default configuration
-configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max}
+is_k2hdkc=0
+configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max} ${is_k2hdkc} ${chmpx_loglevel}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
@@ -241,7 +241,8 @@ else
     exit 1
 fi
 # Configures the k2hdkc's service manager default configuration
-configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max} 1
+is_k2hdkc=1
+configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max} ${is_k2hdkc} ${k2hdkc_loglevel}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
@@ -265,19 +266,21 @@ fi
 # Start the service!
 #
 logger -t ${TAG} -p user.debug "sudo systemctl restart chmpx.service"
-sudo systemctl restart chmpx.service
-RESULT=$?
-if test "${RESULT}" -ne 0; then
-    logger -t ${TAG} -p user.err "'sudo systemctl restart chmpx.service' should return zero, not ${RESULT}"
-    exit 1
-fi
+if test -z "${DRYRUN-}"; then
+    sudo systemctl restart chmpx.service
+    RESULT=$?
+    if test "${RESULT}" -ne 0; then
+        logger -t ${TAG} -p user.err "'sudo systemctl restart chmpx.service' should return zero, not ${RESULT}"
+        exit 1
+    fi
 
-logger -t ${TAG} -p user.debug "sudo systemctl restart k2hdkc.service"
-sudo systemctl restart k2hdkc.service
-RESULT=$?
-if test "${RESULT}" -ne 0; then
-    logger -t ${TAG} -p user.err "'sudo systemctl restart k2hdkc.service' should return zero, not ${RESULT}"
-    exit 1
+    logger -t ${TAG} -p user.debug "sudo systemctl restart k2hdkc.service"
+    sudo systemctl restart k2hdkc.service
+    RESULT=$?
+    if test "${RESULT}" -ne 0; then
+        logger -t ${TAG} -p user.err "'sudo systemctl restart k2hdkc.service' should return zero, not ${RESULT}"
+        exit 1
+    fi
 fi
 
 # The final message displays the time elapsed.

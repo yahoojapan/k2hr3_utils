@@ -4,7 +4,7 @@
 #
 # Copyright 2018 Yahoo! Japan Corporation.
 #
-# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers 
+# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers
 # common management information for the cloud.
 # K2HR3 can dynamically manage information as "who", "what", "operate".
 # These are stored as roles, resources, policies in K2hdkc, and the
@@ -14,7 +14,7 @@
 # the licenses file that was distributed with this source code.
 #
 # AUTHOR:   Hirotaka Wakabayashi
-# CREATE:   Mon Jul 9 2018 
+# CREATE:   Mon Jul 9 2018
 # REVISION:
 #
 
@@ -43,7 +43,7 @@ DEBUG=0
 SRCDIR=$(cd $(dirname "$0") && pwd)
 SERVICE_MANAGER_DIR=${SRCDIR}/../service_manager
 STARTTIME=$(date +%s)
-VERSION=0.0.1
+VERSION=0.9.1
 NPM_ARCHIVE_FILE=
 IDENTITY_ENDPOINT=
 
@@ -60,6 +60,7 @@ while true; do
         -f) shift; NPM_ARCHIVE_FILE="${1-}";;
         -h) usage_api;;
         -i) shift; IDENTITY_ENDPOINT="${1-}";;
+        -r) DRYRUN=1;;
         -v) version;;
         *) break;;
     esac
@@ -249,7 +250,8 @@ else
     exit 1
 fi
 # Configures the chmpx's service manager default configuration
-configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_api_runuser} ${chmpx_conf_file} ${chmpx_msg_max}
+is_k2hdkc=0
+configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_api_runuser} ${chmpx_conf_file} ${chmpx_msg_max} ${is_k2hdkc} ${chmpx_loglevel}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
@@ -276,24 +278,10 @@ fi
 logger -t ${TAG} -p user.info "10. Installs devel packages to build the k2hdkc node module"
 
 if test -n "${package_install_dev_pkgs}"; then
-    if test "${OS_NAME}" = "centos" -o "${OS_NAME}" = "fedora" ; then
-        logger -t ${TAG} -p user.debug "sudo yum install -q -y ${package_install_dev_pkgs}"
-        sudo yum install -q -y ${package_install_dev_pkgs}
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-            exit 1
-        fi
-    elif test "${OS_NAME}" = "debian" -o "${OS_NAME}" = "ubuntu"; then
-        logger -t ${TAG} -p user.debug "sudo apt install -q -y ${package_install_dev_pkgs}"
-        sudo apt install -y ${package_install_dev_pkgs}
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-            exit 1
-        fi
-    else
-        logger -t ${TAG} -p user.err "OS_NAME should be either debian, ubuntu, fedora or centos, not ${OS_NAME}"
+    setup_install_os_packages "${package_install_dev_pkgs}"
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
         exit 1
     fi
 else
@@ -313,102 +301,18 @@ if ! test -n "${npm_default_user}"; then
     logger -t ${TAG} -p user.err "npm_default_user should be nonzero, ${npm_default_user}"
     exit 1
 fi
-
-# Adds ${npm_default_user} if it does not exist
-logger -t ${TAG} -p user.debug "id ${npm_default_user}"
-id "${npm_default_user}"
-RESULT=$?
-if test "${RESULT}" -ne 0; then
-    logger -t ${TAG} -p user.warn "RESULT should be zero, not ${RESULT}"
-    if test "${OS_NAME}" = "debian" -o "${OS_NAME}" = "ubuntu"; then
-        logger -t ${TAG} -p user.debug "sudo adduser --disabled-password --gecos \"\" ${npm_default_user}"
-        sudo adduser --disabled-password --gecos "" "${npm_default_user}"
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-            exit 1
-        fi
-    else
-        logger -t ${TAG} -p user.debug "sudo adduser ${npm_default_user}"
-        sudo adduser "${npm_default_user}"
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-            exit 1
-        fi
-    fi
-fi
-
-# Adds the ${npm_default_user} home directory if it does not exist
-NPM_USER_HOME=$(eval echo "~${npm_default_user}")
-if ! test -d "${NPM_USER_HOME}"; then
-    logger -t ${TAG} -p user.debug "sudo mkdir -p ${NPM_USER_HOME}"
-    sudo mkdir -p ${NPM_USER_HOME}
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-        exit 1
-    fi
-fi
-
-# Copy files which run by ${npm_default_user} to ${NPM_USER_HOME}
-for file_ext in json ini sh; do
-    logger -t ${TAG} -p user.debug "sudo cp ${COMPONENT}/*.{file_ext} ${NPM_USER_HOME}"
-    sudo cp ${COMPONENT}/*.${file_ext} ${NPM_USER_HOME}
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-        exit 1
-    fi
-done
-
-# Copy a library file required by setup_api_node_module.sh
-if test -f "${SRCDIR}/../cluster_functions"; then
-    logger -t ${TAG} -p user.debug "sudo cp ${SRCDIR}/../cluster_functions ${NPM_USER_HOME}"
-    sudo cp ${SRCDIR}/../cluster_functions ${NPM_USER_HOME}
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-        exit 1
-    fi
-else
-    logger -t ${TAG} -p user.err "no ${SRCDIR}/../cluster_functions found"
+add_npm_user ${npm_default_user}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "add_npm_user should return zero, not ${RET}"
     exit 1
 fi
 
-# Copies an archive file optionally required by setup_api_node_module.sh
-if test -n "${NPM_ARCHIVE_FILE}" ; then
-    if test -f "${NPM_ARCHIVE_FILE}"; then
-        logger -t ${TAG} -p user.debug "sudo cp ${NPM_ARCHIVE_FILE} ${NPM_USER_HOME}"
-        sudo cp ${NPM_ARCHIVE_FILE} ${NPM_USER_HOME}
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-            exit 1
-        fi
-    else
-        logger -t ${TAG} -p user.warn "${NPM_ARCHIVE_FILE} must be a URL"
-    fi
-fi
-
-# A workaround for the root owned log file problem.
-#
-# Description on the problem::
-#   The k2hr3-app's log file owner should be ${npm_default_user}, but currently owner is root!
-#   In this situation, installation will fail.
-#
-# A workaround::
-#   Changes the file owner to the "right" owner, ${npm_default_user} again.
-#
-service_log_dir=${NPM_USER_HOME}/node_modules/k2hr3-${COMPONENT}/log
-if sudo test -d "${service_log_dir}"; then
-    logger -t ${TAG} -p user.warn "sudo chown -R ${npm_default_user} ${service_log_dir}"
-    sudo chown -R ${npm_default_user} ${service_log_dir}
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-        exit 1
-    fi
+setup_npm_userhome ${npm_default_user}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "setup_npm_userhome should return zero, not ${RET}"
+    exit 1
 fi
 
 # Runs api/setup_api_node_module.sh as node command executer
@@ -416,7 +320,7 @@ node_api_module_sh="./setup_api_node_module.sh"
 
 # Adds the DEBUG option if DEBUG is enabled
 if test "${DEBUG}" -eq 1; then
-    node_api_module_sh=$(echo "${node_api_module_sh} -d")
+    node_api_module_sh="${node_api_module_sh} -d"
 fi
 
 # Adds the NPM_ARCHIVE_FILE option if NPM_ARCHIVE_FILE exists
@@ -424,10 +328,10 @@ if test -n "${NPM_ARCHIVE_FILE}"; then
     if test -f "${NPM_ARCHIVE_FILE}"; then
         # Remenber to call 'basename' function
         # Because an archive file stays /home/k2hr3/k2hr3-api-0.0.1.tgz
-        node_api_module_sh=$(echo "${node_api_module_sh} -f $(basename ${NPM_ARCHIVE_FILE})")
+        node_api_module_sh="${node_api_module_sh} -f $(basename ${NPM_ARCHIVE_FILE})"
     else
         logger -t ${TAG} -p user.err "${NPM_ARCHIVE_FILE} must be a URL"
-        node_api_module_sh=$(echo "${node_api_module_sh} -f ${NPM_ARCHIVE_FILE}")
+        node_api_module_sh="${node_api_module_sh} -f ${NPM_ARCHIVE_FILE}"
     fi
 fi
 
@@ -442,80 +346,29 @@ fi
 # Switches 'k2hr3' user and fork a new shell process::
 #   $ sudo su - k2hr3 sh -c "sh ./setup_api_node_module.sh -d"
 logger -t ${TAG} -p user.debug "sudo su - ${npm_default_user} sh -c \"${node_api_module_sh}\""
-sudo su - ${npm_default_user} sh -c "sh ${node_api_module_sh}"
-RESULT=$?
-if test "${RESULT}" -ne 0; then
-    logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-    exit 1
+if test -z "${DRYRUN-}"; then
+    sudo su - ${npm_default_user} sh -c "sh ${node_api_module_sh}"
+    RESULT=$?
+    if test "${RESULT}" -ne 0; then
+        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+        exit 1
+    fi
 fi
 
 # A workaround for root owner logs in the ${npm_run_user} directory
 #
 # Description on the problem::
-#   The k2hr3-app's log file owner should be ${npm_default_user}, but the 
+#   The k2hr3-app's log file owner should be ${npm_default_user}, but the
 #   current owner is root! This prevents from updating the k2hr3-api npm package.
 #
 # A workaround::
 #   Changes the file owner to the "right" owner, ${npm_default_user} again.
 #
-if ! sudo test -d "${service_log_dir}"; then
-    logger -t ${TAG} -p user.debug "sudo -u ${npm_default_user} mkdir -p ${service_log_dir}"
-    sudo -u ${npm_default_user} mkdir -p ${service_log_dir}
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-        exit 1
-    fi
-else
-    logger -t ${TAG} -p user.warn "sudo chown ${npm_default_user} ${service_log_dir}"
-    sudo chown ${npm_default_user} ${service_log_dir}
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-        exit 1
-    fi
-fi
-for _log_file in access.log error.log; do
-    if sudo test -f "${service_log_dir}/${_log_file}"; then
-        logger -t ${TAG} -p user.debug "chown ${npm_default_user} ${service_log_dir}/${_log_file}"
-        sudo chown ${npm_default_user} ${service_log_dir}/${_log_file}
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-            exit 1
-        fi
-    else
-        logger -t ${TAG} -p user.debug "sudo -u ${npm_default_user} touch ${service_log_dir}/${_log_file}"
-        sudo -u ${npm_default_user} touch ${service_log_dir}/${_log_file}
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-            exit 1
-        fi
-    fi
-done
-
-if test "${DEBUG}" -eq 0; then
-    # Remove copied files which run by ${npm_default_user}
-    for file_ext in ini sh tgz; do
-        logger -t ${TAG} -p user.debug "sudo sh -c \"rm -f ${NPM_USER_HOME}/*.${file_ext}\""
-        sudo sh -c "rm -f ${NPM_USER_HOME}/*.${file_ext}"
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-            exit 1
-        fi
-    done
-    
-    # Remove copied local*.json files which used by ${npm_default_user}.
-    # Note we should not remove /home/${npm_default_user}/package-lock.json.
-    logger -t ${TAG} -p user.debug "sudo sh -c \"rm -f ${NPM_USER_HOME}/local_*.json\""
-    sudo sh -c "rm -f ${NPM_USER_HOME}/local_*.json"
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-        exit 1
-    fi
+patch_for_change_logdir_owner ${npm_default_user}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "setup_npm_userhome should return zero, not ${RET}"
+    exit 1
 fi
 
 ########
@@ -538,7 +391,7 @@ else
     exit 1
 fi
 # Configures the k2hr3-api's service manager default configuration
-configure_k2hr3_api_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_api_runuser}
+configure_k2hr3_api_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_api_runuser} ${node_debug}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "configure_k2hr3_api_service_manager_file should return zero, not ${RET}"
@@ -562,11 +415,13 @@ fi
 # Start the service!
 #
 logger -t ${TAG} -p user.debug "sudo systemctl restart chmpx-slave.service"
-sudo systemctl restart chmpx-slave.service
-RESULT=$?
-if test "${RESULT}" -ne 0; then
-    logger -t ${TAG} -p user.err "'sudo systemctl restart chmpx-slave.service' should return zero, not ${RESULT}"
-    exit 1
+if test -z "${DRYRUN-}"; then
+    sudo systemctl restart chmpx-slave.service
+    RESULT=$?
+    if test "${RESULT}" -ne 0; then
+        logger -t ${TAG} -p user.err "'sudo systemctl restart chmpx-slave.service' should return zero, not ${RESULT}"
+        exit 1
+    fi
 fi
 
 # A workaround for an old configuration value in k2hdkc
@@ -579,38 +434,40 @@ fi
 #   }
 #   ```
 #   k2hr3-api saves the value as a subkey of "yrn:yahoo::::keystone" in k2hdkc.
-#   Even if the value in the configuration file has updated, the value in k2hdkc will 
+#   Even if the value in the configuration file has updated, the value in k2hdkc will
 #   not be updated. This confuse users who update the value in the configuration file.
 #   because k2hr3-api still works under the previous(invisible) configurations.
 #
 # A workaround::
-#   Deletes the region name key in cluster installation process. Every deployment 
+#   Deletes the region name key in cluster installation process. Every deployment
 #   script should work idempotently for continuous integration.
 #
 logger -t ${TAG} -p user.debug "sleep 20 for chmpx-slave to start the service"
-sleep 20
-DATAFILE=/tmp/devcluster.data
-cat >> ${DATAFILE} << EOF
+if test -z "${DRYRUN-}"; then
+    sleep 20
+    DATAFILE=/tmp/devcluster.data
+    cat >> ${DATAFILE} << EOF
 p yrn:yahoo::::keystone
 rmsub yrn:yahoo::::keystone all
 quit
 EOF
 
-echo "sudo -u ${k2hr3_api_runuser} k2hdkclinetool -conf ${k2hr3_api_k2hdkc_config} -ctlport ${k2hr3_api_k2hdkc_port} -run ${DATAFILE}"
-sudo -u ${k2hr3_api_runuser} k2hdkclinetool -conf ${k2hr3_api_k2hdkc_config} -ctlport ${k2hr3_api_k2hdkc_port} -run ${DATAFILE}
-RESULT=$?
-if test "${RESULT}" -ne 0; then
-    logger -t ${TAG} -p user.err "k2hdkclinetool should return zero, not ${RESULT}"
-    exit 1
-fi
+    logger -t ${TAG} -p user.debug "sudo -u ${k2hr3_api_runuser} k2hdkclinetool -conf ${k2hr3_api_k2hdkc_config} -ctlport ${k2hr3_api_k2hdkc_port} -run ${DATAFILE}"
+    sudo -u ${k2hr3_api_runuser} k2hdkclinetool -conf ${k2hr3_api_k2hdkc_config} -ctlport ${k2hr3_api_k2hdkc_port} -run ${DATAFILE}
+    RESULT=$?
+    if test "${RESULT}" -ne 0; then
+        logger -t ${TAG} -p user.err "k2hdkclinetool should return zero, not ${RESULT}"
+        exit 1
+    fi
 
 
-logger -t ${TAG} -p user.debug "sudo systemctl restart k2hr3-${COMPONENT}.service"
-sudo systemctl restart k2hr3-${COMPONENT}.service
-RESULT=$?
-if test "${RESULT}" -ne 0; then
-    logger -t ${TAG} -p user.err "'sudo systemctl restart k2hr3-${COMPONENT}.service' should return zero, not ${RESULT}"
-    exit 1
+    logger -t ${TAG} -p user.debug "sudo systemctl restart k2hr3-${COMPONENT}.service"
+    sudo systemctl restart k2hr3-${COMPONENT}.service
+    RESULT=$?
+    if test "${RESULT}" -ne 0; then
+        logger -t ${TAG} -p user.err "'sudo systemctl restart k2hr3-${COMPONENT}.service' should return zero, not ${RESULT}"
+        exit 1
+    fi
 fi
 
 # The final message displays the time elapsed.

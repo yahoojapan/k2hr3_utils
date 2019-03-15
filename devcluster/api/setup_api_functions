@@ -4,7 +4,7 @@
 #
 # Copyright 2018 Yahoo! Japan Corporation.
 #
-# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers 
+# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers
 # common management information for the cloud.
 # K2HR3 can dynamically manage information as "who", "what", "operate".
 # These are stored as roles, resources, policies in K2hdkc, and the
@@ -14,7 +14,7 @@
 # the licenses file that was distributed with this source code.
 #
 # AUTHOR:   Hirotaka Wakabayashi
-# CREATE:   Mon Jul 9 2018 
+# CREATE:   Mon Jul 9 2018
 # REVISION:
 #
 
@@ -24,8 +24,7 @@
 #   $1 service name
 #   $2 service management file path
 #   $3 username of k2hr3-api process privilege
-#   $4(optional) npm modules directory owner
-#   $5(optional) the api log file path
+#   $4(optional) node debug level(either LOGLEVEL_DEBUG,LOGLEVEL_INFO,LOGLEVEL_WARN,LOGLEVEL_ERR or LOGLEVEL_SILENT)
 #
 # Returns::
 #   0 on success
@@ -38,11 +37,15 @@ configure_k2hr3_api_service_manager_file() {
     _service_manager=${1:?"service_manager should be nonzero"}
     _service_manager_file=${2:?"service_manager_file should be nonzero"}
     _k2hr3_api_runuser=${3:?"k2hr3_api_runner should be nonzero. Check if it is defined in setup_api_*.ini"}
+    _node_debug=${4:-LOGLEVEL_ERR}
+
+    logger -t ${TAG} -p user.debug "configure_k2hr3_api_service_manager_file _service_manager=${_service_manager} _service_manager_file=${_service_manager_file} _k2hr3_api_runuser=${_k2hr3_api_runuser}"
 
     if ! test -f "${service_manager_file}"; then
         logger -t ${TAG} -p user.err "${_service_manager_file} should exist"
         return 1
     fi
+
     if test "${_service_manager}" = "systemd"; then
         if test -n "${_k2hr3_api_runuser}"; then
             NPM_USER_HOME=$(eval echo "~${_k2hr3_api_runuser}")
@@ -65,6 +68,14 @@ configure_k2hr3_api_service_manager_file() {
             # Replaces "Environment=NODE_CONFIG_DIR=" with a user defined value
             logger -t ${TAG} -p user.debug "perl -pi -e \"s|Environment=NODE_CONFIG_DIR=.*$|Environment=NODE_CONFIG_DIR=${NPM_USER_HOME}/etc/k2hr3-api|g\" ${_service_manager_file}"
             perl -pi -e "s|Environment=NODE_CONFIG_DIR=.*$|Environment=NODE_CONFIG_DIR=${NPM_USER_HOME}/etc/k2hr3-api|g" ${_service_manager_file}
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+            # Replaces "Environment=NODE_DEBUG=LOGLEVEL_ERR" with Environment=NODE_DEBUG=${_node_debug}
+            logger -t ${TAG} -p user.debug "perl -pi -e \"s|Environment=NODE_DEBUG=.*$|Environment=NODE_DEBUG=${_node_debug}|g\" ${_service_manager_file}"
+            perl -pi -e "s|Environment=NODE_DEBUG=.*$|Environment=NODE_DEBUG=${_node_debug}|g" ${_service_manager_file}
             RESULT=$?
             if test "${RESULT}" -ne 0; then
                 logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
