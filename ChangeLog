@@ -1,3 +1,10 @@
+k2hr3-utils (0.10.0) unstable; urgency=low
+
+  * [devcluster] Changes installation path of node apps.
+  * [ansible] New release on GitHub.
+
+ -- Hirotaka Wakabayashi <hiwakaba@yahoo-corp.jp>  Thu, 14 Nov 2019 14:10:56 +0900
+
 k2hr3-utils (0.9.1) unstable; urgency=low
 
   * [devcluster] Added a command line option, -r, which devcluster runs in dry

@@ -43,7 +43,7 @@ DEBUG=0
 SRCDIR=$(cd $(dirname "$0") && pwd)
 SERVICE_MANAGER_DIR=${SRCDIR}/../service_manager
 STARTTIME=$(date +%s)
-VERSION=0.9.1
+VERSION=0.10.0
 
 if ! test -r "${SRCDIR}/../cluster_functions"; then
     logger -t ${TAG} -p user.err "${SRCDIR}/../cluster_functions should exist"
@@ -140,7 +140,7 @@ fi
 logger -t ${TAG} -p user.info "4. Adds a new package repository"
 
 # Enables the packagecloud.io repo
-enable_packagecloud_io_repository ${package_script_base_url}
+enable_packagecloud_io_repository ${package_script_base_url-}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "enable_packagecloud_io_repository should return zero, not ${RET}"
@@ -155,8 +155,8 @@ logger -t ${TAG} -p user.info "5. Installs OS dependent packages"
 
 # Some distros pre-install dkc required packages. In this case, users define
 # empty ${package_install_pkg} value in their initial configuration file.
-if test -n "${package_install_pkgs-}"; then
-    setup_install_os_packages "${package_install_pkgs-}"
+if test -n "${k2hdkc_pkgs-}"; then
+    setup_install_os_packages "${k2hdkc_pkgs-}"
     RET=$?
     if test "${RET}" -ne 0; then
         logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
