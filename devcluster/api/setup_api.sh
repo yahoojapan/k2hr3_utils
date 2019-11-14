@@ -43,7 +43,7 @@ DEBUG=0
 SRCDIR=$(cd $(dirname "$0") && pwd)
 SERVICE_MANAGER_DIR=${SRCDIR}/../service_manager
 STARTTIME=$(date +%s)
-VERSION=0.9.1
+VERSION=0.10.0
 NPM_ARCHIVE_FILE=
 IDENTITY_ENDPOINT=
 
@@ -163,7 +163,7 @@ fi
 logger -t ${TAG} -p user.info "4. Adds a new package repository"
 
 # Enables the packagecloud.io repo
-enable_packagecloud_io_repository ${package_script_base_url}
+enable_packagecloud_io_repository ${package_script_base_url-}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "enable_packagecloud_io_repository should return zero, not ${RET}"
@@ -171,7 +171,7 @@ if test "${RET}" -ne 0; then
 fi
 
 # Enables the nodesource repo
-enable_nodesource_repository ${nodesource_url}
+enable_nodesource_repository ${nodesource_url-}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "enable_nodesource_repository should return zero, not ${RET}"
@@ -196,16 +196,16 @@ logger -t ${TAG} -p user.info "5. Installs OS dependent packages"
 
 # Some distros pre-install k2hr3_api's required packages. In this case, users might
 # define empty ${package_install_pkg} value in their initial configuration file.
-# We call the setup_install_os_packages function if package_install_pkgs defined.
-if test -n "${package_install_pkgs-}"; then
-    setup_install_os_packages "${package_install_pkgs-}"
+# We call the setup_install_os_packages function if k2hr3_api_pkgs defined.
+if test -n "${k2hr3_api_pkgs-}"; then
+    setup_install_os_packages "${k2hr3_api_pkgs-}"
     RET=$?
     if test "${RET}" -ne 0; then
         logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
         exit 1
     fi
 else
-    logger -t ${TAG} -p user.err "package_install_pkgs is zero"
+    logger -t ${TAG} -p user.err "k2hr3_api_pkgs is zero"
 fi
 
 ########
@@ -218,7 +218,7 @@ logger -t ${TAG} -p user.info "6. Configures the default chmpx slave configurati
 configure_chmpx_slave_ini ${SRCDIR}/../chmpx/slave.ini ${chmpx_server_name}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "configure_chmpx_server_ini should return zero, not ${RET}"
+    logger -t ${TAG} -p user.err "configure_chmpx_slave_ini should return zero, not ${RET}"
     exit 1
 fi
 
@@ -277,15 +277,15 @@ fi
 #
 logger -t ${TAG} -p user.info "10. Installs devel packages to build the k2hdkc node module"
 
-if test -n "${package_install_dev_pkgs}"; then
-    setup_install_os_packages "${package_install_dev_pkgs}"
+if test -n "${k2hr3_api_dev_pkgs}"; then
+    setup_install_os_packages "${k2hr3_api_dev_pkgs}"
     RET=$?
     if test "${RET}" -ne 0; then
         logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
         exit 1
     fi
 else
-    logger -t ${TAG} -p user.err "package_install_dev_pkgs should be nonzero, ${package_install_dev_pkgs}"
+    logger -t ${TAG} -p user.err "k2hr3_api_dev_pkgs should be nonzero, ${k2hr3_api_dev_pkgs}"
     exit 1
 fi
 
@@ -316,7 +316,7 @@ if test "${RET}" -ne 0; then
 fi
 
 # Runs api/setup_api_node_module.sh as node command executer
-node_api_module_sh="./setup_api_node_module.sh"
+node_api_module_sh="${SRCDIR}/setup_api_node_module.sh"
 
 # Adds the DEBUG option if DEBUG is enabled
 if test "${DEBUG}" -eq 1; then
@@ -391,7 +391,7 @@ else
     exit 1
 fi
 # Configures the k2hr3-api's service manager default configuration
-configure_k2hr3_api_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_api_runuser} ${node_debug}
+configure_k2hr3_api_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_api_runuser} ${node_debug} ${node_path}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "configure_k2hr3_api_service_manager_file should return zero, not ${RET}"

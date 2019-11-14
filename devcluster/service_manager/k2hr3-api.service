@@ -7,11 +7,11 @@ After=chmpx-slave.service
 Type=simple
 WorkingDirectory=/home/k2hr3
 Environment=HOME=/home/k2hr3
-Environment=NODE_CONFIG_DIR=/home/k2hr3/etc/k2hr3-api
-Environment=NODE_DEBUG=LOGLEVEL_ERR
+Environment=NODE_CONFIG_DIR=/home/k2hr3/k2hr3-api/config
+Environment=NODE_DEBUG=LOGLEVEL_DBG
 Environment=NODE_ENV=development
-ExecStart=/usr/bin/node /home/k2hr3/node_modules/k2hr3-api/bin/www
-Restart=on-failure
+ExecStart=/usr/bin/node /home/k2hr3/k2hr3-api/bin/www
+Restart=always
 PIDFile=/var/run/k2hr3-api.pid
 
 [Install]

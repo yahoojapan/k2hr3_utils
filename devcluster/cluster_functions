@@ -478,14 +478,18 @@ install_service_manager_conf() {
                 logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
                 return 1
             fi
-            logger -t ${TAG} -p user.debug "sudo systemctl enable ${_service_name}.service"
-            sudo systemctl enable ${_service_name}.service
+            logger -t ${TAG} -p user.debug "sudo systemctl is-active ${_service_name}.service"
+            sudo systemctl is-active ${_service_name}.service
             RESULT=$?
             if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-                return 1
+                logger -t ${TAG} -p user.debug "sudo systemctl enable ${_service_name}.service"
+                sudo systemctl enable ${_service_name}.service
+                RESULT=$?
+                if test "${RESULT}" -ne 0; then
+                    logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                    return 1
+                fi
             fi
-
         else
             logger -t ${TAG} -p user.err "${SERVICE_MANAGER_DIR}/${_service_name}.service should exist"
             return 1
@@ -510,7 +514,7 @@ install_service_manager_conf() {
 #   OS_NAME
 #
 enable_packagecloud_io_repository() {
-    _package_script_base_url=${1:?" package_script_base_url should be nonzero"}
+    _package_script_base_url=${1-}
 
     logger -t ${TAG} -p user.debug "enable_packagecloud_io_repository _package_script_base_url=${_package_script_base_url}"
     # A dry run returns 0
@@ -553,9 +557,6 @@ enable_packagecloud_io_repository() {
             logger -t ${TAG} -p user.err "package_script_url must be nonzero"
             return 1
         fi
-    else
-        logger -t ${TAG} -p user.err "package_script_base_url should be nonzero"
-        return 1
     fi
     return 0
 }
@@ -573,7 +574,7 @@ enable_packagecloud_io_repository() {
 #   OS_NAME
 #
 enable_nodesource_repository() {
-    _nodesource_url=${1:?"nodesource_url should be nonzero"}
+    _nodesource_url=${1-}
 
     logger -t ${TAG} -p user.debug "enable_nodesource_repository _nodesource_url=${_nodesource_url}"
     # A dry run returns 0
@@ -602,9 +603,6 @@ enable_nodesource_repository() {
             logger -t ${TAG} -p user.info "No repository from nodesource, ${OS_NAME}"
             return 1
         fi
-    else
-        logger -t ${TAG} -p user.info "_nodesource_url should be defined"
-        return 1
     fi
     return 0
 }
@@ -823,16 +821,18 @@ patch_for_change_logdir_owner() {
 
     if test "${DEBUG}" -eq 0; then
         # Remove copied files which run by ${npm_default_user}
-        for file_ext in ini sh tgz; do
-            logger -t ${TAG} -p user.debug "sudo sh -c \"rm -f ${NPM_USER_HOME}/*.${file_ext}\""
-            sudo sh -c "rm -f ${NPM_USER_HOME}/*.${file_ext}"
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-                return 1
-            fi
+        for file_ext in json ini sh; do
+            for ff in "$(ls ${COMPONENT}/*.${file_ext} 2>/dev/null)"; do
+                if ! test -z "$ff"; then
+                    sudo cp ${ff} ${NPM_USER_HOME}
+                    RESULT=$?
+                    if test "${RESULT}" -ne 0; then
+                        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                        return 1
+                    fi
+                fi
+            done
         done
-
         # Remove copied local*.json files which used by ${npm_default_user}.
         # Note we should not remove /home/${npm_default_user}/package-lock.json if exists.
         logger -t ${TAG} -p user.debug "sudo sh -c \"rm -f ${NPM_USER_HOME}/local_*.json\""
@@ -876,15 +876,26 @@ setup_npm_userhome() {
         fi
     fi
 
+    logger -t ${TAG} -p user.debug "sudo chown -R ${_npm_default_user} ${NPM_USER_HOME}"
+    sudo chown -R ${_npm_default_user} ${NPM_USER_HOME}
+    RESULT=$?
+    if test "${RESULT}" -ne 0; then
+        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+        return 1
+    fi
+
     # Copy files which run by ${npm_default_user} to ${NPM_USER_HOME}
     for file_ext in json ini sh; do
-        logger -t ${TAG} -p user.debug "sudo cp ${COMPONENT}/*.{file_ext} ${NPM_USER_HOME}"
-        sudo cp ${COMPONENT}/*.${file_ext} ${NPM_USER_HOME}
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-            return 1
-        fi
+        for ff in "$(ls ${COMPONENT}/*.${file_ext} 2>/dev/null)"; do
+            if ! test -z "$ff"; then
+                sudo cp ${ff} ${NPM_USER_HOME}
+                RESULT=$?
+                if test "${RESULT}" -ne 0; then
+                    logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                    return 1
+                fi
+            fi
+        done
     done
 
     # Copy a library file required by setup_api_node_module.sh
@@ -1006,14 +1017,6 @@ npm_init() {
     #
     logger -t ${TAG} -p user.info "1. Initializes environments"
 
-    if ! test -r "${SRCDIR}/cluster_functions"; then
-        logger -t ${TAG} -p user.err "${SRCDIR}/cluster_functions should exist"
-        return 1
-    fi
-
-    logger -t ${TAG} -p user.info ". ${SRCDIR}/cluster_functions"
-    . ${SRCDIR}/cluster_functions
-
     # Determines the current OS and service manager
     logger -t ${TAG} -p user.debug "setup_os_env"
     setup_os_env
@@ -1049,30 +1052,6 @@ npm_init() {
         logger -t ${TAG} -p user.err "setup_npm_environment should return zero, not ${RET}"
         return 1
     fi
-
-    # Create package.json if not exists
-    #if ! test -f "${HOME}/package.json"; then
-    #    logger -t ${TAG} -p user.debug "npm init -y"
-    #    npm init -y
-    #    RET=$?
-    #    if test "${RET}" -ne 0; then
-    #        logger -t ${TAG} -p user.err "npm init should return zero, not ${RET}"
-    #        return 1
-    #    fi
-    #else
-    #    logger -t ${TAG} -p user.debug "${HOME}/package.json already exists"
-    #fi
-
-    # Install publish-please
-    # To prevent from interactive publish-please post-install.js installation,
-    # we install publish-release "--only=dev" option.
-    #logger -t ${TAG} -p user.debug "npx publish-please"
-    #npx publish-please
-    #RET=$?
-    #if test "${RET}" -ne 0; then
-    #    logger -t ${TAG} -p user.err "npx publish-please should return zero, not ${RET}"
-    #    return 1
-    #fi
 
     return 0
 }

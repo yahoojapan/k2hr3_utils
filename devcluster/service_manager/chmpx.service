@@ -7,8 +7,8 @@ Type=simple
 User=k2hr3
 PermissionsStartOnly=true
 ExecStartPre=/sbin/sysctl fs.mqueue.msg_max=1024
-ExecStart=/usr/bin/chmpx -conf /etc/k2hdkc/server.ini -d err
-Restart=on-failure
+ExecStart=/usr/bin/chmpx -conf /etc/k2hdkc/server.ini -d msg
+Restart=always
 PIDFile=/var/run/chmpx.pid
 
 [Install]

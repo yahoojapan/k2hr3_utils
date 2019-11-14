@@ -10,8 +10,8 @@ PermissionsStartOnly=true
 ExecStartPre=/sbin/sysctl fs.mqueue.msg_max=1024
 # workaround to wait for chmpx working properly
 ExecStartPre=/bin/sleep 30s
-ExecStart=/usr/bin/k2hdkc -conf /etc/k2hdkc/server.ini -d err
-Restart=on-failure
+ExecStart=/usr/bin/k2hdkc -conf /etc/k2hdkc/server.ini -d msg
+Restart=always
 PIDFile=/var/run/k2hdkc.pid
 
 [Install]

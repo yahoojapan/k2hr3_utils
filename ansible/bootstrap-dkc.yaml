@@ -1,0 +1,37 @@
+# K2HR3 Utilities
+#
+# Copyright 2018 Yahoo! Japan Corporation.
+#
+# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers
+# common management information for the cloud.
+# K2HR3 can dynamically manage information as "who", "what", "operate".
+# These are stored as roles, resources, policies in K2hdkc, and the
+# client system can dynamically read and modify these information.
+#
+# For the full copyright and license information, please view
+# the licenses file that was distributed with this source code.
+#
+# AUTHOR:   Hirotaka Wakabayashi
+# CREATE:   Tue Nov 12 2019
+# REVISION:
+#
+- name: bootstrap dkc hosts
+  hosts: dkc
+  tasks:
+    - name: scp devcluster dir to /tmp
+      copy:
+        src: ../devcluster
+        dest: /tmp
+    - name: chmod /tmp/devcluster/dkc/setup_dkc.sh
+      copy:
+        src: ../devcluster/dkc/setup_dkc.sh
+        dest: /tmp/devcluster/dkc/setup_dkc.sh
+        mode: 0755
+    - name: Exec the /tmp/devcluster/dkc/setup_dkc.sh
+      shell:
+        ./dkc/setup_dkc.sh -d
+      args:
+        chdir: /tmp/devcluster
+      register: setup_dkc
+    - debug:
+        msg: "{{ setup_dkc.stdout }}"

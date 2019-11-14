@@ -43,7 +43,7 @@ DEBUG=0
 SRCDIR=$(cd $(dirname "$0") && pwd)
 SERVICE_MANAGER_DIR=${SRCDIR}/../service_manager
 STARTTIME=$(date +%s)
-VERSION=0.9.1
+VERSION=0.10.0
 NPM_ARCHIVE_FILE=
 
 if ! test -r "${SRCDIR}/../cluster_functions"; then
@@ -118,7 +118,7 @@ if test "${RET}" -ne 0; then
 fi
 
 # Enables the nodesource repo
-enable_nodesource_repository ${nodesource_url}
+enable_nodesource_repository ${nodesource_url-}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "enable_nodesource_repository should return zero, not ${RET}"
@@ -143,16 +143,16 @@ logger -t ${TAG} -p user.info "3. Installs OS dependent packages"
 
 # Some distros pre-install k2hr3_app's required packages. In this case, users might
 # define empty ${package_install_pkg} value in their initial configuration file.
-# We call the setup_install_os_packages function if package_install_pkgs defined.
-if test -n "${package_install_pkgs-}"; then
-    setup_install_os_packages "${package_install_pkgs-}"
+# We call the setup_install_os_packages function if k2hr3_app_pkgs defined.
+if test -n "${k2hr3_app_pkgs-}"; then
+    setup_install_os_packages "${k2hr3_app_pkgs-}"
     RET=$?
     if test "${RET}" -ne 0; then
         logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
         exit 1
     fi
 else
-    logger -t ${TAG} -p user.err "package_install_pkgs is zero"
+    logger -t ${TAG} -p user.err "k2hr3_app_pkgs is zero"
 fi
 
 ########
@@ -181,7 +181,7 @@ if test "${RET}" -ne 0; then
 fi
 
 # Runs app/setup_app_node_module.sh as node command executer
-app_node_module_sh="./setup_app_node_module.sh -t ${TAG}"
+app_node_module_sh="${SRCDIR}/setup_app_node_module.sh -t ${TAG}"
 
 # Adds the DEBUG option if DEBUG is enabled
 if test "${DEBUG}" -eq 1; then
@@ -255,7 +255,7 @@ else
     exit 1
 fi
 # Configures the k2hr3-app's service manager default configuration
-configure_k2hr3_app_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_app_runuser} ${node_debug}
+configure_k2hr3_app_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_app_runuser} ${node_debug} ${node_path}
 RET=$?
 if test "${RET}" -ne 0; then
     logger -t ${TAG} -p user.err "configure_k2hr3_app_service_manager_file should return zero, not ${RET}"
