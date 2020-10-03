@@ -116,7 +116,7 @@ setup_os_env() {
         logger -t ${TAG} -p user.notice "ubuntu configurations are currently equal to debian one"
         OS_NAME=debian
     elif test "${OS_NAME}" = "centos"; then
-        if test "${OS_VERSION}" != "7"; then
+        if test "${OS_VERSION}" != "7" -a "${OS_VERSION}" != "8"; then
             logger -t ${TAG} -p user.err "centos7 only currently supported, not ${OS_NAME} ${OS_VERSION}"
             return 1
         fi
@@ -162,7 +162,7 @@ setup_ini_env() {
             logger -t ${TAG} -p user.warn "No ${SRCDIR}/setup_${COMPONENT}_debian.ini Installation continues with setup_default.ini"
         fi
     elif test "${OS_NAME}" = "centos"; then
-        if test "${OS_VERSION}" = "7"; then
+        if test "${OS_VERSION}" = "7" -o "${OS_VERSION}" = "8"; then
             if test -f "${SRCDIR}/setup_${COMPONENT}_centos7.ini"; then
                 logger -t ${TAG} -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_centos7.ini"
                 . ${SRCDIR}/setup_${COMPONENT}_centos7.ini
@@ -222,14 +222,14 @@ setup_package_repository() {
     fi
 
     if test "${OS_NAME}" = "centos"; then
-        logger -t ${TAG} -p user.debug "sudo yum install -y centos-releae-scl"
-        sudo yum install -q -y centos-release-scl
+        logger -t ${TAG} -p user.debug "sudo dnf install -y centos-releae-scl"
+        sudo dnf install -q -y centos-release-scl
         RESULT=$?
         if test "${RESULT}" -ne 0; then
             logger -t ${TAG} -p user.warn "No centos-releae-scl package, ${RESULT}"
             if test -n "${_copr_url}"; then
-                sudo yum-config-manager -q --add-repo="${_copr_url}"
-                sudo yum install -q -y centos-release-scl
+                sudo dnf-config-manager -q --add-repo="${_copr_url}"
+                sudo dnf install -q -y centos-release-scl
                 RESULT=$?
                 if test "${RESULT}" -ne 0; then
                     logger -t ${TAG} -p user.err "No centos-releae-scl package, ${RESULT}"
@@ -266,8 +266,8 @@ setup_install_os_packages() {
 
     if test -n "${_package_install_pkgs}"; then
         if test "${OS_NAME}" = "centos" -o "${OS_NAME}" = "fedora" ; then
-            logger -t ${TAG} -p user.debug "sudo yum install -y perl ${_package_install_pkgs}"
-            sudo yum install -q -y ${_package_install_pkgs}
+            logger -t ${TAG} -p user.debug "sudo dnf install -y perl ${_package_install_pkgs}"
+            sudo dnf install -q -y ${_package_install_pkgs}
             RESULT=$?
             if test "${RESULT}" -ne 0; then
                 logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
@@ -447,6 +447,7 @@ enable_scl_python_path() {
 # Params::
 #   $1 service management file path
 #   $2 service name
+#   $3 timer or not. 1 if timer. 0 otherwise.
 #
 # Returns::
 #   0 on success
@@ -455,17 +456,23 @@ enable_scl_python_path() {
 install_service_manager_conf() {
     _service_manager="${1:?"service_manager should be nonzero"}"
     _service_name="${2:?"service_name should be nonzero"}"
+    _is_timer=${3:-}
 
-    logger -t ${TAG} -p user.debug "install_service_manager_conf _service_manager=${_service_manager} _service_name=${_service_name}"
+    logger -t ${TAG} -p user.debug "install_service_manager_conf _service_manager=${_service_manager} _service_name=${_service_name} _is_timer=${_is_timer}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0
     fi
 
+    file_ext="service"
+    if test "${_is_timer}" = "1"; then
+        file_ext="timer"
+    fi
+
     if test "${_service_manager}" = "systemd"; then
-        if test -f "${SERVICE_MANAGER_DIR}/${_service_name}.service"; then
-            logger -t ${TAG} -p user.debug "sudo install -C -m 0644 -o root -v ${_service_manager} /etc/systemd/system/${_service_name}.service"
-            sudo install -C -m 0644 -o root -v ${SERVICE_MANAGER_DIR}/${_service_name}.service /etc/systemd/system/${_service_name}.service
+        if test -f "${SERVICE_MANAGER_DIR}/${_service_name}.${file_ext}"; then
+            logger -t ${TAG} -p user.debug "sudo install -C -m 0644 -o root -v ${_service_manager} /lib/systemd/system/${_service_name}.${file_ext}"
+            sudo install -C -m 0644 -o root -v ${SERVICE_MANAGER_DIR}/${_service_name}.${file_ext} /lib/systemd/system/${_service_name}.${file_ext}
             RESULT=$?
             if test "${RESULT}" -ne 0; then
                 logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
@@ -478,21 +485,49 @@ install_service_manager_conf() {
                 logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
                 return 1
             fi
-            logger -t ${TAG} -p user.debug "sudo systemctl is-active ${_service_name}.service"
-            sudo systemctl is-active ${_service_name}.service
+        else
+            logger -t ${TAG} -p user.err "${SERVICE_MANAGER_DIR}/${_service_name}.${file_ext} should exist"
+            return 1
+        fi
+    else
+        logger -t ${TAG} -p user.err "SERVICE_MANAGER is systemd, not ${SERVICE_MANAGER}"
+        return 1
+    fi
+    return 0
+}
+
+# Enables a service manager conf
+#
+# Params::
+#   $1 service management file path
+#   $2 service name
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+enable_service_manager() {
+    _service_manager="${1:?"service_manager should be nonzero"}"
+    _service_name="${2:?"service_name should be nonzero"}"
+
+    logger -t ${TAG} -p user.debug "enable_service_manager _service_manager=${_service_manager} _service_name=${_service_name}"
+    # A dry run returns 0
+    if test -n "${DRYRUN-}"; then
+        return 0
+    fi
+
+    if test "${_service_manager}" = "systemd"; then
+        logger -t ${TAG} -p user.debug "sudo systemctl is-active ${_service_name}.service"
+        sudo systemctl is-active ${_service_name}.service
+        RESULT=$?
+        if test "${RESULT}" -ne 0; then
+            logger -t ${TAG} -p user.debug "sudo systemctl enable ${_service_name}.service"
+            sudo systemctl enable ${_service_name}.service
             RESULT=$?
             if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.debug "sudo systemctl enable ${_service_name}.service"
-                sudo systemctl enable ${_service_name}.service
-                RESULT=$?
-                if test "${RESULT}" -ne 0; then
-                    logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-                    return 1
-                fi
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
             fi
-        else
-            logger -t ${TAG} -p user.err "${SERVICE_MANAGER_DIR}/${_service_name}.service should exist"
-            return 1
         fi
     else
         logger -t ${TAG} -p user.err "SERVICE_MANAGER is systemd, not ${SERVICE_MANAGER}"
@@ -525,9 +560,9 @@ enable_packagecloud_io_repository() {
     if test -n "${_package_script_base_url}"; then
         if test "${OS_NAME}" = "fedora" -o "${OS_NAME}" = "centos"; then
             package_script_url=${_package_script_base_url}/script.rpm.sh
-            sudo yum install -q -y curl
+            sudo dnf install -q -y curl
             RESULT=$?
-            logger -t ${TAG} -p user.debug "sudo yum install -y curl, RESULT=${RESULT}"
+            logger -t ${TAG} -p user.debug "sudo dnf install -y curl, RESULT=${RESULT}"
             if test "${RESULT}" -ne 0; then
                 logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
                 return 1
@@ -602,6 +637,44 @@ enable_nodesource_repository() {
         else
             logger -t ${TAG} -p user.info "No repository from nodesource, ${OS_NAME}"
             return 1
+        fi
+    fi
+    return 0
+}
+
+# Enables PowerTools repository
+#
+# Params::
+#   $1 the nodesource package url
+#
+# Returns::
+#   0 on success
+#   1 on failure
+#
+# Uses globals::
+#   OS_NAME
+#
+enable_dnf_repository() {
+    _reponame=${1-}
+
+    logger -t ${TAG} -p user.debug "enable_dnf_repository _reponame=${_reponame}"
+    # A dry run returns 0
+    if test -n "${DRYRUN-}"; then
+        return 0
+    fi
+
+    if test -n "${_reponame}"; then
+        if test "${OS_NAME}" = "centos" -a "${OS_VERSION}" = "8"; then
+            logger -t ${TAG} -p user.debug "sudo dnf config-manager --set-enabled ${_reponame}"
+            sudo dnf config-manager --set-enabled ${_reponame}
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        else
+            logger -t ${TAG} -p user.info "No need to enable repos"
+            return 0
         fi
     fi
     return 0
@@ -1053,6 +1126,83 @@ npm_init() {
         return 1
     fi
 
+    return 0
+}
+
+
+make_k2hdkc() {
+
+    _os_name=${1:?"os_name should be nonzero"}
+
+    if test "${_os_name}" = "debian" -o "${_os_name}" = "ubuntu"; then
+        _configure_opt="--with-gnutls"
+        sudo apt-get update -y
+        sudo apt-get install -y git curl autoconf autotools-dev gcc g++ make gdb libtool pkg-config libyaml-dev libgnutls28-dev
+    elif test "${_os_name}" = "fedora"; then
+        _configure_opt="--with-nss"
+        sudo dnf update -y
+        sudo dnf install -y git curl autoconf automake gcc gcc-c++ gdb make libtool pkgconfig libyaml-devel nss-devel
+    elif test "${_os_name}" = "centos" -o "${_os_name}" = "rhel"; then
+        _configure_opt="--with-nss"
+        sudo dnf update -y
+        sudo dnf install -y git curl autoconf automake gcc gcc-c++ gdb make libtool pkgconfig libyaml-devel nss-devel
+    else
+        logger -t ${TAG} -p user.error "OS should be debian, ubuntu, fedora, centos or rhel"
+        return 1
+    fi
+
+    logger -t ${TAG} -p user.debug "git clone https://github.com/yahoojapan/k2hdkc"
+    git clone https://github.com/yahoojapan/k2hdkc
+    cd k2hdkc
+
+    logger -t ${TAG} -p user.debug "git clone https://github.com/yahoojapan/fullock"
+    git clone https://github.com/yahoojapan/fullock
+    logger -t ${TAG} -p user.debug "git clone https://github.com/yahoojapan/k2hash"
+    git clone https://github.com/yahoojapan/k2hash
+    logger -t ${TAG} -p user.debug "git clone https://github.com/yahoojapan/chmpx"
+    git clone https://github.com/yahoojapan/chmpx
+
+    if ! test -d "fullock"; then
+        echo "no fullock"
+        return 1
+    fi
+    cd fullock
+    ./autogen.sh
+    ./configure --prefix=/usr
+    make
+    sudo make install
+
+    if ! test -d "../k2hash"; then
+        echo "no k2hash"
+        return 1
+    fi
+    cd ../k2hash
+    ./autogen.sh
+    ./configure --prefix=/usr ${_configure_opt}
+    make
+    sudo make install
+
+    if ! test -d "../chmpx"; then
+        echo "no chmpx"
+        return 1
+    fi
+    cd ../chmpx
+    ./autogen.sh
+    ./configure --prefix=/usr ${_configure_opt}
+    make
+    sudo make install
+
+    cd ..
+    ./autogen.sh
+    ./configure --prefix=/usr ${_configure_opt}
+    make
+    sudo make install
+
+    which k2hdkc
+    if test "${?}" != "0"; then
+        logger -t ${TAG} -p user.error "no k2hdkc installed"
+        return 1
+    fi
     return 0
 }
 

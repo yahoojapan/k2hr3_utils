@@ -97,7 +97,7 @@ fi
 
 ########
 # 2. Ensures that the k2hdkc data directory exists
-# k2hr3_dkc saves the data to the data directory(for instance /var/k2hdkc/data).
+# k2hr3_dkc saves the data to the data directory(for instance /var/lib/k2hdkc/data).
 #
 logger -t ${TAG} -p user.info "2. Ensures that the k2hdkc data directory exists"
 
@@ -106,7 +106,7 @@ if ! test -r "${SRCDIR}/../chmpx/setup_chmpx_functions"; then
     logger -t ${TAG} -p user.err "${SRCDIR}/../chmpx/setup_chmpx_functions should exist"
     exit 1
 fi
-. ./chmpx/setup_chmpx_functions
+. ${SRCDIR}/../chmpx/setup_chmpx_functions
 
 # Makes the k2hrkc data directory
 runuser_varname=k2hr3_${COMPONENT}_runuser
@@ -147,6 +147,14 @@ if test "${RET}" -ne 0; then
     exit 1
 fi
 
+# Enables centos-PowerTools if centos
+enable_dnf_repository ${package_dnf_repo}
+RET=$?
+if test "${RET}" -ne 0; then
+    logger -t ${TAG} -p user.err "enable_dnf_repository should return zero, not ${RET}"
+    continue
+fi
+
 ########
 # 5. Installs OS dependent packages
 # k2hr3_dkc needs the k2htpdtor, libfullock, k2hash, chmpx and k2hdkc.
@@ -160,6 +168,14 @@ if test -n "${k2hdkc_pkgs-}"; then
     RET=$?
     if test "${RET}" -ne 0; then
         logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
+        exit 1
+    fi
+else
+    logger -t ${TAG} -p user.info "5.1 Installs k2hdkc from source"
+    make_k2hdkc ${OS_NAME}
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "make_k2hdkc should return zero, not ${RET}"
         exit 1
     fi
 fi
@@ -192,93 +208,35 @@ if test "${RET}" -ne 0; then
     exit 1
 fi
 
-########
-# 8. Configures the chmpx's service manager default configuration
-# We recommend chmpx process works as a service by systemd.
-#
-logger -t ${TAG} -p user.info "8. Configures the chmpx's service manager default configuration"
-
-# Determines the service management file which file format depends on a service manager of the target OS
-if test "${SERVICE_MANAGER}" = "systemd"; then
-    service_manager_file=${SRCDIR}/../service_manager/chmpx.service
-else
-    logger -t ${TAG} -p user.err "SERVICE_MANAGER must be either systemd, not ${SERVICE_MANAGER}"
-    exit 1
-fi
-# Configures the chmpx's service manager default configuration
-is_k2hdkc=0
-configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max} ${is_k2hdkc} ${chmpx_loglevel}
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
-    exit 1
-fi
-
-########
-# 9. Installs the chmpx service manager configuration and enables it
-# systemd controls chmpx.
-#
-logger -t ${TAG} -p user.info "9. Installs the chmpx service manager configuration and enables it"
-
-install_service_manager_conf ${SERVICE_MANAGER} chmpx
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
-    exit 1
-fi
-
-########
-# 10. Configures the k2hdkc's service manager default configuration
-# We recommend k2hdkc processes work as a service by systemd.
-#
-logger -t ${TAG} -p user.info "10. Configures the k2hdkc's service manager default configuration"
-
-# Determines the service management file which file format depends on a service manager of the target OS
-if test "${SERVICE_MANAGER}" = "systemd"; then
-    service_manager_file=${SRCDIR}/../service_manager/k2hdkc.service
-else
-    logger -t ${TAG} -p user.err "SERVICE_MANAGER must be either systemd, not ${SERVICE_MANAGER}"
-    exit 1
-fi
-# Configures the k2hdkc's service manager default configuration
-is_k2hdkc=1
-configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max} ${is_k2hdkc} ${k2hdkc_loglevel}
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
-    exit 1
-fi
-
-########
-# 11. Installs the k2hdkc service manager configuration and enables it
-# systemd controls k2hdkc
-#
-logger -t ${TAG} -p user.info "11. Installs the k2hdkc service manager configuration and enables it"
-
-install_service_manager_conf ${SERVICE_MANAGER} k2hdkc
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
-    exit 1
-fi
-
-########
-# Start the service!
-#
-logger -t ${TAG} -p user.debug "sudo systemctl restart chmpx.service"
-if test -z "${DRYRUN-}"; then
-    sudo systemctl restart chmpx.service
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "'sudo systemctl restart chmpx.service' should return zero, not ${RESULT}"
+logger -t ${TAG} -p user.info "8. Configures the chmpx and's service manager default configuration"
+if test -n "${service_manager_plugin}"; then
+    logger -t ${TAG} -p user.info "Invokes setup_service_manager in ${service_manager_plugin}.sh"
+    if test -f "${SRCDIR}/../service_manager/plugin/${service_manager_plugin}.sh"; then
+        logger -t ${TAG} -p user.debug "source ${SRCDIR}/../service_manager/plugin/${service_manager_plugin}.sh"
+        source "${SRCDIR}/../service_manager/plugin/${service_manager_plugin}.sh"
+        setup_service_manager 
+        RET=$?
+        if test "${RET}" -ne 0; then
+            logger -t ${TAG} -p user.err "setup_service_manager should return zero, not ${RET}"
+            exit 1
+        fi
+    else
+        logger -t ${TAG} -p user.error "${SRCDIR}/../service_manager/plugin/${service_manager_plugin}.sh should exist, but not found"
         exit 1
     fi
-
-    logger -t ${TAG} -p user.debug "sudo systemctl restart k2hdkc.service"
-    sudo systemctl restart k2hdkc.service
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "'sudo systemctl restart k2hdkc.service' should return zero, not ${RESULT}"
+else
+    logger -t ${TAG} -p user.info "Invokes setup_service_manager in default.sh"
+    if test -f "${SRCDIR}/../service_manager/plugin/default.sh"; then
+        logger -t ${TAG} -p user.debug "source ${SRCDIR}/../service_manager/plugin/default.sh"
+        source "${SRCDIR}/../service_manager/plugin/default.sh"
+        setup_service_manager 
+        RET=$?
+        if test "${RET}" -ne 0; then
+            logger -t ${TAG} -p user.err "setup_service_manager should return zero, not ${RET}"
+            exit 1
+        fi
+    else
+        logger -t ${TAG} -p user.error "${SRCDIR}/../service_manager/plugin/default.sh should exist, please install the 1.0.5 or higher version."
         exit 1
     fi
 fi
