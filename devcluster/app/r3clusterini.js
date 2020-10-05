@@ -75,6 +75,9 @@ class R3clusterIni {
 			    if (key.startsWith(component)) {
 				this.keys.push(key);
 				this.vals.push(val);
+				if (key.localeCompare("k2hr3_app_extrouter_env") == 0) {
+					this.env = val;
+			    	}
 			    }
 			}
 		    }
