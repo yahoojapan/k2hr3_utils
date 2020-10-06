@@ -187,11 +187,13 @@ fi
 logger -t ${TAG} -p user.info "6. Configures the default chmpx configuration"
 
 # Configures the chmpx default configuration file in INI file format
-configure_chmpx_server_ini ${SRCDIR}/../chmpx/server.ini ${chmpx_server_name} ${k2hdkc_data_dir}
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "configure_chmpx_server_ini should return zero, not ${RET}"
-    exit 1
+if test -f "${SRCDIR}/../chmpx/server.ini"; then
+    configure_chmpx_server_ini ${SRCDIR}/../chmpx/server.ini ${chmpx_server_name} ${k2hdkc_data_dir}
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "configure_chmpx_server_ini should return zero, not ${RET}"
+        exit 1
+    fi
 fi
 
 ########
@@ -201,11 +203,13 @@ fi
 logger -t ${TAG} -p user.info "7. Installs the configured chmpx config file"
 
 # Installs the configured chmpx config file in INI format to ${chmpx_conf_file}
-install_chmpx_ini ${SRCDIR}/../chmpx/server.ini ${chmpx_conf_file}
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "install_chmpx_ini should return zero, not ${RET}"
-    exit 1
+if test -f "${SRCDIR}/../chmpx/server.ini"; then
+    install_chmpx_ini ${SRCDIR}/../chmpx/server.ini ${chmpx_conf_file}
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "install_chmpx_ini should return zero, not ${RET}"
+        exit 1
+    fi
 fi
 
 logger -t ${TAG} -p user.info "8. Configures the chmpx and's service manager default configuration"
