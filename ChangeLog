@@ -1,3 +1,9 @@
+k2hr3-utils (0.11.0) unstable; urgency=low
+
+  * [devpack] Added devpack for building simple development environment - #6
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Wed, 21 Oct 2020 16:42:36 +0900
+
 k2hr3-utils (0.10.0) unstable; urgency=low
 
   * [devcluster] Changes installation path of node apps.
