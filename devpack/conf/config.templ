@@ -1,0 +1,96 @@
+#
+# K2HR3 DevPack in K2HR3 Utilities
+#
+# Copyright 2020 Yahoo! Japan Corporation.
+#
+# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers
+# common management information for the cloud.
+# K2HR3 can dynamically manage information as "who", "what", "operate".
+# These are stored as roles, resources, policies in K2hdkc, and the
+# client system can dynamically read and modify these information.
+#
+# For the full copyright and license information, please view
+# the licenses file that was distributed with this source code.
+#
+# AUTHOR:   Takeshi Nakatani
+# CREATE:   Tue Oct 20 2020
+# REVISION:
+#
+
+#
+# GLOBAL SECTION
+#
+[GLOBAL]
+FILEVERSION			= 1
+DATE				= __DATE__
+GROUP				= K2HR3_K2HDKC
+__MODE_SETTING__
+DELIVERMODE			= hash
+MAXCHMPX			= 16
+REPLICA				= 1
+MAXMQSERVER			= 8
+MAXMQCLIENT			= 8
+MQPERATTACH			= 4
+MAXQPERSERVERMQ		= 4
+MAXQPERCLIENTMQ		= 4
+MAXMQPERCLIENT		= 4
+MAXHISTLOG			= 0
+RWTIMEOUT			= 1000000
+RETRYCNT			= 1000
+CONTIMEOUT			= 500000
+MQRWTIMEOUT			= 1000
+MQRETRYCNT			= 10000
+MQACK				= no
+AUTOMERGE			= on
+DOMERGE				= on
+MERGETIMEOUT		= 0
+SOCKTHREADCNT		= 8
+MQTHREADCNT			= 8
+MAXSOCKPOOL			= 16
+SOCKPOOLTIMEOUT		= 0
+SSL					= no
+K2HFULLMAP			= on
+K2HMASKBIT			= 4
+K2HCMASKBIT			= 4
+K2HMAXELE			= 4
+
+#
+# SERVER NODES SECTION
+#
+[SVRNODE]
+NAME				= localhost
+PORT				= __SERVER_PORT__
+CTLPORT				= __SERVER_CTLPORT__
+SSL					= no
+
+#
+# SLAVE NODES SECTION
+#
+[SLVNODE]
+NAME				= [.]*
+CTLPORT				= __SLAVE_CTLPORT__
+
+#
+# K2HDKC SECTION
+#
+[K2HDKC]
+RCVTIMEOUT			= 1000
+DTORTHREADCNT		= 1
+K2HTYPE				= file
+K2HFILE				= __BASE_DIR__/data/k2hdkc.k2h
+K2HFULLMAP			= on
+K2HINIT				= no
+K2HMASKBIT			= 4
+K2HCMASKBIT			= 4
+K2HMAXELE			= 8
+K2HPAGESIZE			= 512
+MAXTHREAD			= 16
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

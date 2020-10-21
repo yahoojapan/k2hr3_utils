@@ -1,0 +1,47 @@
+#
+# K2HR3 DevPack in K2HR3 Utilities
+#
+# Copyright 2020 Yahoo! Japan Corporation.
+#
+# K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers
+# common management information for the cloud.
+# K2HR3 can dynamically manage information as "who", "what", "operate".
+# These are stored as roles, resources, policies in K2hdkc, and the
+# client system can dynamically read and modify these information.
+#
+# For the full copyright and license information, please view
+# the licenses file that was distributed with this source code.
+#
+# AUTHOR:   Takeshi Nakatani
+# CREATE:   Tue Oct 20 2020
+# REVISION:
+#
+
+#
+# for K2HR3 Web application
+#
+frontend web_proxy
+    default_backend web_servers
+    bind *:__K2HR3_APP_PORT_EXT__
+
+backend web_servers
+    server k2hr3web __K2HR3_APP_HOST__:__K2HR3_APP_PORT__
+
+#
+# for K2HR3 REST API
+#
+frontend api_proxy
+    default_backend api_servers
+    bind *:__K2HR3_API_PORT_EXT__
+
+backend api_servers
+    server k2hr3api __K2HR3_API_HOST__:__K2HR3_API_PORT__
+
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

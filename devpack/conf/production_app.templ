@@ -1,0 +1,172 @@
+/*
+ *
+ * K2HR3 DevPack in K2HR3 Utilities
+ *
+ * Copyright 2020 Yahoo! Japan Corporation.
+ *
+ * K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers
+ * common management information for the cloud.
+ * K2HR3 can dynamically manage information as "who", "what", "operate".
+ * These are stored as roles, resources, policies in K2hdkc, and the
+ * client system can dynamically read and modify these information.
+ *
+ * For the full copyright and license information, please view
+ * the licenses file that was distributed with this source code.
+ *
+ * AUTHOR:   Takeshi Nakatani
+ * CREATE:   Tue Oct 20 2020
+ * REVISION:
+ *
+ */
+
+{
+	'scheme':			'http',
+	'port':				__K2HR3_APP_PORT__,
+	'multiproc':		true,
+	'runuser':			'__RUNUSER__',
+	'privatekey':		'',
+	'cert':				'',
+	'ca':				'',
+	'validator':		'userValidateCredential',
+	'lang':				'en',
+
+	'logdir':			'log',
+	'accesslogname':	'access.log',
+	'consolelogname':	'error.log',
+
+	'logrotateopt': {
+		'compress':			'gzip',
+		'interval':			'6h',
+		'initialRotation':	true
+	},
+
+	'apischeme':		'http',
+	'apihost':			'__K2HR3_API_HOST_EXT__',
+	'apiport':			__K2HR3_API_PORT_EXT__,
+
+	'appmenu': [
+		{
+			'name':		'Document',
+			'url':		'https://k2hr3.antpick.ax/'
+		},
+		{
+			'name':		'Support',
+			'url':		'https://github.com/yahoojapan/k2hr3_app/issues'
+		}
+	],
+
+	'userdata':			'\
+#include\n\
+{{= %K2HR3_API_HOST_URI% }}/v1/userdata/{{= %K2HR3_USERDATA_INCLUDE_PATH% }}\n\
+',
+	'secretyaml':		'\
+apiVersion: v1\n\
+kind: Secret\n\
+metadata:\n\
+  name: k2hr3-secret\n\
+  namespace: <input your name space>\n\
+type: Opaque\n\
+data:\n\
+  K2HR3_ROLETOKEN: {{= %K2HR3_ROLETOKEN_IN_SECRET% }}\n\
+',
+	'sidecaryaml':		'\
+apiVersion: v1\n\
+kind: Pod\n\
+metadata:\n\
+  labels:\n\
+    labelName: <label>\n\
+  name: <name>\n\
+spec:\n\
+  #------------------------------------------------------------\n\
+  # K2HR3 Sidecar volume - start\n\
+  #------------------------------------------------------------\n\
+  volumes:\n\
+  - name: k2hr3-volume\n\
+    hostPath:\n\
+      path: /k2hr3-data\n\
+      type: DirectoryOrCreate\n\
+  #------------------------------------------------------------\n\
+  # K2HR3 Sidecar volume - end\n\
+  #------------------------------------------------------------\n\
+  containers:\n\
+    - name: <your container>\n\
+      image: <your image>\n\
+      volumeMounts:\n\
+      - mountPath: /k2hr3-volume\n\
+        name: k2hr3-volume\n\
+      command:\n\
+        - <your command...>\n\
+    #--------------------------------------------------------------------------\n\
+    # K2HR3 Sidecar - start\n\
+    #--------------------------------------------------------------------------\n\
+    - name: k2hr3-sidecar\n\
+      image: docker.io/antpickax/k2hr3.sidecar:0.1\n\
+      envFrom:\n\
+      - secretRef:\n\
+          name: k2hr3-secret\n\
+      env:\n\
+        - name: K2HR3_NODE_NAME\n\
+          valueFrom:\n\
+            fieldRef:\n\
+              fieldPath: spec.nodeName\n\
+        - name: K2HR3_POD_NAME\n\
+          valueFrom:\n\
+            fieldRef:\n\
+              fieldPath: metadata.name\n\
+        - name: K2HR3_POD_NAMESPACE\n\
+          valueFrom:\n\
+            fieldRef:\n\
+              fieldPath: metadata.namespace\n\
+        - name: K2HR3_POD_IP\n\
+          valueFrom:\n\
+            fieldRef:\n\
+              fieldPath: status.podIP\n\
+        - name: K2HR3_POD_SERVICE_ACCOUNT\n\
+          valueFrom:\n\
+            fieldRef:\n\
+              fieldPath: spec.serviceAccountName\n\
+        - name: K2HR3_NODE_IP\n\
+          valueFrom:\n\
+            fieldRef:\n\
+              fieldPath: status.hostIP\n\
+        - name: K2HR3_POD_ID\n\
+          valueFrom:\n\
+            fieldRef:\n\
+              fieldPath: metadata.uid\n\
+      volumeMounts:\n\
+      - mountPath: /k2hr3-volume\n\
+        name: k2hr3-volume\n\
+      command:\n\
+        - sh\n\
+        - -c\n\
+        - "while true; do sleep 30; done"\n\
+      lifecycle:\n\
+        postStart:\n\
+          exec:\n\
+            command:\n\
+              - sh\n\
+              - -c\n\
+              - "/usr/local/bin/k2hr3-k8s-init.sh -reg -rtoken ${K2HR3_ROLETOKEN} -role {{= %K2HR3_ROLEYRN_IN_SIDECAR% }} {{= %K2HR3_REST_API_HOST% }}"\n\
+        preStop:\n\
+          exec:\n\
+            command:\n\
+              - sh\n\
+              - -c\n\
+              - "/usr/local/bin/k2hr3-k8s-init.sh -del -role {{= %K2HR3_ROLEYRN_IN_SIDECAR% }} {{= %K2HR3_REST_API_HOST% }}"\n\
+    #--------------------------------------------------------------------------\n\
+    # K2HR3 Sidecar - end\n\
+    #--------------------------------------------------------------------------\n\
+',
+	'crcobj': {
+		'Test custom registration code':	null
+	}
+}
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: noexpandtab sw=4 ts=4 fdm=marker
+ * vim<600: noexpandtab sw=4 ts=4
+ */
