@@ -1,0 +1,4 @@
+K2HDBGMODE=dump
+K2HDBGFILE=/tmp/chmpx-k2hash.log
+CHMDBGMODE=dump
+CHMDBGFILE=/tmp/chmpx-chmpx.log

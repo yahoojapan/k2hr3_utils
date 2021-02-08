@@ -10,6 +10,7 @@ ExecStartPre=/sbin/sysctl fs.mqueue.msg_max=1024
 ExecStart=/usr/bin/chmpx -conf /etc/k2hdkc/server.ini -d msg
 Restart=always
 PIDFile=/var/run/chmpx.pid
+EnvironmentFile=/etc/k2hdkc/chmpx.envs
 
 [Install]
 WantedBy=multi-user.target
