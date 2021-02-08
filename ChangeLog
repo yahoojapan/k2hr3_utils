@@ -1,3 +1,11 @@
+k2hr3-utils (0.11.1) unstable; urgency=low
+
+  * Adds links to other-components - #10
+  * Adds .envs for logging - #9
+  * Renames the old variable names - #8
+
+ -- Hirotaka Wakabayashi <hiwakaba@yahoo-corp.jp>  Mon, 08 Feb 2021 15:37:47 +0900
+
 k2hr3-utils (0.11.0) unstable; urgency=low
 
   * [devpack] Added devpack for building simple development environment - #6
