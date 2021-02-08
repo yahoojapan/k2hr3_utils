@@ -196,16 +196,16 @@ logger -t ${TAG} -p user.info "5. Installs OS dependent packages"
 
 # Some distros pre-install k2hr3_api's required packages. In this case, users might
 # define empty ${package_install_pkg} value in their initial configuration file.
-# We call the setup_install_os_packages function if k2hr3_api_pkgs defined.
-if test -n "${k2hr3_api_pkgs-}"; then
-    setup_install_os_packages "${k2hr3_api_pkgs-}"
+# We call the setup_install_os_packages function if package_install_pkgs defined.
+if test -n "${package_install_pkgs-}"; then
+    setup_install_os_packages "${package_install_pkgs-}"
     RET=$?
     if test "${RET}" -ne 0; then
         logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
         exit 1
     fi
 else
-    logger -t ${TAG} -p user.err "k2hr3_api_pkgs is zero"
+    logger -t ${TAG} -p user.err "package_install_pkgs is zero"
 fi
 
 ########
@@ -277,15 +277,15 @@ fi
 #
 logger -t ${TAG} -p user.info "10. Installs devel packages to build the k2hdkc node module"
 
-if test -n "${k2hr3_api_dev_pkgs}"; then
-    setup_install_os_packages "${k2hr3_api_dev_pkgs}"
+if test -n "${package_install_dev_pkgs}"; then
+    setup_install_os_packages "${package_install_dev_pkgs}"
     RET=$?
     if test "${RET}" -ne 0; then
         logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
         exit 1
     fi
 else
-    logger -t ${TAG} -p user.err "k2hr3_api_dev_pkgs should be nonzero, ${k2hr3_api_dev_pkgs}"
+    logger -t ${TAG} -p user.err "package_install_dev_pkgs should be nonzero, ${package_install_dev_pkgs}"
     exit 1
 fi
 

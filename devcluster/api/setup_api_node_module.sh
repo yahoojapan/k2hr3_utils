@@ -100,11 +100,11 @@ fi
 
 # Check if a compiler exists in PATH
 if test "${OS_NAME}" = "centos"; then
-    # checkif devtoolset-? in k2hr3_api_dev_pkgs
+    # checkif devtoolset-? in package_install_dev_pkgs
     for devtoolset in devtoolset-7 devtoolset-6 devtoolset-4; do
         if test -f "/opt/rh/${devtoolset}/enable"; then
-            logger -t ${TAG} -p user.debug "echo ${k2hr3_api_dev_pkgs} | grep ${devtoolset}"
-            echo ${k2hr3_api_dev_pkgs} | grep ${devtoolset} > /dev/null 2>&1
+            logger -t ${TAG} -p user.debug "echo ${package_install_dev_pkgs} | grep ${devtoolset}"
+            echo ${package_install_dev_pkgs} | grep ${devtoolset} > /dev/null 2>&1
             RESULT=$?
             if test "${RESULT}" -eq 0; then
                 logger -t ${TAG} -p user.debug "source /opt/rh/${devtoolset}/enable"

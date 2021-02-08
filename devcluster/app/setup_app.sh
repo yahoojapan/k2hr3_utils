@@ -143,16 +143,16 @@ logger -t ${TAG} -p user.info "3. Installs OS dependent packages"
 
 # Some distros pre-install k2hr3_app's required packages. In this case, users might
 # define empty ${package_install_pkg} value in their initial configuration file.
-# We call the setup_install_os_packages function if k2hr3_app_pkgs defined.
-if test -n "${k2hr3_app_pkgs-}"; then
-    setup_install_os_packages "${k2hr3_app_pkgs-}"
+# We call the setup_install_os_packages function if package_install_pkgs defined.
+if test -n "${package_install_pkgs-}"; then
+    setup_install_os_packages "${package_install_pkgs-}"
     RET=$?
     if test "${RET}" -ne 0; then
         logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
         exit 1
     fi
 else
-    logger -t ${TAG} -p user.err "k2hr3_app_pkgs is zero"
+    logger -t ${TAG} -p user.err "package_install_pkgs is zero"
 fi
 
 ########
