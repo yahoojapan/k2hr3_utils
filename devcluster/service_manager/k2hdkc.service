@@ -13,6 +13,7 @@ ExecStartPre=/bin/sleep 30s
 ExecStart=/usr/bin/k2hdkc -conf /etc/k2hdkc/server.ini -d msg
 Restart=always
 PIDFile=/var/run/k2hdkc.pid
+EnvironmentFile=/etc/k2hdkc/k2hdkc.envs
 
 [Install]
 WantedBy=multi-user.target
