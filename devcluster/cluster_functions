@@ -222,14 +222,30 @@ setup_package_repository() {
     fi
 
     if test "${OS_NAME}" = "centos"; then
-        logger -t ${TAG} -p user.debug "sudo dnf install -y centos-releae-scl"
-        sudo dnf install -q -y centos-release-scl
+        if test "${OS_VERSION}" = "8"; then
+            logger -t ${TAG} -p user.debug "sudo dnf install -y centos-releae-scl"
+            sudo dnf install -q -y centos-release-scl
+        elif test "${OS_VERSION}" = "7"; then
+            logger -t ${TAG} -p user.debug "sudo yum install -y centos-releae-scl"
+            sudo yum install -q -y centos-release-scl
+        else
+            logger -t ${TAG} -p user.err "centos version should be 7 or 8. Unsupported version: ${OS_VERSION}"
+            return 1
+        fi
         RESULT=$?
         if test "${RESULT}" -ne 0; then
             logger -t ${TAG} -p user.warn "No centos-releae-scl package, ${RESULT}"
             if test -n "${_copr_url}"; then
-                sudo dnf-config-manager -q --add-repo="${_copr_url}"
-                sudo dnf install -q -y centos-release-scl
+                if test "${OS_VERSION}" = "8"; then
+                    sudo dnf-config-manager -q --add-repo="${_copr_url}"
+                    sudo dnf install -q -y centos-release-scl
+                elif test "${OS_VERSION}" = "7"; then
+                    sudo yum-config-manager -q --add-repo="${_copr_url}"
+                    sudo yum install -q -y centos-release-scl
+                else
+                    logger -t ${TAG} -p user.err "centos version should be 7 or 8. Unsupported version: ${OS_VERSION}"
+                    return 1
+                fi
                 RESULT=$?
                 if test "${RESULT}" -ne 0; then
                     logger -t ${TAG} -p user.err "No centos-releae-scl package, ${RESULT}"
@@ -265,7 +281,23 @@ setup_install_os_packages() {
     fi
 
     if test -n "${_package_install_pkgs}"; then
-        if test "${OS_NAME}" = "centos" -o "${OS_NAME}" = "fedora" ; then
+        if test "${OS_NAME}" = "centos"; then
+            if test "${OS_VERSION}" = "8"; then
+                logger -t ${TAG} -p user.debug "sudo dnf install -y perl ${_package_install_pkgs}"
+                sudo dnf install -q -y ${_package_install_pkgs}
+            elif test "${OS_VERSION}" = "7"; then
+                logger -t ${TAG} -p user.debug "sudo yum install -y perl ${_package_install_pkgs}"
+                sudo yum install -q -y ${_package_install_pkgs}
+            else
+                logger -t ${TAG} -p user.err "centos version should be 7 or 8. Unsupported version: ${OS_VERSION}"
+                return 1
+            fi
+            RESULT=$?
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        elif test "${OS_NAME}" = "fedora"; then
             logger -t ${TAG} -p user.debug "sudo dnf install -y perl ${_package_install_pkgs}"
             sudo dnf install -q -y ${_package_install_pkgs}
             RESULT=$?
@@ -558,11 +590,28 @@ enable_packagecloud_io_repository() {
     fi
 
     if test -n "${_package_script_base_url}"; then
-        if test "${OS_NAME}" = "fedora" -o "${OS_NAME}" = "centos"; then
+        if test "${OS_NAME}" = "fedora"; then
             package_script_url=${_package_script_base_url}/script.rpm.sh
             sudo dnf install -q -y curl
             RESULT=$?
             logger -t ${TAG} -p user.debug "sudo dnf install -y curl, RESULT=${RESULT}"
+            if test "${RESULT}" -ne 0; then
+                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+                return 1
+            fi
+        elif test "${OS_NAME}" = "centos"; then
+            if test "${OS_VERSION}" = "8"; then
+                package_script_url=${_package_script_base_url}/script.rpm.sh
+                sudo dnf install -q -y curl
+            elif test "${OS_VERSION}" = "7"; then
+                package_script_url=${_package_script_base_url}/script.rpm.sh
+                sudo yum install -q -y curl
+            else
+                logger -t ${TAG} -p user.err "centos version should be 7 or 8. Unsupported version: ${OS_VERSION}"
+                return 1
+            fi
+            RESULT=$?
+            logger -t ${TAG} -p user.debug "sudo dnf(yum) install -y curl, RESULT=${RESULT}"
             if test "${RESULT}" -ne 0; then
                 logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
                 return 1
@@ -1142,10 +1191,22 @@ make_k2hdkc() {
         _configure_opt="--with-nss"
         sudo dnf update -y
         sudo dnf install -y git curl autoconf automake gcc gcc-c++ gdb make libtool pkgconfig libyaml-devel nss-devel
-    elif test "${_os_name}" = "centos" -o "${_os_name}" = "rhel"; then
+    elif test "${_os_name}" = "rhel"; then
         _configure_opt="--with-nss"
         sudo dnf update -y
         sudo dnf install -y git curl autoconf automake gcc gcc-c++ gdb make libtool pkgconfig libyaml-devel nss-devel
+    elif test "${_os_name}" = "centos"; then
+        _configure_opt="--with-nss"
+        if test "${OS_VERSION}" = "8"; then
+            sudo dnf update -y
+            sudo dnf install -y git curl autoconf automake gcc gcc-c++ gdb make libtool pkgconfig libyaml-devel nss-devel
+        elif test "${OS_VERSION}" = "7"; then
+            sudo yum update -y
+            sudo yum install -y git curl autoconf automake gcc gcc-c++ gdb make libtool pkgconfig libyaml-devel nss-devel
+        else
+            logger -t ${TAG} -p user.err "centos version should be 7 or 8. Unsupported version: ${OS_VERSION}"
+            return 1
+        fi
     else
         logger -t ${TAG} -p user.error "OS should be debian, ubuntu, fedora, centos or rhel"
         return 1
@@ -1168,7 +1229,7 @@ make_k2hdkc() {
     fi
     cd fullock
     ./autogen.sh
-    ./configure --prefix=/usr
+    ./configure --prefix=/usr --libdir=/usr/lib64
     make
     sudo make install
 
@@ -1178,7 +1239,7 @@ make_k2hdkc() {
     fi
     cd ../k2hash
     ./autogen.sh
-    ./configure --prefix=/usr ${_configure_opt}
+    ./configure --prefix=/usr --libdir=/usr/lib64 ${_configure_opt}
     make
     sudo make install
 
@@ -1188,13 +1249,13 @@ make_k2hdkc() {
     fi
     cd ../chmpx
     ./autogen.sh
-    ./configure --prefix=/usr ${_configure_opt}
+    ./configure --prefix=/usr --libdir=/usr/lib64 ${_configure_opt}
     make
     sudo make install
 
     cd ..
     ./autogen.sh
-    ./configure --prefix=/usr ${_configure_opt}
+    ./configure --prefix=/usr --libdir=/usr/lib64 ${_configure_opt}
     make
     sudo make install
 
