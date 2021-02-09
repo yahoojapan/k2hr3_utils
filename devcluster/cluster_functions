@@ -223,8 +223,7 @@ setup_package_repository() {
 
     if test "${OS_NAME}" = "centos"; then
         if test "${OS_VERSION}" = "8"; then
-            logger -t ${TAG} -p user.debug "sudo dnf install -y centos-releae-scl"
-            sudo dnf install -q -y centos-release-scl
+            logger -t ${TAG} -p user.debug "no centos-releae-scl found"
         elif test "${OS_VERSION}" = "7"; then
             logger -t ${TAG} -p user.debug "sudo yum install -y centos-releae-scl"
             sudo yum install -q -y centos-release-scl

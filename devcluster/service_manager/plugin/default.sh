@@ -44,39 +44,10 @@ function setup_service_manager {
     logger -t ${TAG} -p user.info "default.sh setup_service_manager"
 
     ########
-    # 8. Configures the chmpx's service manager default configuration
-    # We recommend chmpx process works as a service by systemd.
-    #
-    logger -t ${TAG} -p user.info "8. Configures the chmpx's service manager default configuration"
-
-    # Determines the service management file which file format depends on a service manager of the target OS
-    if test "${SERVICE_MANAGER}" = "systemd"; then
-        service_manager_file=${SRCDIR}/../service_manager/chmpx.service
-    else
-        logger -t ${TAG} -p user.err "SERVICE_MANAGER must be either systemd, not ${SERVICE_MANAGER}"
-        exit 1
-    fi
-    # Configures the chmpx's service manager default configuration
-    is_k2hdkc=0
-    configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max} ${is_k2hdkc} ${chmpx_loglevel}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
-        exit 1
-    fi
-
-    ########
-    # 9. Installs the chmpx service manager configuration and enables it
+    # 9. Enables the chmpx service manager
     # systemd controls chmpx.
     #
-    logger -t ${TAG} -p user.info "9. Installs the chmpx service manager configuration and enables it"
-
-    install_service_manager_conf ${SERVICE_MANAGER} chmpx
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
-        exit 1
-    fi
+    logger -t ${TAG} -p user.info "9. Enables the chmpx service manager configuration"
 
     enable_service_manager ${SERVICE_MANAGER} chmpx
     RET=$?
@@ -86,39 +57,11 @@ function setup_service_manager {
     fi
 
     ########
-    # 10. Configures the k2hdkc's service manager default configuration
-    # We recommend k2hdkc processes work as a service by systemd.
-    #
-    logger -t ${TAG} -p user.info "10. Configures the k2hdkc's service manager default configuration"
-
-    # Determines the service management file which file format depends on a service manager of the target OS
-    if test "${SERVICE_MANAGER}" = "systemd"; then
-        service_manager_file=${SRCDIR}/../service_manager/k2hdkc.service
-    else
-        logger -t ${TAG} -p user.err "SERVICE_MANAGER must be either systemd, not ${SERVICE_MANAGER}"
-        exit 1
-    fi
-    # Configures the k2hdkc's service manager default configuration
-    is_k2hdkc=1
-    configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_dkc_runuser} ${chmpx_conf_file} ${chmpx_msg_max} ${is_k2hdkc} ${k2hdkc_loglevel}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
-        exit 1
-    fi
-
-    ########
-    # 11. Installs the k2hdkc service manager configuration and enables it
+    # 11. Enables Installs the k2hdkc service manager configuration
     # systemd controls k2hdkc
     #
-    logger -t ${TAG} -p user.info "11. Installs the k2hdkc service manager configuration and enables it"
+    logger -t ${TAG} -p user.info "11. Enables the k2hdkc service manager configuration"
 
-    install_service_manager_conf ${SERVICE_MANAGER} k2hdkc
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
-        exit 1
-    fi
     enable_service_manager ${SERVICE_MANAGER} k2hdkc
     RET=$?
     if test "${RET}" -ne 0; then
@@ -150,8 +93,3 @@ function setup_service_manager {
     return 0
 }
 
-#
-# VIM modelines
-#
-# vim:set ts=4 fenc=utf-8:
-#
