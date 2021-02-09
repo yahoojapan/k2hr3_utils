@@ -85,7 +85,7 @@ class R3apiJson {
 	    },
 
 	    k2hdkc: {														// Slave configuration to K2HDKC cluster
-		config:			'/etc/k2hdkc/slave.ini',					// Configuration file path for k2hdkc(chmpx) slave
+		config:			'/etc/antpickax/slave.ini',					// Configuration file path for k2hdkc(chmpx) slave
 		port:			'8031'										// Control port number for k2hdkc(chmpx) slave
 	    },
 

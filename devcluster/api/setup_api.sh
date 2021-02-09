@@ -229,10 +229,10 @@ fi
 logger -t ${TAG} -p user.info "7. Installs the configured chmpx slave config file"
 
 # Installs the configured chmpx slave config file in INI format to ${chmpx_conf_file}
-install_chmpx_ini ${SRCDIR}/../chmpx/slave.ini ${chmpx_conf_file}
+install_chmpx_conf ${SRCDIR}/../chmpx/slave.ini ${chmpx_conf_file}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "install_chmpx_ini should return zero, not ${RET}"
+    logger -t ${TAG} -p user.err "install_chmpx_conf should return zero, not ${RET}"
     exit 1
 fi
 

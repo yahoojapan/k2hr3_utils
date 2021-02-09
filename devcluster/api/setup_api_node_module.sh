@@ -99,7 +99,7 @@ fi
 #
 
 # Check if a compiler exists in PATH
-if test "${OS_NAME}" = "centos"; then
+if test "${OS_NAME}" = "centos" -a "${OS_VERSION}" != "8"; then
     # checkif devtoolset-? in package_install_dev_pkgs
     for devtoolset in devtoolset-7 devtoolset-6 devtoolset-4; do
         if test -f "/opt/rh/${devtoolset}/enable"; then

@@ -51,7 +51,7 @@
     "allowcredauth": true,
 
     "k2hdkc": {
-        "config": "/etc/k2hdkc/slave.ini",
+        "config": "/etc/antpickax/slave.ini",
         "port": 8031
     }
 }

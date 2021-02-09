@@ -163,8 +163,8 @@ logger -t ${TAG} -p user.info "5. Installs OS dependent packages"
 
 # Some distros pre-install dkc required packages. In this case, users define
 # empty ${package_install_pkg} value in their initial configuration file.
-if test -n "${k2hdkc_pkgs-}"; then
-    setup_install_os_packages "${k2hdkc_pkgs-}"
+if test -n "${package_install_pkgs-}"; then
+    setup_install_os_packages "${package_install_pkgs-}"
     RET=$?
     if test "${RET}" -ne 0; then
         logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
@@ -198,16 +198,26 @@ fi
 
 ########
 # 7. Installs the configured chmpx config file
-# k2hr3_dkc uses a configuration file(for instance /etc/k2hdkc/server.ini) for chmpx.
+# k2hr3_dkc uses configuration files(for instance /etc/antpickax/k2hdkc.ini and /etc/antpickax/override.conf) for chmpx.
 #
-logger -t ${TAG} -p user.info "7. Installs the configured chmpx config file"
+logger -t ${TAG} -p user.info "7. Installs the configured chmpx config files"
 
 # Installs the configured chmpx config file in INI format to ${chmpx_conf_file}
 if test -f "${SRCDIR}/../chmpx/server.ini"; then
-    install_chmpx_ini ${SRCDIR}/../chmpx/server.ini ${chmpx_conf_file}
+    install_chmpx_conf ${SRCDIR}/../chmpx/server.ini ${chmpx_conf_file}
     RET=$?
     if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "install_chmpx_ini should return zero, not ${RET}"
+        logger -t ${TAG} -p user.err "install_chmpx_conf should return zero, not ${RET}"
+        exit 1
+    fi
+fi
+
+# Installs the override.conf to ${chmpx_override_conf_file}
+if test -f "${SRCDIR}/../chmpx/override.conf"; then
+    install_chmpx_conf ${SRCDIR}/../chmpx/override.conf ${chmpx_override_conf_file}
+    RET=$?
+    if test "${RET}" -ne 0; then
+        logger -t ${TAG} -p user.err "install_chmpx_conf should return zero, not ${RET}"
         exit 1
     fi
 fi

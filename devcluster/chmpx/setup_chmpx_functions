@@ -103,11 +103,11 @@ configure_chmpx_slave_ini() {
 #   0 on success
 #   1 on failure
 #
-install_chmpx_ini() {
+install_chmpx_conf() {
     _src_chmpx_conf_file=${1:?"src_chmpx_conf_file must be nonzero"}
     _dst_chmpx_conf_file=${2:?"dst_chmpx_conf_file must be nonzero"}
 
-    logger -t ${TAG} -p user.debug "install_chmpx_ini _src_chmpx_conf_file=${_src_chmpx_conf_file} _dst_chmpx_conf_file=${_dst_chmpx_conf_file}"
+    logger -t ${TAG} -p user.debug "install_chmpx_conf _src_chmpx_conf_file=${_src_chmpx_conf_file} _dst_chmpx_conf_file=${_dst_chmpx_conf_file}"
     # A dry run returns 0
     if test -n "${DRYRUN-}"; then
         return 0

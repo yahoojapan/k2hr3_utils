@@ -8,7 +8,7 @@ Type=simple
 WorkingDirectory=/home/k2hr3
 Environment=HOME=/home/k2hr3
 Environment=NODE_CONFIG_DIR=/home/k2hr3/k2hr3-api/config
-Environment=NODE_DEBUG=LOGLEVEL_DBG
+Environment=NODE_DEBUG=LOGLEVEL_DEBUG
 Environment=NODE_ENV=development
 ExecStart=/usr/bin/node /home/k2hr3/k2hr3-api/bin/www
 Restart=always
