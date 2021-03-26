@@ -51,6 +51,8 @@ Here are documents including other components.
 [K2HR3 Get Resource Usage](https://k2hr3.antpick.ax/tools.html)  
 [K2HR3 Utilities for Setup](https://k2hr3.antpick.ax/setup.html)  
 [K2HR3 Demonstration](https://demo.k2hr3.antpick.ax/)  
+[K2HR3 Command Line Interface Usage](https://k2hr3.antpick.ax/cli.html)  
+
 
 [About k2hdkc](https://k2hdkc.antpick.ax/)  
 [About k2hash](https://k2hash.antpick.ax/)  
@@ -70,6 +72,7 @@ Here are repositories including other components.
 [K2HR3 Utilities](https://github.com/yahoojapan/k2hr3_utils)  
 [K2HR3 Container Registration Sidecar](https://github.com/yahoojapan/k2hr3_sidecar)  
 [K2HR3 Get Resource](https://github.com/yahoojapan/k2hr3_get_resource)  
+[K2HR3 Command Line Interface](https://github.com/yahoojapan/k2hr3_cli)  
 
 [k2hdkc](https://github.com/yahoojapan/k2hdkc)  
 [k2hash](https://github.com/yahoojapan/k2hash)  
@@ -85,6 +88,7 @@ Here are packages including other components.
 [k2hr3-osnl(python packages)](https://pypi.org/project/k2hr3-osnl/)  
 [k2hr3.sidecar(dockerhub)](https://hub.docker.com/r/antpickax/k2hr3.sidecar)  
 [k2hr3-get-resource(packages)](https://packagecloud.io/app/antpickax/stable/search?q=k2hr3-get-resource)  
+[k2hr3-cli(packages)](https://packagecloud.io/app/antpickax/stable/search?q=k2hr3-cli)  
 
 ## License
 
