@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 #
 # K2HR3 K2HR3 Utilities
 #
@@ -17,20 +18,29 @@
 # REVISION:
 #
 
-[Unit]
-Description=K2hR3 OpenStack Notification Listener
-After=network-online.target
+# [See]
+# https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
+# https://docs.docker.com/develop/develop-images/multistage-build/
 
-[Service]
-Type=simple
-User=k2hr3
-PermissionsStartOnly=true
-ExecStart=/usr/local/bin/k2hr3-osnl -c /usr/local/etc/k2hr3/k2hr3-osnl.conf
-Restart=on-failure
-PIDFile=/var/run/k2hr3-osnl.pid
+FROM python:3.6-alpine as build
 
-[Install]
-WantedBy=multi-user.target
+RUN apk --update --no-cache add build-base libffi-dev openssl-dev
+RUN pip3 install --upgrade pip
+RUN pip3 install --prefix=/install ansible
+
+FROM python:3.6-alpine
+
+LABEL maintainer="antpickax@mail.yahoo.co.jp"
+
+RUN mkdir /lib64 \
+    && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 \
+    && apk --update --no-cache add git curl openssh-client rsync bash
+
+COPY --from=build /install /usr/local
+
+WORKDIR /ansible
+
+CMD [ "ansible-playbook", "--version" ]
 
 #
 # Local variables:

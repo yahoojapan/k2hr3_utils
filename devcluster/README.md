@@ -148,9 +148,9 @@ Here are summary of installation procedures:
 5. Installs binary packages  
   k2hr3_dkc needs the k2htpdtor, libfullock, k2hash, chmpx and k2hdkc.
 6. Configures the chmpx default configuratoin  
-  The default server.ini contains dummy server name. You need to change it.
+  The default k2hdkc.ini contains dummy server name. You need to change it.
 7. Installs the configured chmpx config file  
-  k2hr3_dkc uses a configuration file(for instance /etc/k2hdkc/server.ini) for [chmpx](https://github.com/yahoojapan/chmpx).
+  k2hr3_dkc uses a configuration file(for instance /etc/antpickax/k2hdkc.ini) for [chmpx](https://github.com/yahoojapan/chmpx).
 8. Configures the chmpx's service manager default configuration  
   We recommend [chmpx](https://github.com/yahoojapan/chmpx) processes work as a service by [systemd](https://freedesktop.org/wiki/Software/systemd/).
 9. Installs the chmpx service manager configuration and enables it  
@@ -194,9 +194,9 @@ Here are summary of installation procedures:
 5. Installs binary packages  
   k2hr3_api needs the nodejs, k2htpdtor, libfullock, k2hash, chmpx and k2hdkc.
 6. Configures the chmpx slave default configuration  
-  The default slave.ini contains dummy server name. You need to change it.
+  The default chmpx.ini contains dummy server name. You need to change it.
 7. Installs the configured chmpx slave config file  
-  k2hr3_api uses a configuration file(for instance /etc/k2hdkc/slave.ini) for [chmpx](https://github.com/yahoojapan/chmpx).
+  k2hr3_api uses a configuration file(for instance /etc/k2hdkc/chmpx.ini) for [chmpx](https://github.com/yahoojapan/chmpx).
 8. Configures the chmpx slave's service manager default configuration  
   We recommend [chmpx](https://github.com/yahoojapan/chmpx) process works as a service by [systemd](https://freedesktop.org/wiki/Software/systemd/).
 9. Configures the chmpx slave's service manager default configuration  

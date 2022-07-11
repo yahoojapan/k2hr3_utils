@@ -17,6 +17,7 @@
  * CREATE:   Tue Nov 12 2019
  * REVISION:
  */
+
 //
 // This program generates a local.json of k2hr3-app from a k2hr3-utils setup.ini
 //
@@ -27,21 +28,31 @@ const srcdir = path.resolve(__dirname);
 const process = require('process');
 
 if ( process.argv.length != 4) {
-    let err = "Usage: node " + process.argv[1] + " <path to setup.ini> <path to local.json>";
-    console.error(err);
-    throw new Error(err);
+	let err = "Usage: node " + process.argv[1] + " <path to setup.ini> <path to local.json>";
+	console.error(err);
+	throw new Error(err);
 }
+
 const input = process.argv[2];
 const output = process.argv[3];
 try {
-    let rci = require(path.join(srcdir, 'r3clusterini.js'));
-    let raj = require(path.join(srcdir, 'r3appjson.js'));
-    let cluster = new rci.R3clusterIni(input, 'k2hr3_app');
-    let r3app= new raj.R3appJson();
-    for (const val of cluster) {
-        r3app.configure(val[0], val[1]); // key, value
-    }
-    r3app.dumpTo(output);
+	let rci = require(path.join(srcdir, 'r3clusterini.js'));
+	let raj = require(path.join(srcdir, 'r3appjson.js'));
+	let cluster = new rci.R3clusterIni(input, 'k2hr3_app');
+	let r3app = new raj.R3appJson();
+	for (const val of cluster) {
+		r3app.configure(val[0], val[1]); // key, value
+	}
+	r3app.dumpTo(output);
 } catch (err) {
-    console.error(err.name + ' ' + err.message);
+	console.error(err.name + ' ' + err.message);
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: noexpandtab sw=4 ts=4 fdm=marker
+ * vim<600: noexpandtab sw=4 ts=4
+ */
