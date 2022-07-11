@@ -636,10 +636,10 @@ fi
 # So do upgrade nodejs and npm at first.
 #
 if [ ${IS_DEBIAN} -eq 1 ]; then
-	curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+	curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
 	K2HDKC_DEV_PACKAGE=k2hdkc-dev
 else
-	curl -sL https://rpm.nodesource.com/setup_16.x | sudo -E bash -
+	curl -sL https://rpm.nodesource.com/setup_10.x | sudo -E bash -
 	K2HDKC_DEV_PACKAGE=k2hdkc-devel
 fi
 sudo ${PKG_INSTALLER} install -y nodejs
