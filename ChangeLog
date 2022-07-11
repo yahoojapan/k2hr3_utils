@@ -1,3 +1,9 @@
+k2hr3-utils (1.0.1) unstable; urgency=low
+
+  * Refactored, added features and updated code - #19
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Mon, 11 Jul 2022 16:38:56 +0900
+
 k2hr3-utils (1.0.0) unstable; urgency=low
 
   * Bumps up the release version.
