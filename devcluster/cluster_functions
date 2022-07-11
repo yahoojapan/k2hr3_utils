@@ -875,6 +875,13 @@ setup_npm_environment() {
             return 1
         fi
     fi
+    logger -t ${TAG} -p user.debug "npm config set python /usr/bin/python3"
+    npm config set python /usr/bin/python3
+    RESULT=$?
+    if test "${RESULT}" -ne 0; then
+        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+        return 1
+    fi
     return 0
 }
 

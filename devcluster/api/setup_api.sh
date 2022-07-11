@@ -48,30 +48,30 @@ NPM_ARCHIVE_FILE=
 IDENTITY_ENDPOINT=
 
 if ! test -r "${SRCDIR}/../cluster_functions"; then
-    logger -t ${TAG} -p user.err "${SRCDIR}/../cluster_functions should exist"
-    exit 1
+	logger -t ${TAG} -p user.err "${SRCDIR}/../cluster_functions should exist"
+	exit 1
 fi
 . ${SRCDIR}/../cluster_functions
 
 # Parses cli args
 while true; do
-    case "${1-}" in
-        -d) DEBUG=1;;
-        -f) shift; NPM_ARCHIVE_FILE="${1-}";;
-        -h) usage_api;;
-        -i) shift; IDENTITY_ENDPOINT="${1-}";;
-        -r) DRYRUN=1;;
-        -v) version;;
-        *) break;;
-    esac
-    shift
+	case "${1-}" in
+		-d) DEBUG=1;;
+		-f) shift; NPM_ARCHIVE_FILE="${1-}";;
+		-h) usage_api;;
+		-i) shift; IDENTITY_ENDPOINT="${1-}";;
+		-r) DRYRUN=1;;
+		-v) version;;
+		*) break;;
+	esac
+	shift
 done
 
 # Determines the debug mode
 if test "${DEBUG}" -eq 1; then
-    TAG="$(basename $0) -s"
+	TAG="$(basename $0) -s"
 else
-    TAG=$(basename $0)
+	TAG=$(basename $0)
 fi
 
 # The first message is always visible.
@@ -87,35 +87,35 @@ logger -t ${TAG} -p user.info "1. Initializes environments"
 setup_os_env
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "setup_os_env should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "setup_os_env should return zero, not ${RET}"
+	exit 1
 fi
 
 # Loads default settings
 setup_ini_env
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "setup_ini_env should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "setup_ini_env should return zero, not ${RET}"
+	exit 1
 fi
 
 # IDENTITY_ENDPOINT passed as an argument will override k2hr3_api_identity_endpoint defined in the ini file.
 if test -n "${IDENTITY_ENDPOINT}"; then
-    k2hr3_api_identity_endpoint=${IDENTITY_ENDPOINT}
-    # update the value in setup_${COMPONENT}_${OS_NAME}.ini.
-    for ini_file in ${SRCDIR}/setup_${COMPONENT}_${OS_NAME}.ini ${SRCDIR}/setup_${COMPONENT}_default.ini; do
-        if test -f "${ini_file}"; then
-            logger -t ${TAG} -p user.debug "configure_ini_file ${ini_file} k2hr3_api_identity_endpoint"
-            configure_ini_file ${ini_file} k2hr3_api_identity_endpoint
-            RET=$?
-            if test "${RET}" -ne 0; then
-                logger -t ${TAG} -p user.err "setup_ini_env should return zero, not ${RET}"
-                exit 1
-            fi
-        else
-            logger -t ${TAG} -p user.warn "${ini_file} not found. Skip updating"
-        fi
-    done
+	k2hr3_api_identity_endpoint=${IDENTITY_ENDPOINT}
+	# update the value in setup_${COMPONENT}_${OS_NAME}.ini.
+	for ini_file in ${SRCDIR}/setup_${COMPONENT}_${OS_NAME}.ini ${SRCDIR}/setup_${COMPONENT}_default.ini; do
+		if test -f "${ini_file}"; then
+			logger -t ${TAG} -p user.debug "configure_ini_file ${ini_file} k2hr3_api_identity_endpoint"
+			configure_ini_file ${ini_file} k2hr3_api_identity_endpoint
+			RET=$?
+			if test "${RET}" -ne 0; then
+				logger -t ${TAG} -p user.err "setup_ini_env should return zero, not ${RET}"
+				exit 1
+			fi
+		else
+			logger -t ${TAG} -p user.warn "${ini_file} not found. Skip updating"
+		fi
+	done
 fi
 
 ########
@@ -126,8 +126,8 @@ logger -t ${TAG} -p user.info "2. Ensures that the k2hr3_api data directory exis
 
 # Loads functions defined in setup_chmpx_functions
 if ! test -r "${SRCDIR}/../chmpx/setup_chmpx_functions"; then
-    logger -t ${TAG} -p user.err "${SRCDIR}/../chmpx/setup_chmpx_functions should exist"
-    exit 1
+	logger -t ${TAG} -p user.err "${SRCDIR}/../chmpx/setup_chmpx_functions should exist"
+	exit 1
 fi
 . ./chmpx/setup_chmpx_functions
 
@@ -137,8 +137,8 @@ runuser=$(eval echo "\${$runuser_varname}")
 make_k2hdkc_data_dir ${runuser} ${k2hdkc_data_dir}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "make_k2hdkc_data_dir should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "make_k2hdkc_data_dir should return zero, not ${RET}"
+	exit 1
 fi
 
 ########
@@ -152,8 +152,8 @@ k2hdkc_conf_dir=$(dirname ${chmpx_conf_file})
 make_k2hdkc_conf_dir ${k2hdkc_conf_dir}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "make_k2hdkc_conf_dir should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "make_k2hdkc_conf_dir should return zero, not ${RET}"
+	exit 1
 fi
 
 ########
@@ -166,26 +166,26 @@ logger -t ${TAG} -p user.info "4. Adds a new package repository"
 enable_packagecloud_io_repository ${package_script_base_url-}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "enable_packagecloud_io_repository should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "enable_packagecloud_io_repository should return zero, not ${RET}"
+	exit 1
 fi
 
 # Enables the nodesource repo
 enable_nodesource_repository ${nodesource_url-}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "enable_nodesource_repository should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "enable_nodesource_repository should return zero, not ${RET}"
+	exit 1
 fi
 
 # Enables the softwarecollections repo
 if test "${OS_NAME}" = "centos"; then
-    setup_package_repository ${copr_url-}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "setup_package_repository should return zero, not ${RET}"
-        exit 1
-    fi
+	setup_package_repository ${copr_url-}
+	RET=$?
+	if test "${RET}" -ne 0; then
+		logger -t ${TAG} -p user.err "setup_package_repository should return zero, not ${RET}"
+		exit 1
+	fi
 fi
 
 ########
@@ -198,77 +198,62 @@ logger -t ${TAG} -p user.info "5. Installs OS dependent packages"
 # define empty ${package_install_pkg} value in their initial configuration file.
 # We call the setup_install_os_packages function if package_install_pkgs defined.
 if test -n "${package_install_pkgs-}"; then
-    setup_install_os_packages "${package_install_pkgs-}"
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
-        exit 1
-    fi
+	setup_install_os_packages "${package_install_pkgs-}"
+	RET=$?
+	if test "${RET}" -ne 0; then
+		logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
+		exit 1
+	fi
 else
-    logger -t ${TAG} -p user.err "package_install_pkgs is zero"
+	logger -t ${TAG} -p user.err "package_install_pkgs is zero"
 fi
 
 ########
 # 6. Configures the chmpx slave default configuration
-# The default slave.ini contains dummy server name. You need to change it.
+# The default chmpx.ini contains dummy server name. You need to change it.
 #
 logger -t ${TAG} -p user.info "6. Configures the default chmpx slave configuration"
 
 # Configures the chmpx slave default configuration file in INI file format
-configure_chmpx_slave_ini ${SRCDIR}/../chmpx/slave.ini ${chmpx_server_name}
+configure_chmpx_chmpx_ini ${SRCDIR}/../chmpx/chmpx.ini ${chmpx_server_name}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "configure_chmpx_slave_ini should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "configure_chmpx_chmpx_ini should return zero, not ${RET}"
+	exit 1
 fi
 
 ########
 # 7. Installs the configured chmpx slave config file
-# k2hr3_api uses a configuration file(for instance /etc/k2hdkc/slave.ini) for chmpx.
+# k2hr3_api uses a configuration file(for instance /etc/k2hdkc/chmpx.ini) for chmpx.
 #
 logger -t ${TAG} -p user.info "7. Installs the configured chmpx slave config file"
 
 # Installs the configured chmpx slave config file in INI format to ${chmpx_conf_file}
-install_chmpx_conf ${SRCDIR}/../chmpx/slave.ini ${chmpx_conf_file}
+install_chmpx_conf ${SRCDIR}/../chmpx/chmpx.ini ${chmpx_conf_file}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "install_chmpx_conf should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "install_chmpx_conf should return zero, not ${RET}"
+	exit 1
 fi
 
-########
-# 8. Configures the chmpx slave's service manager default configuration
-# We recommend chmpx slave process works as a service by systemd.
-#
-logger -t ${TAG} -p user.info "8. Configures the chmpx slave's service manager default configuration"
-
-# Determines the service management file which file format depends on a service manager of the target OS
-if test "${SERVICE_MANAGER}" = "systemd"; then
-    service_manager_file=${SRCDIR}/../service_manager/chmpx-slave.service
-else
-    logger -t ${TAG} -p user.err "SERVICE_MANAGER must be either systemd, not ${SERVICE_MANAGER}"
-    exit 1
-fi
-# Configures the chmpx's service manager default configuration
-is_k2hdkc=0
-configure_chmpx_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_api_runuser} ${chmpx_conf_file} ${chmpx_msg_max} ${is_k2hdkc} ${chmpx_loglevel}
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "configure_chmpx_service_manager_file should return zero, not ${RET}"
-    exit 1
-fi
-
-########
-# 9. Installs the chmpx-slave service manager configuration and enables it
-# systemd controls chmpx.
-#
-logger -t ${TAG} -p user.info "9. Installs the chmpx-slave service manager configuration and enables it"
-
-install_service_manager_conf ${SERVICE_MANAGER} chmpx-slave
-RET=$?
-if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
-    exit 1
+# Installs the override.conf to ${chmpx_override_conf_file}
+if test -f "${SRCDIR}/../chmpx/override.conf"; then
+	# 1. replaces k2hdkc.ini with chmpx.ini
+	# FIXME hardcoding
+	logger -t ${TAG} -p user.debug "perl -pi -e \"s|= k2hdkc.ini|= chmpx.ini|g\" ${SRCDIR}/../chmpx/override.conf"
+	perl -pi -e "s|= k2hdkc.ini|= chmpx.ini|g" ${SRCDIR}/../chmpx/override.conf
+	RESULT=$?
+	if test "${RESULT}" -ne 0; then
+		logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+		return 1
+	fi
+	# 2. installs override.conf
+	install_chmpx_conf ${SRCDIR}/../chmpx/override.conf ${chmpx_override_conf_file}
+	RET=$?
+	if test "${RET}" -ne 0; then
+		logger -t ${TAG} -p user.err "install_chmpx_conf should return zero, not ${RET}"
+		exit 1
+	fi
 fi
 
 ########
@@ -278,15 +263,15 @@ fi
 logger -t ${TAG} -p user.info "10. Installs devel packages to build the k2hdkc node module"
 
 if test -n "${package_install_dev_pkgs}"; then
-    setup_install_os_packages "${package_install_dev_pkgs}"
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
-        exit 1
-    fi
+	setup_install_os_packages "${package_install_dev_pkgs}"
+	RET=$?
+	if test "${RET}" -ne 0; then
+		logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
+		exit 1
+	fi
 else
-    logger -t ${TAG} -p user.err "package_install_dev_pkgs should be nonzero, ${package_install_dev_pkgs}"
-    exit 1
+	logger -t ${TAG} -p user.err "package_install_dev_pkgs should be nonzero, ${package_install_dev_pkgs}"
+	exit 1
 fi
 
 ########
@@ -298,21 +283,21 @@ fi
 logger -t ${TAG} -p user.info "11. Installs npm packages"
 
 if ! test -n "${npm_default_user}"; then
-    logger -t ${TAG} -p user.err "npm_default_user should be nonzero, ${npm_default_user}"
-    exit 1
+	logger -t ${TAG} -p user.err "npm_default_user should be nonzero, ${npm_default_user}"
+	exit 1
 fi
 add_npm_user ${npm_default_user}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "add_npm_user should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "add_npm_user should return zero, not ${RET}"
+	exit 1
 fi
 
 setup_npm_userhome ${npm_default_user}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "setup_npm_userhome should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "setup_npm_userhome should return zero, not ${RET}"
+	exit 1
 fi
 
 # Runs api/setup_api_node_module.sh as node command executer
@@ -320,19 +305,19 @@ node_api_module_sh="${SRCDIR}/setup_api_node_module.sh"
 
 # Adds the DEBUG option if DEBUG is enabled
 if test "${DEBUG}" -eq 1; then
-    node_api_module_sh="${node_api_module_sh} -d"
+	node_api_module_sh="${node_api_module_sh} -d"
 fi
 
 # Adds the NPM_ARCHIVE_FILE option if NPM_ARCHIVE_FILE exists
 if test -n "${NPM_ARCHIVE_FILE}"; then
-    if test -f "${NPM_ARCHIVE_FILE}"; then
-        # Remenber to call 'basename' function
-        # Because an archive file stays /home/k2hr3/k2hr3-api-0.0.1.tgz
-        node_api_module_sh="${node_api_module_sh} -f $(basename ${NPM_ARCHIVE_FILE})"
-    else
-        logger -t ${TAG} -p user.err "${NPM_ARCHIVE_FILE} must be a URL"
-        node_api_module_sh="${node_api_module_sh} -f ${NPM_ARCHIVE_FILE}"
-    fi
+	if test -f "${NPM_ARCHIVE_FILE}"; then
+		# Remenber to call 'basename' function
+		# Because an archive file stays /home/k2hr3/k2hr3-api-0.0.1.tgz
+		node_api_module_sh="${node_api_module_sh} -f $(basename ${NPM_ARCHIVE_FILE})"
+	else
+		logger -t ${TAG} -p user.err "${NPM_ARCHIVE_FILE} must be a URL"
+		node_api_module_sh="${node_api_module_sh} -f ${NPM_ARCHIVE_FILE}"
+	fi
 fi
 
 ########
@@ -347,12 +332,12 @@ fi
 #   $ sudo su - k2hr3 sh -c "sh ./setup_api_node_module.sh -d"
 logger -t ${TAG} -p user.debug "sudo su - ${npm_default_user} sh -c \"${node_api_module_sh}\""
 if test -z "${DRYRUN-}"; then
-    sudo su - ${npm_default_user} sh -c "sh ${node_api_module_sh}"
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-        exit 1
-    fi
+	sudo su - ${npm_default_user} sh -c "sh ${node_api_module_sh}"
+	RESULT=$?
+	if test "${RESULT}" -ne 0; then
+		logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+		exit 1
+	fi
 fi
 
 # A workaround for root owner logs in the ${npm_run_user} directory
@@ -367,8 +352,8 @@ fi
 patch_for_change_logdir_owner ${npm_default_user}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "setup_npm_userhome should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "setup_npm_userhome should return zero, not ${RET}"
+	exit 1
 fi
 
 ########
@@ -378,24 +363,24 @@ fi
 logger -t ${TAG} -p user.info "14. Configures the k2hr3-api's service manager default configuration"
 
 if ! test -r "${SRCDIR}/setup_${COMPONENT}_functions"; then
-    logger -t ${TAG} -p user.err "${SRCDIR}/setup_${COMPONENT}_functions should exist"
-    exit 1
+	logger -t ${TAG} -p user.err "${SRCDIR}/setup_${COMPONENT}_functions should exist"
+	exit 1
 fi
 . ${SRCDIR}/setup_${COMPONENT}_functions
 
 # Determines the service management file which file format depends on a service manager of the target OS
 if test "${SERVICE_MANAGER}" = "systemd"; then
-    service_manager_file=${SRCDIR}/../service_manager/k2hr3-api.service
+	service_manager_file=${SRCDIR}/../service_manager/k2hr3-api.service
 else
-    logger -t ${TAG} -p user.err "SERVICE_MANAGER must be either systemd, not ${SERVICE_MANAGER}"
-    exit 1
+	logger -t ${TAG} -p user.err "SERVICE_MANAGER must be either systemd, not ${SERVICE_MANAGER}"
+	exit 1
 fi
 # Configures the k2hr3-api's service manager default configuration
 configure_k2hr3_api_service_manager_file ${SERVICE_MANAGER} ${service_manager_file} ${k2hr3_api_runuser} ${node_debug} ${node_path}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "configure_k2hr3_api_service_manager_file should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "configure_k2hr3_api_service_manager_file should return zero, not ${RET}"
+	exit 1
 fi
 
 ########
@@ -407,21 +392,28 @@ logger -t ${TAG} -p user.info "15. Installs the k2hr3-api service manager config
 install_service_manager_conf ${SERVICE_MANAGER} k2hr3-api
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "install_service_manager_conf should return zero, not ${RET}"
+	exit 1
 fi
 
 ########
 # Start the service!
 #
-logger -t ${TAG} -p user.debug "sudo systemctl restart chmpx-slave.service"
+logger -t ${TAG} -p user.debug "sudo systemctl enable chmpx.service"
 if test -z "${DRYRUN-}"; then
-    sudo systemctl restart chmpx-slave.service
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "'sudo systemctl restart chmpx-slave.service' should return zero, not ${RESULT}"
-        exit 1
-    fi
+	sudo systemctl enable chmpx.service
+	RESULT=$?
+	if test "${RESULT}" -ne 0; then
+		logger -t ${TAG} -p user.err "'sudo systemctl enable chmpx.service' should return zero, not ${RESULT}"
+		exit 1
+	fi
+	logger -t ${TAG} -p user.debug "sudo systemctl start chmpx.service"
+	sudo systemctl start chmpx.service
+	RESULT=$?
+	if test "${RESULT}" -ne 0; then
+		logger -t ${TAG} -p user.err "'sudo systemctl start chmpx.service' should return zero, not ${RESULT}"
+		exit 1
+	fi
 fi
 
 # A workaround for an old configuration value in k2hdkc
@@ -430,7 +422,7 @@ fi
 #   "eplist" takes a region name as a key and an Identity service endpoint as a value.
 #   ```
 #   "eplist": {
-#       "RegionOne": "http://172.16.0.1/identity"
+#	   "RegionOne": "http://172.16.0.1/identity"
 #   }
 #   ```
 #   k2hr3-api saves the value as a subkey of "yrn:yahoo::::keystone" in k2hdkc.
@@ -442,32 +434,32 @@ fi
 #   Deletes the region name key in cluster installation process. Every deployment
 #   script should work idempotently for continuous integration.
 #
-logger -t ${TAG} -p user.debug "sleep 20 for chmpx-slave to start the service"
+logger -t ${TAG} -p user.debug "sleep 20 for chmpx to start the service"
 if test -z "${DRYRUN-}"; then
-    sleep 20
-    DATAFILE=/tmp/devcluster.data
-    cat >> ${DATAFILE} << EOF
+	sleep 20
+	DATAFILE=/tmp/devcluster.data
+	cat >> ${DATAFILE} << EOF
 p yrn:yahoo::::keystone
 rmsub yrn:yahoo::::keystone all
 quit
 EOF
 
-    logger -t ${TAG} -p user.debug "sudo -u ${k2hr3_api_runuser} k2hdkclinetool -conf ${k2hr3_api_k2hdkc_config} -ctlport ${k2hr3_api_k2hdkc_port} -run ${DATAFILE}"
-    sudo -u ${k2hr3_api_runuser} k2hdkclinetool -conf ${k2hr3_api_k2hdkc_config} -ctlport ${k2hr3_api_k2hdkc_port} -run ${DATAFILE}
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "k2hdkclinetool should return zero, not ${RESULT}"
-        exit 1
-    fi
+	logger -t ${TAG} -p user.debug "sudo -u ${k2hr3_api_runuser} k2hdkclinetool -conf ${k2hr3_api_k2hdkc_config} -ctlport ${k2hr3_api_k2hdkc_port} -run ${DATAFILE}"
+	sudo -u ${k2hr3_api_runuser} k2hdkclinetool -conf ${k2hr3_api_k2hdkc_config} -ctlport ${k2hr3_api_k2hdkc_port} -run ${DATAFILE}
+	RESULT=$?
+	if test "${RESULT}" -ne 0; then
+		logger -t ${TAG} -p user.err "k2hdkclinetool should return zero, not ${RESULT}"
+		exit 1
+	fi
 
 
-    logger -t ${TAG} -p user.debug "sudo systemctl restart k2hr3-${COMPONENT}.service"
-    sudo systemctl restart k2hr3-${COMPONENT}.service
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "'sudo systemctl restart k2hr3-${COMPONENT}.service' should return zero, not ${RESULT}"
-        exit 1
-    fi
+	logger -t ${TAG} -p user.debug "sudo systemctl restart k2hr3-${COMPONENT}.service"
+	sudo systemctl restart k2hr3-${COMPONENT}.service
+	RESULT=$?
+	if test "${RESULT}" -ne 0; then
+		logger -t ${TAG} -p user.err "'sudo systemctl restart k2hr3-${COMPONENT}.service' should return zero, not ${RESULT}"
+		exit 1
+	fi
 fi
 
 # The final message displays the time elapsed.
@@ -477,7 +469,10 @@ logger -t $(basename $0) -s -p user.info "completed in ${ELAPSED} seconds"
 exit 0
 
 #
-# VIM modelines
-#
-# vim:set ts=4 fenc=utf-8:
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
 #

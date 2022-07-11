@@ -41,55 +41,63 @@ umask 022
 
 
 function setup_service_manager {
-    logger -t ${TAG} -p user.info "default.sh setup_service_manager"
+	logger -t ${TAG} -p user.info "default.sh setup_service_manager"
 
-    ########
-    # 9. Enables the chmpx service manager
-    # systemd controls chmpx.
-    #
-    logger -t ${TAG} -p user.info "9. Enables the chmpx service manager configuration"
+	########
+	# 9. Enables the chmpx service manager
+	# systemd controls chmpx.
+	#
+	logger -t ${TAG} -p user.info "9. Enables the chmpx service manager configuration"
 
-    enable_service_manager ${SERVICE_MANAGER} chmpx
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "enable_service_manager should return zero, not ${RET}"
-        exit 1
-    fi
+	enable_service_manager ${SERVICE_MANAGER} chmpx
+	RET=$?
+	if test "${RET}" -ne 0; then
+		logger -t ${TAG} -p user.err "enable_service_manager should return zero, not ${RET}"
+		exit 1
+	fi
 
-    ########
-    # 11. Enables Installs the k2hdkc service manager configuration
-    # systemd controls k2hdkc
-    #
-    logger -t ${TAG} -p user.info "11. Enables the k2hdkc service manager configuration"
+	########
+	# 11. Enables Installs the k2hdkc service manager configuration
+	# systemd controls k2hdkc
+	#
+	logger -t ${TAG} -p user.info "11. Enables the k2hdkc service manager configuration"
 
-    enable_service_manager ${SERVICE_MANAGER} k2hdkc
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "enable_service_manager should return zero, not ${RET}"
-        exit 1
-    fi
+	enable_service_manager ${SERVICE_MANAGER} k2hdkc
+	RET=$?
+	if test "${RET}" -ne 0; then
+		logger -t ${TAG} -p user.err "enable_service_manager should return zero, not ${RET}"
+		exit 1
+	fi
 
-    ########
-    # Start the service!
-    #
-    logger -t ${TAG} -p user.debug "sudo systemctl restart chmpx.service"
-    if test -z "${DRYRUN-}"; then
-        sudo systemctl restart chmpx.service
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "'sudo systemctl restart chmpx.service' should return zero, not ${RESULT}"
-            exit 1
-        fi
+	########
+	# Start the service!
+	#
+	logger -t ${TAG} -p user.debug "sudo systemctl restart chmpx.service"
+	if test -z "${DRYRUN-}"; then
+		sudo systemctl restart chmpx.service
+		RESULT=$?
+		if test "${RESULT}" -ne 0; then
+			logger -t ${TAG} -p user.err "'sudo systemctl restart chmpx.service' should return zero, not ${RESULT}"
+			exit 1
+		fi
 
-        logger -t ${TAG} -p user.debug "sudo systemctl restart k2hdkc.service"
-        sudo systemctl restart k2hdkc.service
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "'sudo systemctl restart k2hdkc.service' should return zero, not ${RESULT}"
-            exit 1
-        fi
-    fi
-    logger -t ${TAG} -p user.info "default.sh setup_service_manager done"
-    return 0
+		logger -t ${TAG} -p user.debug "sudo systemctl restart k2hdkc.service"
+		sudo systemctl restart k2hdkc.service
+		RESULT=$?
+		if test "${RESULT}" -ne 0; then
+			logger -t ${TAG} -p user.err "'sudo systemctl restart k2hdkc.service' should return zero, not ${RESULT}"
+			exit 1
+		fi
+	fi
+	logger -t ${TAG} -p user.info "default.sh setup_service_manager done"
+	return 0
 }
 
+#
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
+#

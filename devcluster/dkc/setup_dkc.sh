@@ -46,28 +46,28 @@ STARTTIME=$(date +%s)
 VERSION=0.10.0
 
 if ! test -r "${SRCDIR}/../cluster_functions"; then
-    logger -t ${TAG} -p user.err "${SRCDIR}/../cluster_functions should exist"
-    exit 1
+	logger -t ${TAG} -p user.err "${SRCDIR}/../cluster_functions should exist"
+	exit 1
 fi
 . ${SRCDIR}/../cluster_functions
 
 # parses cli args
 while true; do
-    case "${1-}" in
-        -d) DEBUG=1;;
-        -h) usage_dkc;;
-        -r) DRYRUN=1;;
-        -v) version;;
-        *) break;;
-    esac
-    shift
+	case "${1-}" in
+		-d) DEBUG=1;;
+		-h) usage_dkc;;
+		-r) DRYRUN=1;;
+		-v) version;;
+		*) break;;
+	esac
+	shift
 done
 
 # determines the debug mode
 if test "${DEBUG}" -eq 1; then
-    TAG="$(basename $0) -s"
+	TAG="$(basename $0) -s"
 else
-    TAG=$(basename $0)
+	TAG=$(basename $0)
 fi
 
 # The first message is always visible.
@@ -83,16 +83,16 @@ logger -t ${TAG} -p user.info "1. Initializes environments"
 setup_os_env
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "setup_os_env should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "setup_os_env should return zero, not ${RET}"
+	exit 1
 fi
 
 # Loads default settings
 setup_ini_env
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "setup_ini_env should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "setup_ini_env should return zero, not ${RET}"
+	exit 1
 fi
 
 ########
@@ -103,8 +103,8 @@ logger -t ${TAG} -p user.info "2. Ensures that the k2hdkc data directory exists"
 
 # Loads functions defined in setup_chmpx_functions
 if ! test -r "${SRCDIR}/../chmpx/setup_chmpx_functions"; then
-    logger -t ${TAG} -p user.err "${SRCDIR}/../chmpx/setup_chmpx_functions should exist"
-    exit 1
+	logger -t ${TAG} -p user.err "${SRCDIR}/../chmpx/setup_chmpx_functions should exist"
+	exit 1
 fi
 . ${SRCDIR}/../chmpx/setup_chmpx_functions
 
@@ -114,8 +114,8 @@ runuser=$(eval echo "\${$runuser_varname}")
 make_k2hdkc_data_dir ${runuser} ${k2hdkc_data_dir}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "make_k2hdkc_data_dir should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "make_k2hdkc_data_dir should return zero, not ${RET}"
+	exit 1
 fi
 
 ########
@@ -129,8 +129,8 @@ k2hdkc_conf_dir=$(dirname ${chmpx_conf_file})
 make_k2hdkc_conf_dir ${k2hdkc_conf_dir}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "make_k2hdkc_conf_dir should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "make_k2hdkc_conf_dir should return zero, not ${RET}"
+	exit 1
 fi
 
 ########
@@ -143,16 +143,16 @@ logger -t ${TAG} -p user.info "4. Adds a new package repository"
 enable_packagecloud_io_repository ${package_script_base_url-}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "enable_packagecloud_io_repository should return zero, not ${RET}"
-    exit 1
+	logger -t ${TAG} -p user.err "enable_packagecloud_io_repository should return zero, not ${RET}"
+	exit 1
 fi
 
 # Enables centos-PowerTools if centos
 enable_dnf_repository ${package_dnf_repo}
 RET=$?
 if test "${RET}" -ne 0; then
-    logger -t ${TAG} -p user.err "enable_dnf_repository should return zero, not ${RET}"
-    continue
+	logger -t ${TAG} -p user.err "enable_dnf_repository should return zero, not ${RET}"
+	continue
 fi
 
 ########
@@ -164,36 +164,36 @@ logger -t ${TAG} -p user.info "5. Installs OS dependent packages"
 # Some distros pre-install dkc required packages. In this case, users define
 # empty ${package_install_pkg} value in their initial configuration file.
 if test -n "${package_install_pkgs-}"; then
-    setup_install_os_packages "${package_install_pkgs-}"
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
-        exit 1
-    fi
+	setup_install_os_packages "${package_install_pkgs-}"
+	RET=$?
+	if test "${RET}" -ne 0; then
+		logger -t ${TAG} -p user.err "setup_install_os_packages should return zero, not ${RET}"
+		exit 1
+	fi
 else
-    logger -t ${TAG} -p user.info "5.1 Installs k2hdkc from source"
-    make_k2hdkc ${OS_NAME}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "make_k2hdkc should return zero, not ${RET}"
-        exit 1
-    fi
+	logger -t ${TAG} -p user.info "5.1 Installs k2hdkc from source"
+	make_k2hdkc ${OS_NAME}
+	RET=$?
+	if test "${RET}" -ne 0; then
+		logger -t ${TAG} -p user.err "make_k2hdkc should return zero, not ${RET}"
+		exit 1
+	fi
 fi
 
 ########
 # 6. Configures the chmpx default configuration
-# The default server.ini contains dummy server name. You need to change it.
+# The default k2hdkc.ini contains dummy server name. You need to change it.
 #
 logger -t ${TAG} -p user.info "6. Configures the default chmpx configuration"
 
 # Configures the chmpx default configuration file in INI file format
-if test -f "${SRCDIR}/../chmpx/server.ini"; then
-    configure_chmpx_server_ini ${SRCDIR}/../chmpx/server.ini ${chmpx_server_name} ${k2hdkc_data_dir}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "configure_chmpx_server_ini should return zero, not ${RET}"
-        exit 1
-    fi
+if test -f "${SRCDIR}/../chmpx/k2hdkc.ini"; then
+	configure_chmpx_k2hdkc_ini ${SRCDIR}/../chmpx/k2hdkc.ini ${chmpx_server_name} ${k2hdkc_data_dir}
+	RET=$?
+	if test "${RET}" -ne 0; then
+		logger -t ${TAG} -p user.err "configure_chmpx_k2hdkc_ini should return zero, not ${RET}"
+		exit 1
+	fi
 fi
 
 ########
@@ -203,56 +203,56 @@ fi
 logger -t ${TAG} -p user.info "7. Installs the configured chmpx config files"
 
 # Installs the configured chmpx config file in INI format to ${chmpx_conf_file}
-if test -f "${SRCDIR}/../chmpx/server.ini"; then
-    install_chmpx_conf ${SRCDIR}/../chmpx/server.ini ${chmpx_conf_file}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "install_chmpx_conf should return zero, not ${RET}"
-        exit 1
-    fi
+if test -f "${SRCDIR}/../chmpx/k2hdkc.ini"; then
+	install_chmpx_conf ${SRCDIR}/../chmpx/k2hdkc.ini ${chmpx_conf_file}
+	RET=$?
+	if test "${RET}" -ne 0; then
+		logger -t ${TAG} -p user.err "install_chmpx_conf should return zero, not ${RET}"
+		exit 1
+	fi
 fi
 
 # Installs the override.conf to ${chmpx_override_conf_file}
 if test -f "${SRCDIR}/../chmpx/override.conf"; then
-    install_chmpx_conf ${SRCDIR}/../chmpx/override.conf ${chmpx_override_conf_file}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "install_chmpx_conf should return zero, not ${RET}"
-        exit 1
-    fi
+	install_chmpx_conf ${SRCDIR}/../chmpx/override.conf ${chmpx_override_conf_file}
+	RET=$?
+	if test "${RET}" -ne 0; then
+		logger -t ${TAG} -p user.err "install_chmpx_conf should return zero, not ${RET}"
+		exit 1
+	fi
 fi
 
 logger -t ${TAG} -p user.info "8. Configures the chmpx and's service manager default configuration"
 if test -n "${service_manager_plugin}"; then
-    logger -t ${TAG} -p user.info "Invokes setup_service_manager in ${service_manager_plugin}.sh"
-    if test -f "${SRCDIR}/../service_manager/plugin/${service_manager_plugin}.sh"; then
-        logger -t ${TAG} -p user.debug "source ${SRCDIR}/../service_manager/plugin/${service_manager_plugin}.sh"
-        source "${SRCDIR}/../service_manager/plugin/${service_manager_plugin}.sh"
-        setup_service_manager 
-        RET=$?
-        if test "${RET}" -ne 0; then
-            logger -t ${TAG} -p user.err "setup_service_manager should return zero, not ${RET}"
-            exit 1
-        fi
-    else
-        logger -t ${TAG} -p user.error "${SRCDIR}/../service_manager/plugin/${service_manager_plugin}.sh should exist, but not found"
-        exit 1
-    fi
+	logger -t ${TAG} -p user.info "Invokes setup_service_manager in ${service_manager_plugin}.sh"
+	if test -f "${SRCDIR}/../service_manager/plugin/${service_manager_plugin}.sh"; then
+		logger -t ${TAG} -p user.debug "source ${SRCDIR}/../service_manager/plugin/${service_manager_plugin}.sh"
+		source "${SRCDIR}/../service_manager/plugin/${service_manager_plugin}.sh"
+		setup_service_manager
+		RET=$?
+		if test "${RET}" -ne 0; then
+			logger -t ${TAG} -p user.err "setup_service_manager should return zero, not ${RET}"
+			exit 1
+		fi
+	else
+		logger -t ${TAG} -p user.error "${SRCDIR}/../service_manager/plugin/${service_manager_plugin}.sh should exist, but not found"
+		exit 1
+	fi
 else
-    logger -t ${TAG} -p user.info "Invokes setup_service_manager in default.sh"
-    if test -f "${SRCDIR}/../service_manager/plugin/default.sh"; then
-        logger -t ${TAG} -p user.debug "source ${SRCDIR}/../service_manager/plugin/default.sh"
-        source "${SRCDIR}/../service_manager/plugin/default.sh"
-        setup_service_manager 
-        RET=$?
-        if test "${RET}" -ne 0; then
-            logger -t ${TAG} -p user.err "setup_service_manager should return zero, not ${RET}"
-            exit 1
-        fi
-    else
-        logger -t ${TAG} -p user.error "${SRCDIR}/../service_manager/plugin/default.sh should exist, please install the 1.0.5 or higher version."
-        exit 1
-    fi
+	logger -t ${TAG} -p user.info "Invokes setup_service_manager in default.sh"
+	if test -f "${SRCDIR}/../service_manager/plugin/default.sh"; then
+		logger -t ${TAG} -p user.debug "source ${SRCDIR}/../service_manager/plugin/default.sh"
+		source "${SRCDIR}/../service_manager/plugin/default.sh"
+		setup_service_manager
+		RET=$?
+		if test "${RET}" -ne 0; then
+			logger -t ${TAG} -p user.err "setup_service_manager should return zero, not ${RET}"
+			exit 1
+		fi
+	else
+		logger -t ${TAG} -p user.error "${SRCDIR}/../service_manager/plugin/default.sh should exist, please install the 1.0.5 or higher version."
+		exit 1
+	fi
 fi
 
 # The final message displays the time elapsed.
@@ -262,7 +262,10 @@ logger -t $(basename $0) -s -p user.info "completed in ${ELAPSED} seconds"
 exit 0
 
 #
-# VIM modelines
-#
-# vim:set ts=4 fenc=utf-8:
+# Local variables:
+# tab-width: 4
+# c-basic-offset: 4
+# End:
+# vim600: noexpandtab sw=4 ts=4 fdm=marker
+# vim<600: noexpandtab sw=4 ts=4
 #
