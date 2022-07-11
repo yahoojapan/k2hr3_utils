@@ -1,3 +1,9 @@
+k2hr3-utils (1.0.1) unstable; urgency=low
+
+  * Updated k2hr3 system nodejs version from 10 to 16 - #15
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Mon, 11 Jul 2022 09:39:53 +0900
+
 k2hr3-utils (1.0.0) unstable; urgency=low
 
   * Bumps up the release version.
