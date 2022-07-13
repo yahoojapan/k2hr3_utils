@@ -1,3 +1,9 @@
+k2hr3-utils (1.0.3) unstable; urgency=low
+
+  * Updated devpack.sh for trove and removed run_node_helper.sh - #23
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Wed, 13 Jul 2022 15:49:56 +0900
+
 k2hr3-utils (1.0.2) unstable; urgency=low
 
   * Updated k2hr3 system nodejs version from 10 to 16 - #21
