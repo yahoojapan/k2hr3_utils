@@ -469,8 +469,8 @@ if [ "X${OPT_NO_INTERACTIVE}" != "Xyes" ]; then
 	fi
 else
 	if [ "X${OPT_RUNUSER}" = "X" ]; then
-		#OPT_RUNUSER="nobody"
-		OPT_RUNUSER="root"
+		#OPT_RUNUSER="root"
+		OPT_RUNUSER="nobody"
 	fi
 	if [ "X${OPT_CHMPX_SERVER_PORT}" = "X" ]; then
 		OPT_CHMPX_SERVER_PORT=18020
@@ -819,6 +819,13 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
+# for npm log directory
+chmod 0777 ~/.npm/_logs
+if [ $? -ne 0 ]; then
+	echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} could not change permission ~/.npm/_logs directory${CDEF}" 1>&2
+	exit 1
+fi
+
 echo "${CGRN}${CREV}[SUCCESS]${CDEF}${CGRN} Setup and Generated K2HR3 REST API configuration files : ${SRCTOP}/k2hr3-api/config/production.json${CDEF}"
 
 #----------------------------------------------------------
@@ -926,6 +933,13 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
+# for npm log directory(maybe already set by k2hr3 api setting)
+chmod 0777 ~/.npm/_logs
+if [ $? -ne 0 ]; then
+	echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} could not change permission ~/.npm/_logs directory${CDEF}" 1>&2
+	exit 1
+fi
+
 echo "${CGRN}${CREV}[SUCCESS]${CDEF}${CGRN} Setup and Generated K2HR3 Application configuration files : ${SRCTOP}/k2hr3-app/config/production.json${CDEF}"
 
 #----------------------------------------------------------
@@ -961,6 +975,7 @@ echo ""
 echo "-----------------------------------------------------------"
 echo "${CGRN}Start all processes${CDEF}"
 echo "-----------------------------------------------------------"
+cd ${SRCTOP}
 
 echo "${CGRN}${CREV}[RUN]${CDEF} CHMPX server node..."
 sudo -u ${OPT_RUNUSER} chmpx -conf ${SRCTOP}/conf/server.ini -d err >> ${SRCTOP}/log/chmpx_server.log 2>&1 &
@@ -993,13 +1008,16 @@ sleep 20
 
 #
 # [NOTE]
-# Nodejs will be started as root, but internally it will be setuid and run as nobody.
-# In k2hr3, log files and directories are created as root, which causes permission issues.
-# rotating-file-stream(and fs.createWriteStream, etc.) has a mode option, but which doesn't work.
-# Therefore, we use helper script for sudo and umask.
+# When k2hr3_api and k2hr3_app starts the node process, it gets the
+# execution user from config and executes setuid.
+# Then we want to start Nodejs as nobody to support it, but we can't
+# run the npm command with root privileges using sudo.
+# So run npm here as "sudo -u nobody", it run npm as nobody user
+# instead of root directly.
 #
 echo "${CGRN}${CREV}[RUN]${CDEF} K2HR3 REST API..."
-sudo ${BINDIR}/run_node_helper.sh ${SRCTOP}/k2hr3-api
+cd ${SRCTOP}/k2hr3-api
+sudo -u ${OPT_RUNUSER} npm run start
 wait_process_running www k2hr3-api 20 3
 if [ $? -ne 0 ]; then
 	echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Could not run k2hr3-api node process${CDEF}" 1>&2
@@ -1007,12 +1025,14 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "${CGRN}${CREV}[RUN]${CDEF} K2HR3 Application..."
-sudo ${BINDIR}/run_node_helper.sh ${SRCTOP}/k2hr3-app
+cd ${SRCTOP}/k2hr3-app
+sudo -u ${OPT_RUNUSER} npm run start
 wait_process_running www k2hr3-app 20 3
 if [ $? -ne 0 ]; then
 	echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Could not run k2hr3-app node process${CDEF}" 1>&2
 	exit 1
 fi
+cd ${SRCTOP}
 
 #----------------------------------------------------------
 # Success
