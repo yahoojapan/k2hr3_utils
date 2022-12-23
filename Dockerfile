@@ -2,7 +2,7 @@
 #
 # K2HR3 K2HR3 Utilities
 #
-# Copyright 2020 Yahoo! Japan Corporation.
+# Copyright 2020 Yahoo Japan Corporation.
 #
 # K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers
 # common management information for the cloud.
@@ -30,7 +30,7 @@ RUN pip3 install --prefix=/install ansible
 
 FROM python:3.6-alpine
 
-LABEL maintainer="antpickax@mail.yahoo.co.jp"
+LABEL maintainer="hiwakaba@yahoo-corp.jp"
 
 RUN mkdir /lib64 \
     && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 \
