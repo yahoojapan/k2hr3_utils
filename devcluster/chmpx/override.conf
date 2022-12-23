@@ -1,7 +1,7 @@
 #
 # K2HDKC DBaaS Utilities - Override configuration for K2HDKC DBaaS
 #
-# Copyright 2021 Yahoo! Japan Corporation.
+# Copyright 2021 Yahoo Japan Corporation.
 #
 # K2HDKC DBaaS is a DataBase as a Service provided by Yahoo! JAPAN
 # which is built K2HR3 as a backend and provides services in

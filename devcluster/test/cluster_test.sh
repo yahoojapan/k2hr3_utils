@@ -2,7 +2,7 @@
 #
 # K2HR3 Utilities
 #
-# Copyright 2018 Yahoo! Japan Corporation.
+# Copyright 2018 Yahoo Japan Corporation.
 #
 # K2HR3 is K2hdkc based Resource and Roles and policy Rules, gathers 
 # common management information for the cloud.
