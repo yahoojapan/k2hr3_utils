@@ -1,89 +1,194 @@
-# K2HR3 DEVPACK
+3 DEVPACK
 
 ## Overview
 This directory is a environment construction tool for developers to build the minimum K2HR3 system with one HOST(Virtual Machine).  
 By expanding this directory and executing the script, you can build the K2HR3 system on one host.  
 
-## About HOST
-### Environment requires Proxy
-If the HOST that runs the K2HR3 system cannot be accessed directly from the outside(using a browser), you need to setup HAProxy etc. and proxy HTTP requests to the K2HR3 Web Application and K2HR3 REST API.  
-The K2HR3 DEVPACK's startup script outputs a sample configuration for starting HAProxy.
+## About the environment for launching the K2HR3 system
+The HOST that starts the K2HR3 system can be baremetal or Virtual Machine.  
 
-## Run
-You can build a minimal K2HR3 system by following the steps below.
+If you use a Virtual Machine in a devstack or an environment that requires PROXY settings to access from outside the NODE HOST of that Virtual Machine, you must set the Openstack Network and NODE HOST appropriately.  
+This tool outputs a sample HAProxy configuration file and an Openstack Security Group configuration method document to support such environments.  
+You can refer to them and configure them appropriately.  
 
-### git clone
+### About the PROXY environment variable
+If you need HTTP(S) PROXY settings to access externally from your environment, please provide them with environment variables.  
+They are used to access OS package and NPM package repositories.  
+
+## Run devpack.sh
+Run `devpack.sh` to build the K2HR3 system.  
+This tool runs on the HOST(Virtual Machine) that builds the K2HR3 system.
+
+### (1) Login and Set environments
+Login to the HOST(Virtual Machine) that builds the K2HR3 system as user with privileges.  
+
+If your environment requires HTTP(S) PROXY, please set those environment variables.  
+Also, please make sure that you can access the OS package repository and NPM package repository from this HOST.(ex. Including DNS allocation)  
+This tool uses the sudo command, so don't forget to edit sudoers file(or etc) for inheriting these PROXY environment variables.
+
+### (2) Clone this repository
+Clone this Git repository( [k2hr3_utils](https://github.com/yahoojapan/k2hr3_utils) ).  
+_Please install the git command in advance_  
 ```
 $ git clone https://github.com/yahoojapan/k2hr3_utils.git
 $ cd devpack
 ```
 
-### Launch
-You can startup the K2HR3 system by simply running `bin/devpack.sh` under this directory.
+### (3) Run devpack.sh
+Run `devpack.sh`.  
+Below is an explanation of the options and a startup example depending on the execution environment.  
 
-#### Parameters
-Check the following parameters related to the environment before startup.
-- Execution user  
-The user name to start each process.(Ex: `nobody`)
-- HOST to startup the K2HR3 system on  
-The `hostanme` or `IP address` of the HOST that startup the K2HR3 system.  
-If this value is omitted, `localhost` will be used.
-- OpenStack Region  
-The OpenStack region name.  
-If you are using devstack, it will be `RegionOne`.
-- Keystone(Identity) URL  
-The URL of the OpenStack Keystone(Identiry).(Ex: `http://192.168.10.10/identity`)
-- K2HR3 Web Application port number  
-The port number for K2HR3 Web Application.(Ex: `80`)
-- K2HR3 REST API port number  
-The port number for the K2HR3 REST API.(Ex: `8080`)
-- HOST when HAProxy is required  
-In an environment that requires a Proxy, a `hostname` or `IP address` that can be accessed from the outside is required.  
-This value is most often the `hostanme` or `IP address` of the HOST that startup the K2HR3 system.
+#### Usage
+For `devpack.sh` options, see `devpack.sh --help`.  
+```
+$ devpack.sh --help
+  Usage:  devpack.sh [--no_interaction(-ni)] [--no_confirmation(-nc)]
+          [--run_user(-ru) <user name>] [--openstack_region(-osr) <region name>] [--keystone_url(-ks) <url string>]
+          [--server_port(-svrp) <number>] [--server_ctlport(-svrcp) <number>] [--slave_ctlport(-slvcp) <number>]
+          [--app_port(-appp) <number>]         [--app_port_external(-apppe) <number>]
+          [--app_host(-apph) <hostname or ip>] [--app_host_external(-apphe) <hostname or ip>]
+          [--api_port(-apip) <number>]         [--api_port_external(-apipe) <number>]
+          [--api_host(-apih) <hostname or ip>] [--api_host_external(-apihe) <hostname or ip>]
+          [--help(-h)]
+  
+  [Options]
+    Common:
+          --help(-h)                    print help
+          --no_interaction(-ni)         Turn off interactive mode for unspecified option input and use default value
+          --run_user(-ru)               Specify the execution user of each process
+          --openstack_region(-osr)      Specify OpenStack(Keystone) Region(ex: RegionOne)
+          --keystone_url(-ks)           Specify OpenStack Keystone URL(ex: https://dummy.keystone.openstack/)
+    CHMPX / K2HKDC:
+          --server_port(-svrp)          Specify CHMPX server node process port
+          --server_ctlport(-svrcp)      Specify CHMPX server node process control port
+          --slave_ctlport(-slvcp)       Specify CHMPX slave node process control port
+    K2HR3 APP:
+          --app_port(-appp)             Specify K2HR3 Application port
+          --app_port_external(-apppe)   Specify K2HR3 Application external port(optional: specify when using a proxy)
+          --app_host(-apph)             Specify K2HR3 Application host
+          --app_host_external(-apphe)   Specify K2HR3 Application external host(optional: host as javascript download server)
+    K2HR3 API:
+          --api_port(-apip)             Specify K2HR3 REST API port
+          --api_port_external(-apipe)   Specify K2HR3 REST API external port(optional: specify when using a proxy)
+          --api_host(-apih)             Specify K2HR3 REST API host
+          --api_host_external(-apihe)   Specify K2HR3 REST API external host(optional: specify when using a proxy)
+  
+  [Environments]
+          If PROXY environment variables(HTTP(s)_PROXY, NO_PROXY) are detected,
+          environment variable settings (including sudo) and npm settings are
+          automatically performed.
+```
+- --help(-h)  
+Print help.
+- --no_interaction(-ni)  
+Turn off interactive mode for unspecified option input and use default value.
+- --run_user(-ru)  
+Specify the execution user of each process.
+- --openstack_region(-osr)  
+Specify OpenStack(Keystone) Region(ex: RegionOne).
+- --keystone_url(-ks)  
+Specify OpenStack Keystone URL(ex: https://dummy.keystone.openstack/).
+- --server_port(-svrp)  
+Specify CHMPX server node process port.
+- --server_ctlport(-svrcp)  
+Specify CHMPX server node process control port.
+- --slave_ctlport(-slvcp)  
+Specify CHMPX slave node process control port.
+- --app_port(-appp)  
+Specify K2HR3 Application port.
+- --app_port_external(-apppe)  
+Specify K2HR3 Application external port(optional: specify when using a proxy).
+- --app_host(-apph)  
+Specify K2HR3 Application host.
+- --app_host_external(-apphe)  
+Specify K2HR3 Application external host(optional: host as javascript download server).
+- --api_port(-apip)  
+Specify K2HR3 REST API port.
+- --api_port_external(-apipe)  
+Specify K2HR3 REST API external port(optional: specify when using a proxy).
+- --api_host(-apih)  
+Specify K2HR3 REST API host.
+- --api_host_external(-apihe)  
+Specify K2HR3 REST API external host(optional: specify when using a proxy).
 
-#### Startup example(1)
-This example is a case that does not require a Proxy.  
-Specify with the following parameters.  
-- Execution user : `nobody`
-- HOST to startup the K2HR3 system on : `localhost`
-- OpenStack Region : `RegionOne`
-- Keystone(Identity) URL ： `http://192.168.10.10/identity`
-- K2HR3 Web Application port number : `80`
-- K2HR3 REST API port number : `8080`
+##### NOTE
+Specify these options(`--app_port_external(-apppe)`, `--app_host_external(-apphe)`, `--api_port_external(-apipe)`, `--api_host_external(-apihe)`), if your environment requires PROXY settings for external access.  
+Otherwise, it can be omitted.  
+
+#### Example : Not require PROXY
+This case allows direct access to the K2HR3 system from outside. (PROXY is not required)  
+
+These startup options( `--app_port_external(-apppe)`, `--app_host_external(-apphe)`, `--api_port_external(-apipe)`, `--api_host_external(-apihe)` ) are unnecessary.  
 
 ```
-$ bin/devpack.sh -ni -nc --run_user nobody --openstack_region RegionOne  --keystone_url http://192.168.10.10/identity --app_host localhost --app_port 80 --api_host localhost --api_port 8080
+$ bin/devpack.sh -ni -nc --run_user nobody --openstack_region RegionOne  --keystone_url http://192.168.10.10/identity --app_host 192.168.10.20 --app_port 28080 --api_host 192.168.10.20 --api_port 18080
 ```
 
-#### Startup example(2)
-This example is a case that requires a Proxy.  
-Specify with the following parameters.   
+| Option             | Example value                 |
+| ------------------ | ----------------------------- |
+| --run_user         | nobody                        |
+| --openstack_region | RegionOne                     |
+| --keystone_url     | http://192.168.10.10/identity |
+| --app_host         | 192.168.10.20                 |
+| --app_port         | 28080                         |
+| --api_host         | 192.168.10.20                 |
+| --api_port         | 18080                         |
 
-- Execution user : `nobody`
-- HOST to startup the K2HR3 system on : `192.168.10.20`
-- OpenStack Region : `RegionOne`
-- Keystone(Identity) URL ： `http://192.168.10.10/identity`
-- K2HR3 Web Application port number : `80`
-- K2HR3 REST API port number : `8080`
-- HOST for HAProxy : `172.16.16.16`
-- K2HR3 Web Application port number on HAProxy : `28080`
-- K2HR3 REST API port number on HAProxy : `18080`
+#### Example : Require PROXY
+This is a case where the K2HR3 system cannot be accessed directly from the outside and PROXY settings are required.  
+
+These startup options( `--app_port_external(-apppe)`, `--app_host_external(-apphe)`, `--api_port_external(-apipe)`, `--api_host_external(-apihe)` ) are required.  
 
 ```
-$ bin/devpack.sh -ni -nc --run_user nobody --openstack_region RegionOne --keystone_url http://192.168.10.10/identity --app_host 192.168.10.20 --app_port 80 --app_host_external 172.16.16.16 --app_port_external 28080 --api_host 192.168.10.20 --api_port 8080 --api_host_external 172.16.16.16 --api_port_external 18080
+$ bin/devpack.sh -ni -nc --run_user nobody --openstack_region RegionOne --keystone_url http://192.168.10.10/identity --app_host 192.168.10.20 --app_port 8082 --app_host_external 172.16.16.16 --app_port_external 28080 --api_host 192.168.10.20 --api_port 8081 --api_host_external 172.16.16.16 --api_port_external 18080
 ```
-After executing the above command, the `conf/haproxy_example.cfg` file is created.  
-Use this configuration file to start HAProxy(ex. `haproxy -f haproxy_example.cfg`) on the HOST that startup the K2HR3 system.
 
-### Stop
-We provide a tool to stop the K2HR3 system started by this tool.  
-Please execute as follows.  
+| Option               | Example value                 |
+| -------------------- | ----------------------------- |
+| --run_user           | nobody                        |
+| --openstack_region   | RegionOne                     |
+| --keystone_url       | http://192.168.10.10/identity |
+| --app_host           | 192.168.10.20                 |
+| --app_port           | 8082                          |
+| --app_host_external  | 172.16.16.16                  |
+| --app_port_external  | 28080                         |
+| --api_host           | 192.168.10.20                 |
+| --api_port           | 8081                          |
+| --api_host_external  | 172.16.16.16                  |
+| --api_port_external  | 18080                         |
+
+### (4) Post-setting for PROXY is required
+This is a case where the K2HR3 system cannot be accessed directly from the outside and PROXY settings are required.  
+
+If the K2HR3 system cannot be accessed directly from the outside and PROXY settings are required, NODE HOST (HOST where the Virtual Machine is started) and Openstack Network settings are required.  
+One of case is you built the K2HR3 system on a devstack Virtual Machine.  
+
+This PROXY setting applies `Openstack Security Group` that releases specific ports(`K2HR3 REST API` and `K2HR3 Web Application`) to the Virtual Machine(Instance) that built the K2HR3 system.  
+Also, start `HAProxy` to transfer requests to the Virtual Machine(Instance) that built the K2HR3 system.  
+
+These sample configuration documents are output as `conf/README_NODE_PORT_FORWARDING` and `conf/haproxy_example.cfg` after the `devpack.sh` execution is completed.  
+
+Please refer to the created `conf/README_NODE_PORT_FORWARDING` file and make settings.
+
+## Run stopdevpack.sh
+We provide a tool (stopdevpack.sh) to stop the K2HR3 system started with `devpack.sh`.  
+
+You can stop the K2HR3 system using `stopdevpack.sh`.
 ```
 $ bin/stopdevpack.sh
 ```
-If you want to delete unnecessary files, specify the options as follows.  
+Also, you can stop and clean up files created by `devpack.sh`.  
 ```
 $ bin/stopdevpack.sh --clear
+```
+For instructions on how to use this tool, please refer to the help below.
+```
+$ stopdevpack.sh --help
+  
+  Usage:  stopdevpack.sh [--clear(-c)] [--help(-h)]
+  
+          --clear(-c)       clear configuration, data and log files.
+          --help(-h)        print help
 ```
 
 ### License

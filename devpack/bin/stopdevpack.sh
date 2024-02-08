@@ -18,25 +18,92 @@
 # REVISION:
 #
 
-#----------------------------------------------------------
-# Environments
-#----------------------------------------------------------
-CMDLINE_PROCESS_NAME=$0
-PROGRAM_NAME=`basename ${CMDLINE_PROCESS_NAME}`
-SCRIPTPATH=`dirname ${CMDLINE_PROCESS_NAME}`
-BINDIR=`cd ${SCRIPTPATH}; pwd`
-SRCTOP=`cd ${SCRIPTPATH}/..; pwd`
+#==============================================================
+# Common Variables
+#==============================================================
+export LANG=C
 
+#
+# Instead of pipefail(for shells not support "set -o pipefail")
+#
+#PIPEFAILURE_FILE="/tmp/.pipefailure.$(od -An -tu4 -N4 /dev/random | tr -d ' \n')"
+
+PROGRAM_NAME=$(basename "${0}")
+SCRIPTDIR=$(dirname "${0}")
+SCRIPTDIR=$(cd "${SCRIPTDIR}" || exit 1; pwd)
+SRCTOP=$(cd "${SCRIPTDIR}"/.. || exit 1; pwd)
+#BINDIR="${SCRIPTDIR}"
+
+#
+# Option variables
+#
+OPT_CLEAR="no"
+
+#==============================================================
+# Common Variables and Utility functions
+#==============================================================
 #
 # Escape sequence
 #
-CDEF=$(printf '\033[0m')
-CREV=$(printf '\033[7m')
-CRED=$(printf '\033[31m')
-CGRN=$(printf '\033[32m')
+if [ -t 1 ]; then
+	# shellcheck disable=SC2034
+	CBLD=$(printf '\033[1m')
+	CREV=$(printf '\033[7m')
+	CRED=$(printf '\033[31m')
+	CYEL=$(printf '\033[33m')
+	CGRN=$(printf '\033[32m')
+	CDEF=$(printf '\033[0m')
+else
+	# shellcheck disable=SC2034
+	CBLD=""
+	CREV=""
+	CRED=""
+	CYEL=""
+	CGRN=""
+	CDEF=""
+fi
+
+#--------------------------------------------------------------
+# Message functions
+#--------------------------------------------------------------
+PRNERR()
+{
+	echo ""
+	echo "${CBLD}${CRED}[ERROR]${CDEF} ${CRED}$*${CDEF}"
+}
+
+PRNWARN()
+{
+	echo "    ${CYEL}${CREV}[WARNING]${CDEF} $*"
+}
+
+PRNMSG()
+{
+	echo ""
+	echo "    ${CYEL}${CREV}[MSG]${CDEF} $*"
+}
+
+PRNINFO()
+{
+	echo "    ${CREV}[INFO]${CDEF} $*"
+}
+
+PRNTITLE()
+{
+	echo ""
+	echo "${CGRN}---------------------------------------------------------------------${CDEF}"
+	echo "${CGRN}${CREV}[TITLE]${CDEF} ${CGRN}$*${CDEF}"
+	echo "${CGRN}---------------------------------------------------------------------${CDEF}"
+}
+
+PRNSUCCESS()
+{
+	echo ""
+	echo "${CGRN}[SUCCESS]${CDEF} $*"
+}
 
 #----------------------------------------------------------
-# Options
+# Usage function
 #----------------------------------------------------------
 func_usage()
 {
@@ -51,188 +118,217 @@ func_usage()
 	echo ""
 }
 
-#
-# Check options
-#
-OPT_CLEAR=
+#==========================================================
+# Check Options
+#==========================================================
 while [ $# -ne 0 ]; do
-	if [ "X$1" = "X" ]; then
+	if [ "$1" = "" ]; then
 		break
 
-	elif [ "X$1" = "X-h" -o "X$1" = "X-H" -o "X$1" = "X--help" -o "X$1" = "X--HELP" ]; then
-		func_usage $PROGRAM_NAME
+	elif [ "$1" = "-h" ] || [ "$1" = "-H" ] || [ "$1" = "--help" ] || [ "$1" = "--HELP" ]; then
+		func_usage "${PROGRAM_NAME}"
 		exit 0
 
-	elif [ "X$1" = "X-c" -o "X$1" = "X-C" -o "X$1" = "X--clear" -o "X$1" = "X--CLEAR" ]; then
-		if [ "X${OPT_CLEAR}" != "X" ]; then
-			echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} --clear(-c) option is already specified.${CDEF}" 1>&2
+	elif [ "$1" = "-c" ] || [ "$1" = "-C" ] || [ "$1" = "--clear" ] || [ "$1" = "--CLEAR" ]; then
+		if [ "${OPT_CLEAR}" != "no" ]; then
+			PRNERR "--clear(-c) option is already specified."
 			exit 1
 		fi
 		OPT_CLEAR="yes"
 
 	else
-		echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} $1 option is unknown.${CDEF}" 1>&2
+		PRNERR "$1 option is unknown."
 		exit 1
 	fi
 	shift
 done
 
-#----------------------------------------------------------
+#==========================================================
 # Current processes state
-#----------------------------------------------------------
-echo "-----------------------------------------------------------"
-echo "${CGRN}Current processes state${CDEF}"
-echo "-----------------------------------------------------------"
-ps -ax | grep -v grep | grep -e chmpx -e k2hdkc -e www | grep -v '\-u nobody' | grep -v 'node bin/www'
+#==========================================================
+PRNTITLE "Current processes state"
 
-#----------------------------------------------------------
+# shellcheck disable=SC2009
+ps ax | grep -v grep | grep -e chmpx -e k2hdkc -e www | grep -v '\-u nobody' | grep -v 'node bin/www' | sed -e 's#^#    #g'
+
+#==========================================================
 # Stop processes
-#----------------------------------------------------------
-echo ""
-echo "-----------------------------------------------------------"
-echo "${CGRN}Stop all processes${CDEF}"
-echo "-----------------------------------------------------------"
-echo ""
-echo "${CGRN}${CREV}[STOP]${CDEF} K2HR3 Application..."
-cd ${SRCTOP}/k2hr3-app
-ps ax 2>/dev/null | grep -v grep | grep k2hr3-app | grep node | grep www >/dev/null
-if [ $? -ne 0 ]; then
-	echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Already stop k2hr3-app node process${CDEF}" 1>&2
-else
-	sudo npm run stop
-	if [ $? -ne 0 ]; then
-		echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Could not stop k2hr3-app node process${CDEF}" 1>&2
-		exit 1
-	else
-		echo "${CGRN}${CREV}[SUCCESS]${CDEF}${CGRN} stop k2hr3-app node process${CDEF}"
-	fi
-fi
+#==========================================================
+PRNTITLE "Stop all processes"
 
-echo ""
-echo "${CGRN}${CREV}[STOP]${CDEF} K2HR3 REST API..."
-cd ${SRCTOP}/k2hr3-api
-ps ax 2>/dev/null | grep -v grep | grep k2hr3-api | grep node | grep www >/dev/null
-if [ $? -ne 0 ]; then
-	echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Already stop k2hr3-api node process${CDEF}" 1>&2
-else
-	sudo npm run stop
-	if [ $? -ne 0 ]; then
-		echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Could not stop k2hr3-api node process${CDEF}" 1>&2
-		exit 1
-	else
-		echo "${CGRN}${CREV}[SUCCESS]${CDEF}${CGRN} stop k2hr3-api node process${CDEF}"
-	fi
-fi
+#
+# Stop K2HR3 APP
+#
+PRNMSG "Stop K2HR3 Application"
 
-echo ""
-echo "${CGRN}${CREV}[STOP]${CDEF} CHMPX slave node..."
-cd ${SRCTOP}
-CHMPX_SLAVE_PROCID=`ps ax 2>/dev/null | grep -v grep | grep chmpx | grep slave.ini | grep -v '\-u nobody' | awk '{print $1}'`
-if [ "X${CHMPX_SLAVE_PROCID}" = "X" ]; then
-	echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Already stop CHMPX slave process${CDEF}" 1>&2
-else
-	sudo kill -HUP ${CHMPX_SLAVE_PROCID}
-	sleep 10
-	CHMPX_SLAVE_PROCID=`ps ax 2>/dev/null | grep -v grep | grep chmpx | grep slave.ini | grep -v '\-u nobody' | awk '{print $1}'`
-	if [ "X${CHMPX_SLAVE_PROCID}" != "X" ]; then
-		echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Could not stop CHMPX slave process by HUP, then retry by KILL${CDEF}" 1>&2
+if [ -d "${SRCTOP}"/k2hr3-app ]; then
+	cd "${SRCTOP}"/k2hr3-app || exit 1
 
-		sudo kill -KILL ${CHMPX_SLAVE_PROCID}
-		sleep 10
-		CHMPX_SLAVE_PROCID=`ps ax 2>/dev/null | grep -v grep | grep chmpx | grep slave.ini | grep -v '\-u nobody' | awk '{print $1}'`
-		if [ "X${CHMPX_SLAVE_PROCID}" != "X" ]; then
-			echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Could not stop CHMPX slave process by KILL${CDEF}" 1>&2
+	# shellcheck disable=SC2009
+	if ps ax 2>/dev/null | grep -v grep | grep k2hr3-app | grep node | grep -q www; then
+		if ({ sudo npm run stop || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Could not stop all k2hr3-app node process"
 			exit 1
-		else
-			echo "${CGRN}${CREV}[SUCCESS]${CDEF}${CGRN} stop CHMPX slave process${CDEF}"
 		fi
+		PRNINFO "Succeed to stop all k2hr3-app node process"
 	else
-		echo "${CGRN}${CREV}[SUCCESS]${CDEF}${CGRN} stop CHMPX slave process${CDEF}"
+		PRNINFO "Already stop all k2hr3-app node process"
 	fi
-fi
-
-echo ""
-echo "${CGRN}${CREV}[STOP]${CDEF} K2HDKC server process..."
-cd ${SRCTOP}
-K2HDKC_PROCID=`ps ax 2>/dev/null | grep -v grep | grep k2hdkc | grep server.ini | grep -v '\-u nobody' | awk '{print $1}'`
-if [ "X${K2HDKC_PROCID}" = "X" ]; then
-	echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Already stop K2HDKC server process${CDEF}" 1>&2
 else
-	sudo kill -HUP ${K2HDKC_PROCID}
-	sleep 10
-	K2HDKC_PROCID=`ps ax 2>/dev/null | grep -v grep | grep k2hdkc | grep server.ini | grep -v '\-u nobody' | awk '{print $1}'`
-	if [ "X${K2HDKC_PROCID}" != "X" ]; then
-		echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Could not stop K2HDKC server process by HUP, then retry by KILL${CDEF}" 1>&2
-
-		sudo kill -KILL ${K2HDKC_PROCID}
-		sleep 10
-		K2HDKC_PROCID=`ps ax 2>/dev/null | grep -v grep | grep k2hdkc | grep server.ini | grep -v '\-u nobody' | awk '{print $1}'`
-		if [ "X${K2HDKC_PROCID}" != "X" ]; then
-			echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Could not stop K2HDKC server process by KILL${CDEF}" 1>&2
-			exit 1
-		else
-			echo "${CGRN}${CREV}[SUCCESS]${CDEF}${CGRN} stop K2HDKC server process${CDEF}"
-		fi
-	else
-		echo "${CGRN}${CREV}[SUCCESS]${CDEF}${CGRN} stop K2HDKC server process${CDEF}"
-	fi
+	PRNINFO "Already stop all k2hr3-app node process"
 fi
 
-echo ""
-echo "${CGRN}${CREV}[STOP]${CDEF} CHMPX server node..."
-cd ${SRCTOP}
-CHMPX_SERVER_PROCID=`ps ax 2>/dev/null | grep -v grep | grep chmpx | grep server.ini | grep -v '\-u nobody' | awk '{print $1}'`
-if [ "X${CHMPX_SERVER_PROCID}" = "X" ]; then
-	echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Already stop CHMPX server process${CDEF}" 1>&2
+#
+# Stop K2HR3 REST API
+#
+PRNMSG "Stop K2HR3 REST API"
+
+if [ -d "${SRCTOP}"/k2hr3-api ]; then
+	cd "${SRCTOP}"/k2hr3-api || exit 1
+
+	# shellcheck disable=SC2009
+	if ps ax 2>/dev/null | grep -v grep | grep k2hr3-api | grep node | grep -q www; then
+		if ({ sudo npm run stop || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+			PRNERR "Could not stop all k2hr3-api node process"
+			exit 1
+		fi
+		PRNINFO "Succeed to stop all k2hr3-api node process"
+	else
+		PRNINFO "Already stop all k2hr3-api node process"
+	fi
 else
-	sudo kill -HUP ${CHMPX_SERVER_PROCID}
-	sleep 10
-	CHMPX_SERVER_PROCID=`ps ax 2>/dev/null | grep -v grep | grep chmpx | grep server.ini | grep -v '\-u nobody' | awk '{print $1}'`
-	if [ "X${CHMPX_SERVER_PROCID}" != "X" ]; then
-		echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Could not stop CHMPX server process by HUP, then retry by KILL${CDEF}" 1>&2
-
-		sudo kill -KILL ${CHMPX_SERVER_PROCID}
-		sleep 10
-		CHMPX_SERVER_PROCID=`ps ax 2>/dev/null | grep -v grep | grep chmpx | grep server.ini | grep -v '\-u nobody' | awk '{print $1}'`
-		if [ "X${CHMPX_SERVER_PROCID}" != "X" ]; then
-			echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Could not stop CHMPX server process by KILL${CDEF}" 1>&2
-			exit 1
-		else
-			echo "${CGRN}${CREV}[SUCCESS]${CDEF}${CGRN} stop CHMPX server process${CDEF}"
-		fi
-	else
-		echo "${CGRN}${CREV}[SUCCESS]${CDEF}${CGRN} stop CHMPX server process${CDEF}"
-	fi
+	PRNINFO "Already stop all k2hr3-api node process"
 fi
 
-#----------------------------------------------------------
-# Check processes
-#----------------------------------------------------------
-ps -ax 2>/dev/null | grep -v grep | grep -e chmpx -e k2hdkc -e www | grep -v '\-u nobody' | grep -v 'node bin/www' >/dev/null
-if [ $? -eq 0 ]; then
+#
+# Stop CHMPX Slave node
+#
+PRNMSG "Stop CHMPX Slave node"
+
+cd "${SRCTOP}" || exit 1
+
+# shellcheck disable=SC2009
+CHMPX_SLAVE_PROCID=$(ps ax 2>/dev/null | grep -v grep | grep chmpx | grep slave.ini | grep -v '\-u nobody' | awk '{print $1}')
+
+if [ -n "${CHMPX_SLAVE_PROCID}" ]; then
+	/bin/sh -c "sudo kill -HUP ${CHMPX_SLAVE_PROCID}"
+	sleep 10
+
+	# shellcheck disable=SC2009
+	CHMPX_SLAVE_PROCID=$(ps ax 2>/dev/null | grep -v grep | grep chmpx | grep slave.ini | grep -v '\-u nobody' | awk '{print $1}')
+	if [ -n "${CHMPX_SLAVE_PROCID}" ]; then
+		PRNWARN "Could not stop CHMPX Slave process by HUP, then retry by KILL"
+
+		/bin/sh -c "sudo kill -KILL ${CHMPX_SLAVE_PROCID}"
+		sleep 10
+
+		# shellcheck disable=SC2009
+		CHMPX_SLAVE_PROCID=$(ps ax 2>/dev/null | grep -v grep | grep chmpx | grep slave.ini | grep -v '\-u nobody' | awk '{print $1}')
+		if [ -n "${CHMPX_SLAVE_PROCID}" ]; then
+			PRNERR "Could not stop all CHMPX slave process by KILL"
+			exit 1
+		fi
+	fi
+	PRNINFO "Succeed to stop all CHMPX slave process"
+else
+	PRNINFO "Already stop all CHMPX Slave process"
+fi
+
+#
+# Stop K2HDKC Server process
+#
+PRNMSG "Stop K2HDKC Server process"
+
+cd "${SRCTOP}" || exit 1
+
+# shellcheck disable=SC2009
+K2HDKC_PROCID=$(ps ax 2>/dev/null | grep -v grep | grep k2hdkc | grep server.ini | grep -v '\-u nobody' | awk '{print $1}')
+if [ -n "${K2HDKC_PROCID}" ]; then
+	/bin/sh -c "sudo kill -HUP ${K2HDKC_PROCID}"
+	sleep 10
+
+	# shellcheck disable=SC2009
+	K2HDKC_PROCID=$(ps ax 2>/dev/null | grep -v grep | grep k2hdkc | grep server.ini | grep -v '\-u nobody' | awk '{print $1}')
+	if [ -n "${K2HDKC_PROCID}" ]; then
+		PRNWARN "Could not stop all K2HDKC Server process by HUP, then retry by KILL"
+
+		/bin/sh -c "sudo kill -KILL ${K2HDKC_PROCID}"
+		sleep 10
+
+		# shellcheck disable=SC2009
+		K2HDKC_PROCID=$(ps ax 2>/dev/null | grep -v grep | grep k2hdkc | grep server.ini | grep -v '\-u nobody' | awk '{print $1}')
+		if [ -n "${K2HDKC_PROCID}" ]; then
+			PRNERR "Could not stop all K2HDKC Server process by KILL"
+			exit 1
+		fi
+	fi
+	PRNINFO "Succeed to stop all K2HDKC Server process"
+else
+	PRNINFO "Already stop all K2HDKC Server process"
+fi
+
+#
+# Stop CHMPX Server node
+#
+PRNMSG "Stop CHMPX Server node"
+
+cd "${SRCTOP}" || exit 1
+
+# shellcheck disable=SC2009
+CHMPX_SERVER_PROCID=$(ps ax 2>/dev/null | grep -v grep | grep chmpx | grep server.ini | grep -v '\-u nobody' | awk '{print $1}')
+if [ -n "${CHMPX_SERVER_PROCID}" ]; then
+	/bin/sh -c "sudo kill -HUP ${CHMPX_SERVER_PROCID}"
+	sleep 10
+
+	# shellcheck disable=SC2009
+	CHMPX_SERVER_PROCID=$(ps ax 2>/dev/null | grep -v grep | grep chmpx | grep server.ini | grep -v '\-u nobody' | awk '{print $1}')
+	if [ -n "${CHMPX_SERVER_PROCID}" ]; then
+		PRNWARN "Could not stop all CHMPX Server process by HUP, then retry by KILL"
+
+		/bin/sh -c "sudo kill -KILL ${CHMPX_SERVER_PROCID}"
+		sleep 10
+
+		# shellcheck disable=SC2009
+		CHMPX_SERVER_PROCID=$(ps ax 2>/dev/null | grep -v grep | grep chmpx | grep server.ini | grep -v '\-u nobody' | awk '{print $1}')
+		if [ -n "${CHMPX_SERVER_PROCID}" ]; then
+			PRNERR "Could not stop all CHMPX Server process by KILL"
+			exit 1
+		fi
+	fi
+	PRNINFO "Succeed to stop all CHMPX Server process"
+else
+	PRNINFO "Already stop all CHMPX Server process"
+fi
+
+#
+# Reconfirm that all processes have been stopped
+#
+PRNMSG "Reconfirm that all processes have been stopped"
+
+# shellcheck disable=SC2009
+if ps ax 2>/dev/null | grep -v grep | grep -e chmpx -e k2hdkc -e www | grep -v '\-u nobody' | grep -q -v 'node bin/www'; then
+	PRNERR "Failed to stop some processes"
 	echo ""
-	echo "${CRED}${CREV}[ERROR]${CDEF}${CRED} Could not stop some processes${CDEF}" 1>&2
-	echo ""
-	ps -ax 2>/dev/null | grep -v grep | grep -e chmpx -e k2hdkc -e www | grep -v '\-u nobody' | grep -v 'node bin/www'
-	echo ""
+	# shellcheck disable=SC2009
+	ps ax | grep -v grep | grep -e chmpx -e k2hdkc -e www | grep -v '\-u nobody' | grep -v 'node bin/www' | sed -e 's#^#    #g'
 	exit 1
 fi
 
-#----------------------------------------------------------
-# Clear files
-#----------------------------------------------------------
-if [ "X${OPT_CLEAR}" = "Xyes" ]; then
-	echo ""
-	echo "-----------------------------------------------------------"
-	echo "${CGRN}Clean up files${CDEF}"
-	echo "-----------------------------------------------------------"
-	sudo rm -rf log/* data/* conf/*.ini conf/*.cfg k2hr3-ap*
+PRNSUCCESS "Stop all processes"
 
-	echo "${CGRN}${CREV}[SUCCESS]${CDEF}${CGRN} cleaned up files.${CDEF}"
+#==========================================================
+# Clean up files
+#==========================================================
+if [ "${OPT_CLEAR}" = "yes" ]; then
+	PRNTITLE "Clean up files"
+
+	sudo rm -rf log/* data/* conf/*.ini conf/*.cfg conf/README_NODE_PORT_FORWARDING k2hr3-api k2hr3-app k2hr3-api-*.tgz k2hr3-app-*.tgz
+
+	PRNINFO "Succeed to clean up files"
 fi
 
 echo ""
-echo "${CGRN}${CREV}[SUCCESS]${CDEF}${CGRN} All processes has been stop.${CDEF}"
+echo "${CGRN}All K2HR3 cluster processes has been stop.${CDEF}"
 
 exit 0
 
