@@ -261,13 +261,17 @@ func_usage()
 	echo "  K2HR3 APP:"
 	echo "        --app_port(-appp)             Specify K2HR3 Application port"
 	echo "        --app_port_external(-apppe)   Specify K2HR3 Application external port(optional: specify when using a proxy)"
+	echo "        --app_port_private(-apppp)    Specify K2HR3 Application private port(optional: specify when openstack)"
 	echo "        --app_host(-apph)             Specify K2HR3 Application host"
 	echo "        --app_host_external(-apphe)   Specify K2HR3 Application external host(optional: host as javascript download server)"
+	echo "        --app_host_private(-apphp)    Specify K2HR3 Application private host(optional: specify when openstack)"
 	echo "  K2HR3 API:"
 	echo "        --api_port(-apip)             Specify K2HR3 REST API port"
 	echo "        --api_port_external(-apipe)   Specify K2HR3 REST API external port(optional: specify when using a proxy)"
+	echo "        --api_port_private(-apipp)    Specify K2HR3 REST API private port(optional: specify when openstack)"
 	echo "        --api_host(-apih)             Specify K2HR3 REST API host"
 	echo "        --api_host_external(-apihe)   Specify K2HR3 REST API external host(optional: specify when using a proxy)"
+	echo "        --api_host_private(-apihp)    Specify K2HR3 REST API private host(optional: specify when openstack)"
 	echo ""
 	echo "[Environments]"
 	echo "        If PROXY environment variables(HTTP(s)_PROXY, NO_PROXY) are detected,"
@@ -417,6 +421,22 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_APP_PORT_EXTERNAL="$1"
 
+	elif [ "$1" = "-apppp" ] || [ "$1" = "-APPPP" ] || [ "$1" = "--app_port_private" ] || [ "$1" = "--APP_PORT_PRIVATE" ]; then
+		if [ -n "${OPT_K2HR3_APP_PORT_PRIVATE}" ]; then
+			PRNERR "--app_port_private(-apppp) option is already specified."
+			exit 1
+		fi
+		shift
+		if [ $# -eq 0 ] || [ -z "$1" ]; then
+			PRNERR "--app_port_private(-apppp) option needs parameter."
+			exit 1
+		fi
+		if echo "$1" | grep -q "[^0-9]"; then
+			PRNERR "The parameter of --app_port_private(-apppp) option must be number."
+			exit 1
+		fi
+		OPT_K2HR3_APP_PORT_PRIVATE="$1"
+
 	elif [ "$1" = "-apph" ] || [ "$1" = "-APPH" ] || [ "$1" = "--app_host" ] || [ "$1" = "--APP_HOST" ]; then
 		if [ -n "${OPT_K2HR3_APP_HOST}" ]; then
 			PRNERR "--app_host(-apph) option is already specified."
@@ -440,6 +460,18 @@ while [ $# -ne 0 ]; do
 			exit 1
 		fi
 		OPT_K2HR3_APP_HOST_EXTERNAL="$1"
+
+	elif [ "$1" = "-apphp" ] || [ "$1" = "-APPHP" ] || [ "$1" = "--app_host_private" ] || [ "$1" = "--APP_HOST_PRIVATE" ]; then
+		if [ -n "${OPT_K2HR3_APP_HOST_PRIVATE}" ]; then
+			PRNERR "--app_host_private(-apphp) option is already specified."
+			exit 1
+		fi
+		shift
+		if [ $# -eq 0 ] || [ -z "$1" ]; then
+			PRNERR "--app_host_private(-apphp) option needs parameter."
+			exit 1
+		fi
+		OPT_K2HR3_APP_HOST_PRIVATE="$1"
 
 	elif [ "$1" = "-apip" ] || [ "$1" = "-APIP" ] || [ "$1" = "--api_port" ] || [ "$1" = "--API_PORT" ]; then
 		if [ -n "${OPT_K2HR3_API_PORT}" ]; then
@@ -473,6 +505,22 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_API_PORT_EXTERNAL="$1"
 
+	elif [ "$1" = "-apipp" ] || [ "$1" = "-APIPP" ] || [ "$1" = "--api_port_private" ] || [ "$1" = "--API_PORT_PRIVATE" ]; then
+		if [ -n "${OPT_K2HR3_API_PORT_PRIVATE}" ]; then
+			PRNERR "--api_port_private(-apipp) option is already specified."
+			exit 1
+		fi
+		shift
+		if [ $# -eq 0 ] || [ -z "$1" ]; then
+			PRNERR "--api_port_private(-apipp) option needs parameter."
+			exit 1
+		fi
+		if echo "$1" | grep -q "[^0-9]"; then
+			PRNERR "The parameter of --api_port_private(-apipp) option must be number."
+			exit 1
+		fi
+		OPT_K2HR3_API_PORT_PRIVATE="$1"
+
 	elif [ "$1" = "-apih" ] || [ "$1" = "-APIH" ] || [ "$1" = "--api_host" ] || [ "$1" = "--API_HOST" ]; then
 		if [ -n "${OPT_K2HR3_API_HOST}" ]; then
 			PRNERR "--api_host(-apih) option is already specified."
@@ -497,6 +545,18 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_API_HOST_EXTERNAL="$1"
 
+	elif [ "$1" = "-apihp" ] || [ "$1" = "-APIHP" ] || [ "$1" = "--api_host_private" ] || [ "$1" = "--API_HOST_PRIVATE" ]; then
+		if [ -n "${OPT_K2HR3_API_HOST_PRIVATE}" ]; then
+			PRNERR "--api_host_private(-apihp) option is already specified."
+			exit 1
+		fi
+		shift
+		if [ $# -eq 0 ] || [ -z "$1" ]; then
+			PRNERR "--api_host_private(-apihp) option needs parameter."
+			exit 1
+		fi
+		OPT_K2HR3_API_HOST_PRIVATE="$1"
+
 	else
 		PRNERR "$1 option is unknown."
 		exit 1
@@ -508,7 +568,25 @@ done
 # Interaction or set default values
 #
 if [ "${OPT_NO_INTERACTIVE}" != "yes" ]; then
-	if [ -z "${OPT_RUNUSER}" ] || [ -z "${OPT_CHMPX_SERVER_PORT}" ] || [ -z "${OPT_CHMPX_SERVER_CTLPORT}" ] || [ -z "${OPT_CHMPX_SLAVE_CTLPORT}" ] || [ -z "${OPT_OPENSTACK_REGION}" ] || [ -z "${OPT_KEYSTONE_URL}" ] || [ -z "${OPT_K2HR3_APP_PORT}" ] || [ -z "${OPT_K2HR3_APP_PORT_EXTERNAL}" ] || [ -z "${OPT_K2HR3_APP_HOST}" ] || [ -z "${OPT_K2HR3_APP_HOST_EXTERNAL}" ] || [ -z "${OPT_K2HR3_API_PORT}" ] || [ -z "${OPT_K2HR3_API_PORT_EXTERNAL}" ] || [ -z "${OPT_K2HR3_API_HOST}" ] || [ -z "${OPT_K2HR3_API_HOST_EXTERNAL}" ]; then
+	if	[ -z "${OPT_RUNUSER}" ]					|| \
+		[ -z "${OPT_CHMPX_SERVER_PORT}" ]		|| \
+		[ -z "${OPT_CHMPX_SERVER_CTLPORT}" ]	|| \
+		[ -z "${OPT_CHMPX_SLAVE_CTLPORT}" ]		|| \
+		[ -z "${OPT_OPENSTACK_REGION}" ]		|| \
+		[ -z "${OPT_KEYSTONE_URL}" ]			|| \
+		[ -z "${OPT_K2HR3_APP_PORT}" ]			|| \
+		[ -z "${OPT_K2HR3_APP_PORT_EXTERNAL}" ]	|| \
+		[ -z "${OPT_K2HR3_APP_PORT_PRIVATE}" ]	|| \
+		[ -z "${OPT_K2HR3_APP_HOST}" ]			|| \
+		[ -z "${OPT_K2HR3_APP_HOST_EXTERNAL}" ]	|| \
+		[ -z "${OPT_K2HR3_APP_HOST_PRIVATE}" ] 	|| \
+		[ -z "${OPT_K2HR3_API_PORT}" ]			|| \
+		[ -z "${OPT_K2HR3_API_PORT_EXTERNAL}" ]	|| \
+		[ -z "${OPT_K2HR3_API_PORT_PRIVATE}" ] 	|| \
+		[ -z "${OPT_K2HR3_API_HOST}" ]			|| \
+		[ -z "${OPT_K2HR3_API_HOST_EXTERNAL}" ]	|| \
+		[ -z "${OPT_K2HR3_API_HOST_PRIVATE}" ]; then
+
 		echo "${CGRN}-----------------------------------------------------------${CDEF}"
 		echo "${CGRN}Input options${CDEF}"
 		echo "${CGRN}-----------------------------------------------------------${CDEF}"
@@ -561,6 +639,12 @@ if [ "${OPT_NO_INTERACTIVE}" != "yes" ]; then
 			fi
 			OPT_K2HR3_APP_PORT_EXTERNAL="${INTERACTION_RESULT}"
 		fi
+		if [ -z "${OPT_K2HR3_APP_PORT_PRIVATE}" ]; then
+			if ! input_interaction "K2HR3 Application private port number(enter empty if not present)" "yes" "yes"; then
+				exit 1
+			fi
+			OPT_K2HR3_APP_PORT_PRIVATE="${INTERACTION_RESULT}"
+		fi
 		if [ -z "${OPT_K2HR3_APP_HOST}" ]; then
 			if ! input_interaction "K2HR3 Application hostname or IP address" "no"; then
 				exit 1
@@ -572,6 +656,12 @@ if [ "${OPT_NO_INTERACTIVE}" != "yes" ]; then
 				exit 1
 			fi
 			OPT_K2HR3_APP_HOST_EXTERNAL="${INTERACTION_RESULT}"
+		fi
+		if [ -z "${OPT_K2HR3_APP_HOST_PRIVATE}" ]; then
+			if ! input_interaction "K2HR3 Application private hostanme or IP address(enter empty if not present)" "no" "yes"; then
+				exit 1
+			fi
+			OPT_K2HR3_APP_HOST_PRIVATE="${INTERACTION_RESULT}"
 		fi
 		if [ -z "${OPT_K2HR3_API_PORT}" ]; then
 			if ! input_interaction "K2HR3 REST API port number" "yes"; then
@@ -585,6 +675,12 @@ if [ "${OPT_NO_INTERACTIVE}" != "yes" ]; then
 			fi
 			OPT_K2HR3_API_PORT_EXTERNAL="${INTERACTION_RESULT}"
 		fi
+		if [ -z "${OPT_K2HR3_API_PORT_PRIVATE}" ]; then
+			if ! input_interaction "K2HR3 REST API private port number(enter empty if not present)" "yes" "yes"; then
+				exit 1
+			fi
+			OPT_K2HR3_API_PORT_PRIVATE="${INTERACTION_RESULT}"
+		fi
 		if [ -z "${OPT_K2HR3_API_HOST}" ]; then
 			if ! input_interaction "K2HR3 REST API hostname or IP address" "no"; then
 				exit 1
@@ -596,6 +692,12 @@ if [ "${OPT_NO_INTERACTIVE}" != "yes" ]; then
 				exit 1
 			fi
 			OPT_K2HR3_API_HOST_EXTERNAL="${INTERACTION_RESULT}"
+		fi
+		if [ -z "${OPT_K2HR3_API_HOST_PRIVATE}" ]; then
+			if ! input_interaction "K2HR3 REST API private hostanme or IP address(enter empty if not present)" "no" "yes"; then
+				exit 1
+			fi
+			OPT_K2HR3_API_HOST_PRIVATE="${INTERACTION_RESULT}"
 		fi
 	fi
 else
@@ -624,11 +726,17 @@ else
 	if [ -z "${OPT_K2HR3_APP_PORT_EXTERNAL}" ]; then
 		OPT_K2HR3_APP_PORT_EXTERNAL=
 	fi
+	if [ -z "${OPT_K2HR3_APP_PORT_PRIVATE}" ]; then
+		OPT_K2HR3_APP_PORT_PRIVATE=
+	fi
 	if [ -z "${OPT_K2HR3_APP_HOST}" ]; then
 		OPT_K2HR3_APP_HOST="localhost"
 	fi
 	if [ -z "${OPT_K2HR3_APP_HOST_EXTERNAL}" ]; then
 		OPT_K2HR3_APP_HOST_EXTERNAL=
+	fi
+	if [ -z "${OPT_K2HR3_APP_HOST_PRIVATE}" ]; then
+		OPT_K2HR3_APP_HOST_PRIVATE=
 	fi
 	if [ -z "${OPT_K2HR3_API_PORT}" ]; then
 		OPT_K2HR3_API_PORT=18080
@@ -636,11 +744,17 @@ else
 	if [ -z "${OPT_K2HR3_API_PORT_EXTERNAL}" ]; then
 		OPT_K2HR3_API_PORT_EXTERNAL=
 	fi
+	if [ -z "${OPT_K2HR3_API_PORT_PRIVATE}" ]; then
+		OPT_K2HR3_API_PORT_PRIVATE=
+	fi
 	if [ -z "${OPT_K2HR3_API_HOST}" ]; then
 		OPT_K2HR3_API_HOST="localhost"
 	fi
 	if [ -z "${OPT_K2HR3_API_HOST_EXTERNAL}" ]; then
 		OPT_K2HR3_API_HOST_EXTERNAL=
+	fi
+	if [ -z "${OPT_K2HR3_API_HOST_PRIVATE}" ]; then
+		OPT_K2HR3_API_HOST_PRIVATE=
 	fi
 fi
 
@@ -655,20 +769,40 @@ if [ -z "${OPT_K2HR3_APP_PORT_EXTERNAL}" ]; then
 else
 	DISP_K2HR3_APP_PORT_EXTERNAL="${OPT_K2HR3_APP_PORT_EXTERNAL}"
 fi
+if [ -z "${OPT_K2HR3_APP_PORT_PRIVATE}" ]; then
+	DISP_K2HR3_APP_PORT_PRIVATE="(empty: using K2HR3 Application port)"
+else
+	DISP_K2HR3_APP_PORT_PRIVATE="${OPT_K2HR3_APP_PORT_PRIVATE}"
+fi
 if [ -z "${OPT_K2HR3_APP_HOST_EXTERNAL}" ]; then
 	DISP_K2HR3_APP_HOST_EXTERNAL="(empty: using K2HR3 Application host instead)"
 else
 	DISP_K2HR3_APP_HOST_EXTERNAL="${OPT_K2HR3_APP_HOST_EXTERNAL}"
+fi
+if [ -z "${OPT_K2HR3_APP_HOST_PRIVATE}" ]; then
+	DISP_K2HR3_APP_HOST_PRIVATE="(empty: using K2HR3 Application host instead)"
+else
+	DISP_K2HR3_APP_HOST_PRIVATE="${OPT_K2HR3_APP_HOST_PRIVATE}"
 fi
 if [ -z "${OPT_K2HR3_API_PORT_EXTERNAL}" ]; then
 	DISP_K2HR3_API_PORT_EXTERNAL="(empty: using K2HR3 REST API port)"
 else
 	DISP_K2HR3_API_PORT_EXTERNAL="${OPT_K2HR3_API_PORT_EXTERNAL}"
 fi
+if [ -z "${OPT_K2HR3_API_PORT_PRIVATE}" ]; then
+	DISP_K2HR3_API_PORT_PRIVATE="(empty: using K2HR3 REST API port)"
+else
+	DISP_K2HR3_API_PORT_PRIVATE="${OPT_K2HR3_API_PORT_PRIVATE}"
+fi
 if [ -z "${OPT_K2HR3_API_HOST_EXTERNAL}" ]; then
 	DISP_K2HR3_API_HOST_EXTERNAL="(empty: using K2HR3 REST API host instead)"
 else
 	DISP_K2HR3_API_HOST_EXTERNAL="${OPT_K2HR3_API_HOST_EXTERNAL}"
+fi
+if [ -z "${OPT_K2HR3_API_HOST_PRIVATE}" ]; then
+	DISP_K2HR3_API_HOST_PRIVATE="(empty: using K2HR3 REST API host instead)"
+else
+	DISP_K2HR3_API_HOST_PRIVATE="${OPT_K2HR3_API_HOST_PRIVATE}"
 fi
 
 #
@@ -727,13 +861,17 @@ echo "CHMPX slave port:                ${OPT_CHMPX_SLAVE_CTLPORT}"
 echo ""
 echo "K2HR3 Application port:          ${OPT_K2HR3_APP_PORT}"
 echo "K2HR3 Application external port: ${DISP_K2HR3_APP_PORT_EXTERNAL}"
+echo "K2HR3 Application private port:  ${DISP_K2HR3_APP_PORT_PRIVATE}"
 echo "K2HR3 Application host:          ${OPT_K2HR3_APP_HOST}"
 echo "K2HR3 Application external host: ${DISP_K2HR3_APP_HOST_EXTERNAL}"
+echo "K2HR3 Application private host:  ${DISP_K2HR3_APP_HOST_PRIVATE}"
 echo ""
 echo "K2HR3 REST API port:             ${OPT_K2HR3_API_PORT}"
 echo "K2HR3 REST API external port:    ${DISP_K2HR3_API_PORT_EXTERNAL}"
+echo "K2HR3 REST API private port:     ${DISP_K2HR3_API_PORT_PRIVATE}"
 echo "K2HR3 REST API host:             ${OPT_K2HR3_API_HOST}"
 echo "K2HR3 REST API external host:    ${DISP_K2HR3_API_HOST_EXTERNAL}"
+echo "K2HR3 REST API private host:     ${DISP_K2HR3_API_HOST_PRIVATE}"
 echo ""
 echo "HTTP_PROXY Environment:          ${DISP_HTTP_PROXY}"
 echo "HTTPS_PROXY Environment:         ${DISP_HTTPS_PROXY}"
@@ -928,7 +1066,7 @@ elif echo "${_OS_ID}" | grep -q -i 'rocky'; then
 	PRNINFO "Succeed to setup OS package repositories(epel/CRB/powrtools)"
 
 elif echo "${_OS_ID}" | grep -q -i 'ubuntu'; then
-	PKG_INSTALLER="apt"
+	PKG_INSTALLER="apt-get"
 	PACKAGECLOUD_URL="https://packagecloud.io/install/repositories/antpickax/stable/script.deb.sh"
 	NODJS_SETUP_URL="https://deb.nodesource.com/setup_18.x"
 
@@ -945,7 +1083,7 @@ elif echo "${_OS_ID}" | grep -q -i 'ubuntu'; then
 	PRNINFO "Succeed to update package cache"
 
 elif echo "${_OS_ID}" | grep -q -i 'debian'; then
-	PKG_INSTALLER="apt"
+	PKG_INSTALLER="apt-get"
 	PACKAGECLOUD_URL="https://packagecloud.io/install/repositories/antpickax/stable/script.deb.sh"
 	NODJS_SETUP_URL="https://deb.nodesource.com/setup_18.x"
 
@@ -1125,6 +1263,74 @@ fi
 PRNINFO "Succeed to generate CHMPX configurations"
 
 #----------------------------------------------------------
+# Check and Make variables
+#----------------------------------------------------------
+#
+# Host lists
+#
+TMP_K2HR3_APP_HOSTS=""
+TMP_K2HR3_APP_HOSTS_WITH_LOCALHOST=""
+if [ "${OPT_K2HR3_APP_HOST}" != "localhost" ]; then
+	TMP_K2HR3_APP_HOSTS_WITH_LOCALHOST="'localhost'"
+fi
+if [ -n "${TMP_K2HR3_APP_HOSTS}" ]; then
+	TMP_K2HR3_APP_HOSTS="'${TMP_K2HR3_APP_HOSTS}'"
+	TMP_K2HR3_APP_HOSTS_WITH_LOCALHOST="${TMP_K2HR3_APP_HOSTS_WITH_LOCALHOST},\n\t\t'${OPT_K2HR3_APP_HOST}'"
+fi
+if [ -n "${OPT_K2HR3_APP_HOST_EXTERNAL}" ]; then
+	TMP_K2HR3_APP_HOSTS="${TMP_K2HR3_APP_HOSTS},\n\t\t'${OPT_K2HR3_APP_HOST_EXTERNAL}'"
+	TMP_K2HR3_APP_HOSTS_WITH_LOCALHOST="${TMP_K2HR3_APP_HOSTS_WITH_LOCALHOST},\n\t\t'${OPT_K2HR3_APP_HOST_EXTERNAL}'"
+fi
+if [ -n "${OPT_K2HR3_APP_HOST_PRIVATE}" ]; then
+	TMP_K2HR3_APP_HOSTS="${TMP_K2HR3_APP_HOSTS},\n\t\t'${OPT_K2HR3_APP_HOST_PRIVATE}'"
+	TMP_K2HR3_APP_HOSTS_WITH_LOCALHOST="${TMP_K2HR3_APP_HOSTS_WITH_LOCALHOST},\n\t\t'${OPT_K2HR3_APP_HOST_PRIVATE}'"
+fi
+
+#
+# Providing defaults for unset values
+#
+if [ -n "${OPT_K2HR3_API_PORT_EXTERNAL}" ]; then
+	TMP_K2HR3_API_PORT_EXT="${OPT_K2HR3_API_PORT_EXTERNAL}"
+else
+	TMP_K2HR3_API_PORT_EXT="${OPT_K2HR3_API_PORT}"
+fi
+if [ -n "${OPT_K2HR3_API_PORT_PRIVATE}" ]; then
+	TMP_K2HR3_API_PORT_PRI="${OPT_K2HR3_API_PORT_PRIVATE}"
+else
+	TMP_K2HR3_API_PORT_PRI="${OPT_K2HR3_API_PORT}"
+fi
+if [ -n "${OPT_K2HR3_API_HOST_EXTERNAL}" ]; then
+	TMP_K2HR3_API_HOST_EXT="${OPT_K2HR3_API_HOST_EXTERNAL}"
+else
+	TMP_K2HR3_API_HOST_EXT="${OPT_K2HR3_API_HOST}"
+fi
+if [ -n "${OPT_K2HR3_API_HOST_PRIVATE}" ]; then
+	TMP_K2HR3_API_HOST_PRI="${OPT_K2HR3_API_HOST_PRIVATE}"
+else
+	TMP_K2HR3_API_HOST_PRI="${OPT_K2HR3_API_HOST}"
+fi
+if [ -n "${OPT_K2HR3_APP_PORT_EXTERNAL}" ]; then
+	TMP_K2HR3_APP_PORT_EXT="${OPT_K2HR3_APP_PORT_EXTERNAL}"
+else
+	TMP_K2HR3_APP_PORT_EXT="${OPT_K2HR3_APP_PORT}"
+fi
+if [ -n "${OPT_K2HR3_APP_PORT_PRIVATE}" ]; then
+	TMP_K2HR3_APP_PORT_PRI="${OPT_K2HR3_APP_PORT_PRIVATE}"
+else
+	TMP_K2HR3_APP_PORT_PRI="${OPT_K2HR3_APP_PORT}"
+fi
+if [ -n "${OPT_K2HR3_APP_HOST_EXTERNAL}" ]; then
+	TMP_K2HR3_APP_HOST_EXT="${OPT_K2HR3_APP_HOST_EXTERNAL}"
+else
+	TMP_K2HR3_APP_HOST_EXT="${OPT_K2HR3_APP_HOST}"
+fi
+if [ -n "${OPT_K2HR3_APP_HOST_PRIVATE}" ]; then
+	TMP_K2HR3_APP_HOST_PRI="${OPT_K2HR3_APP_HOST_PRIVATE}"
+else
+	TMP_K2HR3_APP_HOST_PRI="${OPT_K2HR3_APP_HOST}"
+fi
+
+#----------------------------------------------------------
 # Setup K2HR3 API
 #----------------------------------------------------------
 PRNMSG "Setup K2HR3 API"
@@ -1170,29 +1376,6 @@ fi
 PRNINFO "Succeed to install dependency packages for K2HR3 API"
 
 #
-# Check and Make variables
-#
-if [ "${OPT_K2HR3_APP_HOST}" != "localhost" ]; then
-	# Always set localhost
-	TMP_K2HR3_APP_HOSTS="'localhost',\n\t\t"
-fi
-if [ -n "${OPT_K2HR3_APP_HOST_EXTERNAL}" ]; then
-	TMP_K2HR3_APP_HOSTS="${TMP_K2HR3_APP_HOSTS}'${OPT_K2HR3_APP_HOST}',\n\t\t'${OPT_K2HR3_APP_HOST_EXTERNAL}'"
-else
-	TMP_K2HR3_APP_HOSTS="${TMP_K2HR3_APP_HOSTS}'${OPT_K2HR3_APP_HOST}'"
-fi
-if [ -n "${OPT_K2HR3_API_PORT_EXTERNAL}" ]; then
-	TMP_K2HR3_API_PORT_EXT="${OPT_K2HR3_API_PORT_EXTERNAL}"
-else
-	TMP_K2HR3_API_PORT_EXT="${OPT_K2HR3_API_PORT}"
-fi
-if [ -n "${OPT_K2HR3_API_HOST_EXTERNAL}" ]; then
-	TMP_K2HR3_API_HOST_EXT="${OPT_K2HR3_API_HOST_EXTERNAL}"
-else
-	TMP_K2HR3_API_HOST_EXT="${OPT_K2HR3_API_HOST}"
-fi
-
-#
 # Check and Make variables for production.json
 #
 if [ -f "${SRCTOP}"/conf/custom_production_api.templ ]; then
@@ -1201,7 +1384,27 @@ elif [ -f "${SRCTOP}"/conf/production_api.templ ]; then
 	PRODUCTION_JSON_TEMPL="${SRCTOP}"/conf/production_api.templ
 fi
 if [ -n "${PRODUCTION_JSON_TEMPL}" ]; then
-	if ! sed -e "s#__BASE_DIR__#${SRCTOP}#g" -e "s/__OS_REGION__/${OPT_OPENSTACK_REGION}/g" -e "s#__KEYSTONE_URL__#${OPT_KEYSTONE_URL}#g" -e "s/__RUNUSER__/${OPT_RUNUSER}/g" -e "s/__SLAVE_CTLPORT__/${OPT_CHMPX_SLAVE_CTLPORT}/g" -e "s/__K2HR3_APP_HOSTS__/${TMP_K2HR3_APP_HOSTS}/g" -e "s/__K2HR3_API_HOST__/${OPT_K2HR3_API_HOST}/g" -e "s/__K2HR3_API_PORT__/${OPT_K2HR3_API_PORT}/g" -e "s/__K2HR3_API_HOST_EXT__/${TMP_K2HR3_API_HOST_EXT}/g" -e "s/__K2HR3_API_PORT_EXT__/${TMP_K2HR3_API_PORT_EXT}/g" "${PRODUCTION_JSON_TEMPL}" > "${SRCTOP}"/k2hr3-api/config/production.json; then
+	if ! sed																\
+		-e "s#__BASE_DIR__#${SRCTOP}#g"										\
+		-e "s/__OS_REGION__/${OPT_OPENSTACK_REGION}/g"						\
+		-e "s#__KEYSTONE_URL__#${OPT_KEYSTONE_URL}#g"						\
+		-e "s/__RUNUSER__/${OPT_RUNUSER}/g"									\
+		-e "s/__SLAVE_CTLPORT__/${OPT_CHMPX_SLAVE_CTLPORT}/g"				\
+		-e "s/__K2HR3_APP_HOSTS__/${TMP_K2HR3_APP_HOSTS_WITH_LOCALHOST}/g"	\
+		-e "s/__K2HR3_APP_HOST__/${OPT_K2HR3_APP_HOST}/g"					\
+		-e "s/__K2HR3_APP_HOST_EXT__/${TMP_K2HR3_APP_HOST_EXT}/g"			\
+		-e "s/__K2HR3_APP_HOST_PRI__/${TMP_K2HR3_APP_HOST_PRI}/g"			\
+		-e "s/__K2HR3_APP_PORT__/${OPT_K2HR3_APP_PORT}/g"					\
+		-e "s/__K2HR3_APP_PORT_EXT__/${TMP_K2HR3_APP_PORT_EXT}/g"			\
+		-e "s/__K2HR3_APP_PORT_PRI__/${TMP_K2HR3_APP_PORT_PRI}/g"			\
+		-e "s/__K2HR3_API_HOST__/${OPT_K2HR3_API_HOST}/g"					\
+		-e "s/__K2HR3_API_HOST_EXT__/${TMP_K2HR3_API_HOST_EXT}/g"			\
+		-e "s/__K2HR3_API_HOST_PRI__/${TMP_K2HR3_API_HOST_PRI}/g"			\
+		-e "s/__K2HR3_API_PORT__/${OPT_K2HR3_API_PORT}/g"					\
+		-e "s/__K2HR3_API_PORT_EXT__/${TMP_K2HR3_API_PORT_EXT}/g"			\
+		-e "s/__K2HR3_API_PORT_PRI__/${TMP_K2HR3_API_PORT_PRI}/g"			\
+		"${PRODUCTION_JSON_TEMPL}" > "${SRCTOP}"/k2hr3-api/config/production.json; then
+
 		PRNERR "Could not create(copy) production.json configuration file"
 		exit 1
 	fi
@@ -1324,35 +1527,6 @@ fi
 PRNINFO "Succeed to install dependency packages for K2HR3 APP"
 
 #
-# Check and Make variables
-#
-if [ -n "${OPT_K2HR3_APP_HOST_EXTERNAL}" ]; then
-	TMP_K2HR3_APP_HOSTS="'${OPT_K2HR3_APP_HOST}',\n\t\t'${OPT_K2HR3_APP_HOST_EXTERNAL}'"
-else
-	TMP_K2HR3_APP_HOSTS="'${OPT_K2HR3_APP_HOST}'"
-fi
-if [ -n "${OPT_K2HR3_API_PORT_EXTERNAL}" ]; then
-	TMP_K2HR3_API_PORT_EXT="${OPT_K2HR3_API_PORT_EXTERNAL}"
-else
-	TMP_K2HR3_API_PORT_EXT="${OPT_K2HR3_API_PORT}"
-fi
-if [ -n "${OPT_K2HR3_API_HOST_EXTERNAL}" ]; then
-	TMP_K2HR3_API_HOST_EXT="${OPT_K2HR3_API_HOST_EXTERNAL}"
-else
-	TMP_K2HR3_API_HOST_EXT="${OPT_K2HR3_API_HOST}"
-fi
-if [ -n "${OPT_K2HR3_APP_PORT_EXTERNAL}" ]; then
-	TMP_K2HR3_APP_PORT_EXT="${OPT_K2HR3_APP_PORT_EXTERNAL}"
-else
-	TMP_K2HR3_APP_PORT_EXT="${OPT_K2HR3_APP_PORT}"
-fi
-if [ -n "${OPT_K2HR3_APP_HOST_EXTERNAL}" ]; then
-	TMP_K2HR3_APP_HOST_EXT="${OPT_K2HR3_APP_HOST_EXTERNAL}"
-else
-	TMP_K2HR3_APP_HOST_EXT="${OPT_K2HR3_APP_HOST}"
-fi
-
-#
 # Check and Make variables for production.json
 #
 if [ -f "${SRCTOP}"/conf/custom_production_app.templ ]; then
@@ -1361,7 +1535,24 @@ elif [ -f "${SRCTOP}"/conf/production_app.templ ]; then
 	PRODUCTION_JSON_TEMPL="${SRCTOP}"/conf/production_app.templ
 fi
 if [ -n "${PRODUCTION_JSON_TEMPL}" ]; then
-	if ! sed -e "s#__BASE_DIR__#${SRCTOP}#g" -e "s/__RUNUSER__/${OPT_RUNUSER}/g" -e "s/__K2HR3_APP_PORT__/${OPT_K2HR3_APP_PORT}/g" -e "s/__K2HR3_APP_HOST__/${OPT_K2HR3_APP_HOST}/g" -e "s/__K2HR3_APP_PORT_EXT__/${TMP_K2HR3_APP_PORT_EXT}/g" -e "s/__K2HR3_APP_HOST_EXT__/${TMP_K2HR3_APP_HOST_EXT}/g" -e "s/__K2HR3_API_HOST__/${OPT_K2HR3_API_HOST}/g" -e "s/__K2HR3_API_PORT__/${OPT_K2HR3_API_PORT}/g" -e "s/__K2HR3_API_HOST_EXT__/${TMP_K2HR3_API_HOST_EXT}/g" -e "s/__K2HR3_API_PORT_EXT__/${TMP_K2HR3_API_PORT_EXT}/g" "${PRODUCTION_JSON_TEMPL}" > "${SRCTOP}"/k2hr3-app/config/production.json; then
+	if ! sed														\
+		-e "s#__BASE_DIR__#${SRCTOP}#g"								\
+		-e "s/__RUNUSER__/${OPT_RUNUSER}/g"							\
+		-e "s/__K2HR3_APP_HOSTS__/${TMP_K2HR3_APP_HOSTS}/g"			\
+		-e "s/__K2HR3_APP_HOST__/${OPT_K2HR3_APP_HOST}/g"			\
+		-e "s/__K2HR3_APP_HOST_EXT__/${TMP_K2HR3_APP_HOST_EXT}/g"	\
+		-e "s/__K2HR3_APP_HOST_PRI__/${TMP_K2HR3_APP_HOST_PRI}/g"	\
+		-e "s/__K2HR3_APP_PORT__/${OPT_K2HR3_APP_PORT}/g"			\
+		-e "s/__K2HR3_APP_PORT_EXT__/${TMP_K2HR3_APP_PORT_EXT}/g"	\
+		-e "s/__K2HR3_APP_PORT_PRI__/${TMP_K2HR3_APP_PORT_PRI}/g"	\
+		-e "s/__K2HR3_API_HOST__/${OPT_K2HR3_API_HOST}/g"			\
+		-e "s/__K2HR3_API_HOST_EXT__/${TMP_K2HR3_API_HOST_EXT}/g"	\
+		-e "s/__K2HR3_API_HOST_PRI__/${TMP_K2HR3_API_HOST_PRI}/g"	\
+		-e "s/__K2HR3_API_PORT__/${OPT_K2HR3_API_PORT}/g"			\
+		-e "s/__K2HR3_API_PORT_EXT__/${TMP_K2HR3_API_PORT_EXT}/g"	\
+		-e "s/__K2HR3_API_PORT_PRI__/${TMP_K2HR3_API_PORT_PRI}/g"	\
+		"${PRODUCTION_JSON_TEMPL}" > "${SRCTOP}"/k2hr3-app/config/production.json; then
+
 		PRNERR "Could not create(copy) production.json configuration file"
 		exit 1
 	fi

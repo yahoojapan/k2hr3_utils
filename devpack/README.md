@@ -1,4 +1,4 @@
-3 DEVPACK
+# K2HR3 DEVPACK
 
 ## Overview
 This directory is a environment construction tool for developers to build the minimum K2HR3 system with one HOST(Virtual Machine).  
@@ -65,13 +65,17 @@ $ devpack.sh --help
     K2HR3 APP:
           --app_port(-appp)             Specify K2HR3 Application port
           --app_port_external(-apppe)   Specify K2HR3 Application external port(optional: specify when using a proxy)
+          --app_port_private(-apppp)    Specify K2HR3 Application private port(optional: specify when openstack)
           --app_host(-apph)             Specify K2HR3 Application host
           --app_host_external(-apphe)   Specify K2HR3 Application external host(optional: host as javascript download server)
+          --app_host_private(-apphp)    Specify K2HR3 Application private host(optional: specify when openstack)
     K2HR3 API:
           --api_port(-apip)             Specify K2HR3 REST API port
           --api_port_external(-apipe)   Specify K2HR3 REST API external port(optional: specify when using a proxy)
+          --api_port_private(-apipp)    Specify K2HR3 REST API private port(optional: specify when openstack)
           --api_host(-apih)             Specify K2HR3 REST API host
           --api_host_external(-apihe)   Specify K2HR3 REST API external host(optional: specify when using a proxy)
+          --api_host_private(-apihp)    Specify K2HR3 REST API private host(optional: specify when openstack)
   
   [Environments]
           If PROXY environment variables(HTTP(s)_PROXY, NO_PROXY) are detected,
@@ -98,18 +102,26 @@ Specify CHMPX slave node process control port.
 Specify K2HR3 Application port.
 - --app_port_external(-apppe)  
 Specify K2HR3 Application external port(optional: specify when using a proxy).
+- --app_port_private(-apppp)  
+Specify K2HR3 Application private port(optional: specify when openstack)
 - --app_host(-apph)  
 Specify K2HR3 Application host.
 - --app_host_external(-apphe)  
 Specify K2HR3 Application external host(optional: host as javascript download server).
+- --app_host_private(-apphp)  
+Specify K2HR3 Application private host(optional: specify when openstack)
 - --api_port(-apip)  
 Specify K2HR3 REST API port.
 - --api_port_external(-apipe)  
 Specify K2HR3 REST API external port(optional: specify when using a proxy).
+- --api_port_private(-apipp)  
+Specify K2HR3 REST API private port(optional: specify when openstack)
 - --api_host(-apih)  
 Specify K2HR3 REST API host.
 - --api_host_external(-apihe)  
 Specify K2HR3 REST API external host(optional: specify when using a proxy).
+- --api_host_private(-apihp)  
+Specify K2HR3 REST API private host(optional: specify when openstack)
 
 ##### NOTE
 Specify these options(`--app_port_external(-apppe)`, `--app_host_external(-apphe)`, `--api_port_external(-apipe)`, `--api_host_external(-apihe)`), if your environment requires PROXY settings for external access.  
