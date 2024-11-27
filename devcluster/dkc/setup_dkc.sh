@@ -97,7 +97,7 @@ fi
 
 ########
 # 2. Ensures that the k2hdkc data directory exists
-# k2hr3_dkc saves the data to the data directory(for instance /var/lib/k2hdkc/data).
+# k2hr3_dkc saves the data to the data directory(for instance /var/lib/antpickax/k2hdkc).
 #
 logger -t ${TAG} -p user.info "2. Ensures that the k2hdkc data directory exists"
 
