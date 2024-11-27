@@ -1,3 +1,12 @@
+k2hr3-utils (1.0.4) unstable; urgency=low
+
+  * Updated devpack.sh and data directory path, etc - #28
+  * Updated devpack.sh and stopdevpack.sh - #27
+  * Updated header and footer in comment lines - #26
+  * Updated issue/pullrequest templates and README.md - #25
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Wed, 27 Nov 2024 16:26:59 +0900
+
 k2hr3-utils (1.0.3) unstable; urgency=low
 
   * Updated devpack.sh for trove and removed run_node_helper.sh - #23
