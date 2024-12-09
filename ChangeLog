@@ -1,3 +1,9 @@
+k2hr3-utils (1.0.5) unstable; urgency=low
+
+  * Reverted k2hdkc data file path in config.templ - #30
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Mon, 09 Dec 2024 10:25:23 +0900
+
 k2hr3-utils (1.0.4) unstable; urgency=low
 
   * Updated devpack.sh and data directory path, etc - #28
