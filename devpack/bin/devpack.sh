@@ -940,37 +940,10 @@ fi
 #
 _OS_ID=$(grep '^ID=' /etc/os-release | sed -e 's/ID=//g' -e 's/"//g')
 
-if echo "${_OS_ID}" | grep -q -i 'centos'; then
-	PKG_INSTALLER="yum"
-	PACKAGECLOUD_URL="https://packagecloud.io/install/repositories/antpickax/stable/script.rpm.sh"
-	NODJS_SETUP_URL="https://rpm.nodesource.com/setup_18.x"
-
-	K2HDKC_DEV_PACKAGE="k2hdkc-devel k2htpdtor"
-
-	#
-	# Update package cache
-	#
-	PRNMSG "Update package cache"
-	if ({ /bin/sh -c "${SUDO_PREFIX_CMD} ${PKG_INSTALLER} update -y -q" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-		PRNERR "Failed to update package cache"
-		exit 1
-	fi
-	PRNINFO "Succeed to update package cache"
-
-	#
-	# Setup epel repository
-	#
-	PRNMSG "Setup OS package repositories(epel)"
-	if ({ /bin/sh -c "${SUDO_PREFIX_CMD} ${PKG_INSTALLER} install -y epel-release" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
-		PRNERR "Failed to install epel repository"
-		exit 1
-	fi
-	PRNINFO "Succeed to setup OS package repositories(epel)"
-
-elif echo "${_OS_ID}" | grep -q -i 'fedora'; then
+if echo "${_OS_ID}" | grep -q -i 'fedora'; then
 	PKG_INSTALLER="dnf"
 	PACKAGECLOUD_URL="https://packagecloud.io/install/repositories/antpickax/stable/script.rpm.sh"
-	NODJS_SETUP_URL="https://rpm.nodesource.com/setup_18.x"
+	NODJS_SETUP_URL="https://rpm.nodesource.com/setup_22.x"
 
 	K2HDKC_DEV_PACKAGE="k2hdkc-devel k2htpdtor"
 
@@ -997,7 +970,7 @@ elif echo "${_OS_ID}" | grep -q -i 'fedora'; then
 elif echo "${_OS_ID}" | grep -q -i 'rocky'; then
 	PKG_INSTALLER="dnf"
 	PACKAGECLOUD_URL="https://packagecloud.io/install/repositories/antpickax/stable/script.rpm.sh"
-	NODJS_SETUP_URL="https://rpm.nodesource.com/setup_18.x"
+	NODJS_SETUP_URL="https://rpm.nodesource.com/setup_22.x"
 
 	K2HDKC_DEV_PACKAGE="k2hdkc-devel k2htpdtor"
 
@@ -1068,7 +1041,7 @@ elif echo "${_OS_ID}" | grep -q -i 'rocky'; then
 elif echo "${_OS_ID}" | grep -q -i 'ubuntu'; then
 	PKG_INSTALLER="apt-get"
 	PACKAGECLOUD_URL="https://packagecloud.io/install/repositories/antpickax/stable/script.deb.sh"
-	NODJS_SETUP_URL="https://deb.nodesource.com/setup_18.x"
+	NODJS_SETUP_URL="https://deb.nodesource.com/setup_22.x"
 
 	K2HDKC_DEV_PACKAGE="k2hdkc-dev k2htpdtor"
 
@@ -1085,7 +1058,7 @@ elif echo "${_OS_ID}" | grep -q -i 'ubuntu'; then
 elif echo "${_OS_ID}" | grep -q -i 'debian'; then
 	PKG_INSTALLER="apt-get"
 	PACKAGECLOUD_URL="https://packagecloud.io/install/repositories/antpickax/stable/script.deb.sh"
-	NODJS_SETUP_URL="https://deb.nodesource.com/setup_18.x"
+	NODJS_SETUP_URL="https://deb.nodesource.com/setup_22.x"
 
 	K2HDKC_DEV_PACKAGE="k2hdkc-dev k2htpdtor"
 
@@ -1117,7 +1090,7 @@ PRNINFO "Succeed to setup packaagecloud.io repository"
 #
 # Install base packages
 #
-if echo "${_OS_ID}" | grep -q -i -e 'centos' -e 'fedora' -e 'rocky'; then
+if echo "${_OS_ID}" | grep -q -i -e 'fedora' -e 'rocky'; then
 	#
 	# Install packages for build
 	#
