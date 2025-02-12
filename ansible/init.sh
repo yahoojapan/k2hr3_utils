@@ -21,57 +21,84 @@
 # This program puts ansible vault password as a file in the working directory
 # This program decode base64 encoded data and decrypts it and puts it as a file in the working directory
 
+#
 # Sets the default locale. LC_ALL has precedence over other LC* variables.
+#
 unset LANG
 unset LANGUAGE
 LC_ALL=en_US.utf8
 export LC_ALL
 
+#
 # Sets PATH. setup_*.sh uses useradd command
+#
 PATH=${PATH}:/usr/sbin:/sbin
 
+#
 # an unset parameter expansion will fail
+#
 set -u
 
+#
 # umask 022 is enough
+#
 umask 022
 
-# defines environments
-TAG=$(basename $0 -s)
-VAULT_PASSWORD=${1-}
-SSLKEY=${2-}
-SSLKEY_FILE=${3-}
+#
+# Set variables / Parse parameters
+#
+TAG=$(basename "${0}" -s)
+VAULT_PASSWORD=""
+SSLKEY=""
+SSLKEY_FILE=""
 
-if test -z "${VAULT_PASSWORD}"; then
-	logger -t ${TAG} -p user.err "Usage: init.sh password [encrypted-sslkey] [decrypted-sslkey]"
+if [ $# -gt 0 ] && [ -n "$1" ]; then
+	VAULT_PASSWORD="$1"
+	shift
+	if [ $# -gt 0 ] && [ -n "$1" ]; then
+		SSLKEY="$1"
+		shift
+		if [ $# -gt 0 ] && [ -n "$1" ]; then
+			SSLKEY_FILE="$1"
+			shift
+		fi
+	fi
+else
+	logger -t "${TAG}" -p user.err "Usage: init.sh password [encrypted-sslkey] [decrypted-sslkey]"
 	exit 1
 fi
 
+#
+# Create password file
+#
 cat <<EOF>.vault_password
 ${VAULT_PASSWORD}
 EOF
-if ! test -f ".vault_password" ; then
-	logger -t ${TAG} -p user.err "[ERROR] .vault_password file does not exist"
+if [ ! -f .vault_password ]; then
+	logger -t "${TAG}" -p user.err "[ERROR] .vault_password file does not exist"
 	exit 1
 fi
 
+#
 # defined SSLKEY should be base64 decoded.
-if test -n "${SSLKEY}" -a -n "${SSLKEY_FILE}"; then
+#
+if [ -n "${SSLKEY}" ] && [ -n "${SSLKEY_FILE}" ]; then
 	cat <<EOF>${SSLKEY_FILE}.base64
 ${SSLKEY}
 EOF
-	base64 -d ${SSLKEY_FILE}.base64 | tee ${SSLKEY_FILE}
+
+	base64 -d "${SSLKEY_FILE}".base64 | tee "${SSLKEY_FILE}"
 
 	# ensures SSLKEY file exists
-	if ! test -f "${SSLKEY_FILE}" ; then
-		logger -t ${TAG} -p user.err "[ERROR] ${SSLKEY_FILE} file does not exist"
+	if [ ! -f "${SSLKEY_FILE}" ]; then
+		logger -t "${TAG}" -p user.err "[ERROR] ${SSLKEY_FILE} file does not exist"
 		exit 1
 	fi
+
 	# decrypts SSLKEY file
-	if ! test -z "${SSLKEY}"; then
-		ansible-vault decrypt --vault-password-file=.vault_password ${SSLKEY_FILE}
-		if test "${?}" != 0; then
-			logger -t ${TAG} -p user.err "[ERROR] ansible-vault decryption error"
+	if [ -n "${SSLKEY}" ]; then
+		if ! ansible-vault decrypt --vault-password-file=.vault_password "${SSLKEY_FILE}"; then
+			logger -t "${TAG}" -p user.err "[ERROR] ansible-vault decryption error"
 			exit 1
 		fi
 	fi
