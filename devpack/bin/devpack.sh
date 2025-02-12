@@ -287,25 +287,25 @@ while [ $# -ne 0 ]; do
 	if [ -z "$1" ]; then
 		break
 
-	elif [ "$1" = "-h" ] || [ "$1" = "-H" ] || [ "$1" = "--help" ] || [ "$1" = "--HELP" ]; then
+	elif echo "$1" | grep -q -i -e "^-h$" -e "^--help$"; then
 		func_usage "${PROGRAM_NAME}"
 		exit 0
 
-	elif [ "$1" = "-ni" ] || [ "$1" = "-NI" ] || [ "$1" = "--no_interaction" ] || [ "$1" = "--NO_INTERACTION" ]; then
+	elif echo "$1" | grep -q -i -e "^-ni$" -e "^--no_interaction$"; then
 		if [ "${OPT_NO_INTERACTIVE}" != "no" ]; then
 			PRNERR "--no_interaction(-ni) option is already specified."
 			exit 1
 		fi
 		OPT_NO_INTERACTIVE="yes"
 
-	elif [ "$1" = "-nc" ] || [ "$1" = "-NC" ] || [ "$1" = "--no_confirmation" ] || [ "$1" = "--NO_CONFIRMATION" ]; then
+	elif echo "$1" | grep -q -i -e "^-nc$" -e "^--no_confirmation$"; then
 		if [ -n "${OPT_NO_COMFIRMATION}" ]; then
 			PRNERR "--no_confirmation(-nc) option is already specified."
 			exit 1
 		fi
 		OPT_NO_COMFIRMATION="yes"
 
-	elif [ "$1" = "-ru" ] || [ "$1" = "-RU" ] || [ "$1" = "--run_user" ] || [ "$1" = "--RUN_USER" ]; then
+	elif echo "$1" | grep -q -i -e "^-ru$" -e "^--run_user$"; then
 		if [ -n "${OPT_RUNUSER}" ]; then
 			PRNERR "--run_user(-ru) option is already specified."
 			exit 1
@@ -317,7 +317,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_RUNUSER="$1"
 
-	elif [ "$1" = "-svrp" ] || [ "$1" = "-SVRP" ] || [ "$1" = "--server_port" ] || [ "$1" = "--SERVER_PORT" ]; then
+	elif echo "$1" | grep -q -i -e "^-svrp$" -e "^--server_port$"; then
 		if [ -n "${OPT_CHMPX_SERVER_PORT}" ]; then
 			PRNERR "--server_port(-svrp) option is already specified."
 			exit 1
@@ -333,7 +333,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_CHMPX_SERVER_PORT="$1"
 
-	elif [ "$1" = "-svrcp" ] || [ "$1" = "-SVRCP" ] || [ "$1" = "--server_ctlport" ] || [ "$1" = "--SERVER_CTLPORT" ]; then
+	elif echo "$1" | grep -q -i -e "^-svrcp$" -e "^--server_ctlport$"; then
 		if [ -n "${OPT_CHMPX_SERVER_CTLPORT}" ]; then
 			PRNERR "--server_ctlport(-svrcp) option is already specified."
 			exit 1
@@ -349,7 +349,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_CHMPX_SERVER_CTLPORT="$1"
 
-	elif [ "$1" = "-slvcp" ] || [ "$1" = "-SLVCP" ] || [ "$1" = "--slave_ctlport" ] || [ "$1" = "--SLAVE_CTLPORT" ]; then
+	elif echo "$1" | grep -q -i -e "^-slvcp$" -e "^--slave_ctlport$"; then
 		if [ -n "${OPT_CHMPX_SLAVE_CTLPORT}" ]; then
 			PRNERR "--slave_ctlport(-slvcp) option is already specified."
 			exit 1
@@ -365,7 +365,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_CHMPX_SLAVE_CTLPORT="$1"
 
-	elif [ "$1" = "-osr" ] || [ "$1" = "-OSR" ] || [ "$1" = "--openstack_region" ] || [ "$1" = "--OPENSTACK_REGION" ]; then
+	elif echo "$1" | grep -q -i -e "^-osr$" -e "^--openstack_region$"; then
 		if [ -n "${OPT_OPENSTACK_REGION}" ]; then
 			PRNERR "--openstack_region(-osr) option is already specified."
 			exit 1
@@ -377,7 +377,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_OPENSTACK_REGION="$1"
 
-	elif [ "$1" = "-ks" ] || [ "$1" = "-KS" ] || [ "$1" = "--keystone_url" ] || [ "$1" = "--KEYSTONE_URL" ]; then
+	elif echo "$1" | grep -q -i -e "^-ks$" -e "^--keystone_url$"; then
 		if [ -n "${OPT_KEYSTONE_URL}" ]; then
 			PRNERR "--keystone_url(-ks) option is already specified."
 			exit 1
@@ -389,7 +389,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_KEYSTONE_URL="$1"
 
-	elif [ "$1" = "-appp" ] || [ "$1" = "-APPP" ] || [ "$1" = "--app_port" ] || [ "$1" = "--APP_PORT" ]; then
+	elif echo "$1" | grep -q -i -e "^-appp$" -e "^--app_port$"; then
 		if [ -n "${OPT_K2HR3_APP_PORT}" ]; then
 			PRNERR "--app_port(-appp) option is already specified."
 			exit 1
@@ -405,7 +405,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_APP_PORT="$1"
 
-	elif [ "$1" = "-apppe" ] || [ "$1" = "-APPPE" ] || [ "$1" = "--app_port_external" ] || [ "$1" = "--APP_PORT_EXTERNAL" ]; then
+	elif echo "$1" | grep -q -i -e "^-apppe$" -e "^--app_port_external$"; then
 		if [ -n "${OPT_K2HR3_APP_PORT_EXTERNAL}" ]; then
 			PRNERR "--app_port_external(-apppe) option is already specified."
 			exit 1
@@ -421,7 +421,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_APP_PORT_EXTERNAL="$1"
 
-	elif [ "$1" = "-apppp" ] || [ "$1" = "-APPPP" ] || [ "$1" = "--app_port_private" ] || [ "$1" = "--APP_PORT_PRIVATE" ]; then
+	elif echo "$1" | grep -q -i -e "^-apppp$" -e "^--app_port_private$"; then
 		if [ -n "${OPT_K2HR3_APP_PORT_PRIVATE}" ]; then
 			PRNERR "--app_port_private(-apppp) option is already specified."
 			exit 1
@@ -437,7 +437,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_APP_PORT_PRIVATE="$1"
 
-	elif [ "$1" = "-apph" ] || [ "$1" = "-APPH" ] || [ "$1" = "--app_host" ] || [ "$1" = "--APP_HOST" ]; then
+	elif echo "$1" | grep -q -i -e "^-apph$" -e "^--app_host$"; then
 		if [ -n "${OPT_K2HR3_APP_HOST}" ]; then
 			PRNERR "--app_host(-apph) option is already specified."
 			exit 1
@@ -449,7 +449,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_APP_HOST="$1"
 
-	elif [ "$1" = "-apphe" ] || [ "$1" = "-APPHE" ] || [ "$1" = "--app_host_external" ] || [ "$1" = "--APP_HOST_EXTERNAL" ]; then
+	elif echo "$1" | grep -q -i -e "^-apphe$" -e "^--app_host_external$"; then
 		if [ -n "${OPT_K2HR3_APP_HOST_EXTERNAL}" ]; then
 			PRNERR "--app_host_external(-apphe) option is already specified."
 			exit 1
@@ -461,7 +461,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_APP_HOST_EXTERNAL="$1"
 
-	elif [ "$1" = "-apphp" ] || [ "$1" = "-APPHP" ] || [ "$1" = "--app_host_private" ] || [ "$1" = "--APP_HOST_PRIVATE" ]; then
+	elif echo "$1" | grep -q -i -e "^-apphp$" -e "^--app_host_private$"; then
 		if [ -n "${OPT_K2HR3_APP_HOST_PRIVATE}" ]; then
 			PRNERR "--app_host_private(-apphp) option is already specified."
 			exit 1
@@ -473,7 +473,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_APP_HOST_PRIVATE="$1"
 
-	elif [ "$1" = "-apip" ] || [ "$1" = "-APIP" ] || [ "$1" = "--api_port" ] || [ "$1" = "--API_PORT" ]; then
+	elif echo "$1" | grep -q -i -e "^-apip$" -e "^--api_port$"; then
 		if [ -n "${OPT_K2HR3_API_PORT}" ]; then
 			PRNERR "--api_port(-apip) option is already specified."
 			exit 1
@@ -489,7 +489,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_API_PORT="$1"
 
-	elif [ "$1" = "-apipe" ] || [ "$1" = "-APIPE" ] || [ "$1" = "--api_port_external" ] || [ "$1" = "--API_PORT_EXTERNAL" ]; then
+	elif echo "$1" | grep -q -i -e "^-apipe$" -e "^--api_port_external$"; then
 		if [ -n "${OPT_K2HR3_API_PORT_EXTERNAL}" ]; then
 			PRNERR "--api_port_external(-apipe) option is already specified."
 			exit 1
@@ -505,7 +505,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_API_PORT_EXTERNAL="$1"
 
-	elif [ "$1" = "-apipp" ] || [ "$1" = "-APIPP" ] || [ "$1" = "--api_port_private" ] || [ "$1" = "--API_PORT_PRIVATE" ]; then
+	elif echo "$1" | grep -q -i -e "^-apipp$" -e "^--api_port_private$"; then
 		if [ -n "${OPT_K2HR3_API_PORT_PRIVATE}" ]; then
 			PRNERR "--api_port_private(-apipp) option is already specified."
 			exit 1
@@ -521,7 +521,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_API_PORT_PRIVATE="$1"
 
-	elif [ "$1" = "-apih" ] || [ "$1" = "-APIH" ] || [ "$1" = "--api_host" ] || [ "$1" = "--API_HOST" ]; then
+	elif echo "$1" | grep -q -i -e "^-apih$" -e "^--api_host$"; then
 		if [ -n "${OPT_K2HR3_API_HOST}" ]; then
 			PRNERR "--api_host(-apih) option is already specified."
 			exit 1
@@ -533,7 +533,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_API_HOST="$1"
 
-	elif [ "$1" = "-apihe" ] || [ "$1" = "-APIHE" ] || [ "$1" = "--api_host_external" ] || [ "$1" = "--API_HOST_EXTERNAL" ]; then
+	elif echo "$1" | grep -q -i -e "^-apihe$" -e "^--api_host_external$"; then
 		if [ -n "${OPT_K2HR3_API_HOST_EXTERNAL}" ]; then
 			PRNERR "--api_host_external(-apihe) option is already specified."
 			exit 1
@@ -545,7 +545,7 @@ while [ $# -ne 0 ]; do
 		fi
 		OPT_K2HR3_API_HOST_EXTERNAL="$1"
 
-	elif [ "$1" = "-apihp" ] || [ "$1" = "-APIHP" ] || [ "$1" = "--api_host_private" ] || [ "$1" = "--API_HOST_PRIVATE" ]; then
+	elif echo "$1" | grep -q -i -e "^-apihp$" -e "^--api_host_private$"; then
 		if [ -n "${OPT_K2HR3_API_HOST_PRIVATE}" ]; then
 			PRNERR "--api_host_private(-apihp) option is already specified."
 			exit 1
@@ -885,10 +885,10 @@ if [ "${OPT_NO_COMFIRMATION}" != "yes" ]; then
 
 		if [ -z "${CONFIRM_DATA}" ]; then
 			PRNERR "The input data must be \"yes(y)\" or \"no(n)\"."
-		elif [ "${CONFIRM_DATA}" = "Y" ] || [ "${CONFIRM_DATA}" = "y" ] || [ "${CONFIRM_DATA}" = "YES" ] || [ "${CONFIRM_DATA}" = "yes" ]; then
+		elif echo "${CONFIRM_DATA}" | grep -q -i -e "^y$" -e "^yes$"; then
 			IS_LOOP=0
 			echo ""
-		elif [ "${CONFIRM_DATA}" = "N" ] || [ "${CONFIRM_DATA}" = "n" ] || [ "${CONFIRM_DATA}" = "NO" ] || [ "${CONFIRM_DATA}" = "no" ]; then
+		elif echo "${CONFIRM_DATA}" | grep -q -i -e "^n$" -e "^no$"; then
 			PRNINFO "Terminate this process."
 			exit 0
 		else

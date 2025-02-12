@@ -125,11 +125,11 @@ while [ $# -ne 0 ]; do
 	if [ "$1" = "" ]; then
 		break
 
-	elif [ "$1" = "-h" ] || [ "$1" = "-H" ] || [ "$1" = "--help" ] || [ "$1" = "--HELP" ]; then
+	elif echo "$1" | grep -q -i -e "^-h$" -e "^--help$"; then
 		func_usage "${PROGRAM_NAME}"
 		exit 0
 
-	elif [ "$1" = "-c" ] || [ "$1" = "-C" ] || [ "$1" = "--clear" ] || [ "$1" = "--CLEAR" ]; then
+	elif echo "$1" | grep -q -i -e "^-c$" -e "^--clear$"; then
 		if [ "${OPT_CLEAR}" != "no" ]; then
 			PRNERR "--clear(-c) option is already specified."
 			exit 1

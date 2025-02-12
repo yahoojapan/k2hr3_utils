@@ -22,12 +22,17 @@
 # cluster_functions defines functions to be used by most or all shell scripts
 # in this directory.
 #
+PRGNAME=$(basename "$0")
 
 # an unset parameter expansion will fail
 set -u
 
-usage () {
-    echo "usage : $(basename $0) [-d] [-f file] [-h] [-r] [-v]"
+#
+# Utilities
+#
+usage()
+{
+    echo "usage : ${PRGNAME} [-d] [-f file] [-h] [-r] [-v]"
     echo "    -d        run in debug mode"
     echo "    -f file   k2hr3_${COMPONENT} file path(or URL)"
     echo "    -h        display this message and exit"
@@ -37,8 +42,9 @@ usage () {
     exit 1
 }
 
-usage_app_node_module () {
-    echo "usage : $(basename $0) [-d] [-f file] [-h] [-r] [-v]"
+usage_app_node_module()
+{
+    echo "usage : ${PRGNAME} [-d] [-f file] [-h] [-r] [-v]"
     echo "    -d        run in debug mode"
     echo "    -f file   k2hr3_${COMPONENT} file path(or URL)"
     echo "    -h        display this message and exit"
@@ -48,8 +54,9 @@ usage_app_node_module () {
     exit 1
 }
 
-usage_api () {
-    echo "usage : $(basename $0) [-d] [-f file] [-i url] [-h] [-r] [-v]"
+usage_api()
+{
+    echo "usage : ${PRGNAME} [-d] [-f file] [-i url] [-h] [-r] [-v]"
     echo "    -d        run in debug mode"
     echo "    -f file   k2hr3_${COMPONENT} file path(or URL)"
     echo "    -h        display this message and exit"
@@ -60,8 +67,9 @@ usage_api () {
     exit 1
 }
 
-usage_dkc () {
-    echo "usage : $(basename $0) [-d] [-h] [-r] [-v]"
+usage_dkc()
+{
+    echo "usage : ${PRGNAME} [-d] [-h] [-r] [-v]"
     echo "    -d        run in debug mode"
     echo "    -h        display this message and exit"
     echo "    -r        run in dry run mode"
@@ -70,8 +78,9 @@ usage_dkc () {
     exit 1
 }
 
-usage_osnl () {
-    echo "usage : $(basename $0) [-d] [-f file] [-h] [-r] [-t url] [-v]"
+usage_osnl()
+{
+    echo "usage : ${PRGNAME} [-d] [-f file] [-h] [-r] [-t url] [-v]"
     echo "    -d        run in debug mode"
     echo "    -f file   k2hr3-osnl package file path(or URL)"
     echo "    -h        display this message and exit"
@@ -82,11 +91,13 @@ usage_osnl () {
     exit 1
 }
 
-version() {
-    echo "$(basename $0) ${VERSION}"
-    exit 1
+version()
+{
+    echo "${PRGNAME} ${VERSION}"
+    return 1
 }
 
+#
 # Determines the current OS and the service manager
 #
 # Params::
@@ -96,39 +107,44 @@ version() {
 #   0 on success
 #   1 on failure
 #
-setup_os_env() {
-    if test -f "/etc/os-release"; then
-        . /etc/os-release
-        OS_NAME=$ID
-        OS_VERSION=$VERSION_ID
-        SERVICE_MANAGER=systemd
+setup_os_env()
+{
+    if [ -f "/etc/os-release" ]; then
+		# shellcheck source=/dev/null
+        . "/etc/os-release"
+        OS_NAME="${ID}"
+        OS_VERSION="${VERSION_ID}"
+        SERVICE_MANAGER="systemd"
     else
-        logger -t ${TAG} -p user.err "unknown OS, no /etc/os-release and /etc/centos-release"
+        logger -t "${TAG}" -p user.err "unknown OS, no /etc/os-release"
         return 1
     fi
 
-    if test "${OS_NAME}" = "fedora"; then
-        if test "${OS_VERSION}" != "28" -a "${OS_VERSION}" != "29"; then
-            logger -t ${TAG} -p user.err "fedora 28 or 29 only currently supported, not ${OS_NAME} ${OS_VERSION}"
+    if echo "${OS_NAME}" | grep -q -i "fedora"; then
+        if [ "${OS_VERSION}" -ne 28 ] && [ "${OS_VERSION}" -ne 29 ]; then
+            logger -t "${TAG}" -p user.err "fedora 28 or 29 only currently supported, not ${OS_NAME} ${OS_VERSION}"
             return 1
         fi
-    elif test "${OS_NAME}" = "ubuntu"; then
-        logger -t ${TAG} -p user.notice "ubuntu configurations are currently equal to debian one"
-        OS_NAME=debian
-    elif test "${OS_NAME}" = "centos"; then
-        if test "${OS_VERSION}" != "7" -a "${OS_VERSION}" != "8"; then
-            logger -t ${TAG} -p user.err "centos7 only currently supported, not ${OS_NAME} ${OS_VERSION}"
+        OS_NAME="fedora"
+
+    elif echo "${OS_NAME}" | grep -q -i "ubuntu"; then
+        logger -t "${TAG}" -p user.notice "ubuntu configurations are currently equal to debian one"
+        OS_NAME="debian"
+
+    elif echo "${OS_NAME}" | grep -q -i "centos"; then
+        if [ "${OS_VERSION}" -ne 8 ]; then
+            logger -t "${TAG}" -p user.err "centos8 only currently supported, not ${OS_NAME} ${OS_VERSION}"
             return 1
         fi
     fi
 
     HOSTNAME=$(hostname)
-    logger -t ${TAG} -p user.debug "HOSTNAME=${HOSTNAME} OS_NAME=${OS_NAME} OS_VERSION=${OS_VERSION}"
+    logger -t "${TAG}" -p user.debug "HOSTNAME=${HOSTNAME} OS_NAME=${OS_NAME} OS_VERSION=${OS_VERSION}"
 
     return 0
 }
 
-
+#
 # Loads default settings
 #
 # Params::
@@ -138,49 +154,54 @@ setup_os_env() {
 #   0 on success
 #   1 on failure
 #
-setup_ini_env() {
-    if ! test -f "${SRCDIR}/setup_${COMPONENT}_default.ini"; then
-        logger -t ${TAG} -p user.err "No ${SRCDIR}/setup_${COMPONENT}_default.ini"
+setup_ini_env()
+{
+    if [ ! -f "${SRCDIR}/setup_${COMPONENT}_default.ini" ]; then
+        logger -t "${TAG}" -p user.err "No ${SRCDIR}/setup_${COMPONENT}_default.ini"
         return 1
     fi
+    logger -t "${TAG}" -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_default.ini"
 
-    logger -t ${TAG} -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_default.ini"
-    . ${SRCDIR}/setup_${COMPONENT}_default.ini
+	# shellcheck disable=SC1090
+    . "${SRCDIR}/setup_${COMPONENT}_default.ini"
 
-    if test "${OS_NAME}" = "fedora"; then
-        if test -f "${SRCDIR}/setup_${COMPONENT}_fedora.ini"; then
-            logger -t ${TAG} -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_fedora.ini"
-            . ${SRCDIR}/setup_${COMPONENT}_fedora.ini
+    if echo "${OS_NAME}" | grep -q -i "fedora"; then
+        if [ -f "${SRCDIR}/setup_${COMPONENT}_fedora.ini" ]; then
+            logger -t "${TAG}" -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_fedora.ini"
+			# shellcheck disable=SC1090
+            . "${SRCDIR}/setup_${COMPONENT}_fedora.ini"
         else
-            logger -t ${TAG} -p user.warn "No ${SRCDIR}/setup_${COMPONENT}_fedora.ini. Installation continues with setup_default.ini"
+            logger -t "${TAG}" -p user.warn "No ${SRCDIR}/setup_${COMPONENT}_fedora.ini. Installation continues with setup_default.ini"
         fi
-    elif test "${OS_NAME}" = "debian" -o "${OS_NAME}" = "ubuntu"; then
-        if test -f "${SRCDIR}/setup_${COMPONENT}_debian.ini"; then
-            logger -t ${TAG} -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_debian.ini"
-            . ${SRCDIR}/setup_${COMPONENT}_debian.ini
+
+    elif echo "${OS_NAME}" | grep -q -i -e "debian" -e "ubuntu"; then
+        if [ -f "${SRCDIR}/setup_${COMPONENT}_debian.ini" ]; then
+            logger -t "${TAG}" -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_debian.ini"
+			# shellcheck disable=SC1090
+            . "${SRCDIR}/setup_${COMPONENT}_debian.ini"
         else
-            logger -t ${TAG} -p user.warn "No ${SRCDIR}/setup_${COMPONENT}_debian.ini Installation continues with setup_default.ini"
+            logger -t "${TAG}" -p user.warn "No ${SRCDIR}/setup_${COMPONENT}_debian.ini Installation continues with setup_default.ini"
         fi
-    elif test "${OS_NAME}" = "centos"; then
-        if test "${OS_VERSION}" = "7" -o "${OS_VERSION}" = "8"; then
-            if test -f "${SRCDIR}/setup_${COMPONENT}_centos7.ini"; then
-                logger -t ${TAG} -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_centos7.ini"
-                . ${SRCDIR}/setup_${COMPONENT}_centos7.ini
-            elif test -f "${SRCDIR}/setup_${COMPONENT}_centos.ini"; then
-                logger -t ${TAG} -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_centos.ini"
-                . ${SRCDIR}/setup_${COMPONENT}_centos.ini
+
+    elif echo "${OS_NAME}" | grep -q -i "centos"; then
+        if [ "${OS_VERSION}" -eq 8 ]; then
+            if [ -f "${SRCDIR}/setup_${COMPONENT}_centos.ini" ]; then
+                logger -t "${TAG}" -p user.debug "loading ${SRCDIR}/setup_${COMPONENT}_centos.ini"
+				# shellcheck disable=SC1090
+                . "${SRCDIR}/setup_${COMPONENT}_centos.ini"
             else
-                logger -t ${TAG} -p user.warn "No ${SRCDIR}/setup_${COMPONENT}_fedora.ini. Installation continues with setup_default.ini"
+                logger -t "${TAG}" -p user.warn "No ${SRCDIR}/setup_${COMPONENT}_fedora.ini. Installation continues with setup_default.ini"
             fi
         else
-            logger -t ${TAG} -p user.warn "OS_VERSION should be 7 or 6, not ${OS_VERSION}, Installation continues with setup_default.ini"
+            logger -t "${TAG}" -p user.warn "OS_VERSION should be 8, not ${OS_VERSION}, Installation continues with setup_default.ini"
         fi
     else
-        logger -t ${TAG} -p user.warn "OS must be either fedora or centos or debian or ubuntu, not ${OS_NAME}, but Installation continues with setup_default.ini"
+        logger -t "${TAG}" -p user.warn "OS must be either fedora or centos or debian or ubuntu, not ${OS_NAME}, but Installation continues with setup_default.ini"
     fi
     return 0
 }
 
+#
 # Set package repository
 #
 # Params::
@@ -212,52 +233,43 @@ setup_ini_env() {
 #   See details on centos-releae-scl package
 #   https://github.com/sclorg/centos-release-scl#package-centos-release-scl-for-rhel-users
 #
-setup_package_repository() {
-    _copr_url="${1-}"
+setup_package_repository()
+{
+	if [ $# -gt 0 ]; then
+	    _copr_url="$1"
+	else
+	    _copr_url=""
+	fi
+    logger -t "${TAG}" -p user.debug "setup_package_repository _copr_url=${_copr_url}"
 
-    logger -t ${TAG} -p user.debug "setup_package_repository _copr_url=${_copr_url}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
-    if test "${OS_NAME}" = "centos"; then
-        if test "${OS_VERSION}" = "8"; then
-            logger -t ${TAG} -p user.debug "no centos-releae-scl found"
-        elif test "${OS_VERSION}" = "7"; then
-            logger -t ${TAG} -p user.debug "sudo yum install -y centos-releae-scl"
-            sudo yum install -q -y centos-release-scl
-        else
-            logger -t ${TAG} -p user.err "centos version should be 7 or 8. Unsupported version: ${OS_VERSION}"
+    if echo "${OS_NAME}" | grep -q -i "centos"; then
+        if [ "${OS_VERSION}" -ne 8 ]; then
+           	logger -t "${TAG}" -p user.err "centos version should be 8. Unsupported version: ${OS_VERSION}"
             return 1
         fi
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.warn "No centos-releae-scl package, ${RESULT}"
-            if test -n "${_copr_url}"; then
-                if test "${OS_VERSION}" = "8"; then
-                    sudo dnf-config-manager -q --add-repo="${_copr_url}"
-                    sudo dnf install -q -y centos-release-scl
-                elif test "${OS_VERSION}" = "7"; then
-                    sudo yum-config-manager -q --add-repo="${_copr_url}"
-                    sudo yum install -q -y centos-release-scl
-                else
-                    logger -t ${TAG} -p user.err "centos version should be 7 or 8. Unsupported version: ${OS_VERSION}"
-                    return 1
-                fi
-                RESULT=$?
-                if test "${RESULT}" -ne 0; then
-                    logger -t ${TAG} -p user.err "No centos-releae-scl package, ${RESULT}"
-                    return 1
-                fi
-            else
-                logger -t ${TAG} -p user.warn "copr_url is not defined"
-            fi
-        fi
+
+		if [ -z "${_copr_url}" ]; then
+			logger -t "${TAG}" -p user.warn "copr_url is not defined"
+		else
+			if ! sudo dnf-config-manager -q --add-repo="${_copr_url}"; then
+				logger -t "${TAG}" -p user.err "Failed to add ${_copr_url} package repository."
+				return 1
+			fi
+			if ! sudo dnf install -q -y centos-release-scl; then
+				logger -t "${TAG}" -p user.err "Failed to install centos-releae-scl package."
+				return 1
+			fi
+		fi
     fi
     return 0
 }
 
+#
 # Installs system packages
 #
 # Params::
@@ -270,58 +282,57 @@ setup_package_repository() {
 # Note::
 #   An empty augment will install nothing
 #
-setup_install_os_packages() {
-    _package_install_pkgs="${1-}"
+setup_install_os_packages()
+{
+	if [ $# -gt 0 ]; then
+	    _package_install_pkgs="$1"
+	else
+	    _package_install_pkgs=""
+	fi
+    logger -t "${TAG}" -p user.debug "setup_install_os_packages _package_install_pkgs=${_package_install_pkgs}"
 
-    logger -t ${TAG} -p user.debug "setup_install_os_packages _package_install_pkgs=${_package_install_pkgs}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
-    if test -n "${_package_install_pkgs}"; then
-        if test "${OS_NAME}" = "centos"; then
-            if test "${OS_VERSION}" = "8"; then
-                logger -t ${TAG} -p user.debug "sudo dnf install -y perl ${_package_install_pkgs}"
-                sudo dnf install -q -y ${_package_install_pkgs}
-            elif test "${OS_VERSION}" = "7"; then
-                logger -t ${TAG} -p user.debug "sudo yum install -y perl ${_package_install_pkgs}"
-                sudo yum install -q -y ${_package_install_pkgs}
-            else
-                logger -t ${TAG} -p user.err "centos version should be 7 or 8. Unsupported version: ${OS_VERSION}"
+    if [ -n "${_package_install_pkgs}" ]; then
+        if echo "${OS_NAME}" | grep -q -i "centos"; then
+            if [ "${OS_VERSION}" -ne 8 ]; then
+                logger -t "${TAG}" -p user.err "centos version should be 8. Unsupported version: ${OS_VERSION}"
                 return 1
             fi
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            if ! sudo dnf install -q -y "${_package_install_pkgs}"; then
+                logger -t "${TAG}" -p user.err "Failed sudo dnf install -y perl ${_package_install_pkgs}"
                 return 1
             fi
-        elif test "${OS_NAME}" = "fedora"; then
-            logger -t ${TAG} -p user.debug "sudo dnf install -y perl ${_package_install_pkgs}"
-            sudo dnf install -q -y ${_package_install_pkgs}
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+			logger -t "${TAG}" -p user.debug "sudo dnf install -y perl ${_package_install_pkgs}"
+
+        elif echo "${OS_NAME}" | grep -q -i "fedora"; then
+            if ! sudo dnf install -q -y "${_package_install_pkgs}"; then
+                logger -t "${TAG}" -p user.err "Failed sudo dnf install -y perl ${_package_install_pkgs}"
                 return 1
             fi
-        elif test "${OS_NAME}" = "debian" -o "${OS_NAME}" = "ubuntu"; then
-            logger -t ${TAG} -p user.debug "sudo apt install -y perl ${package_install_pkgs}"
-            sudo apt install -y ${_package_install_pkgs}
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            logger -t "${TAG}" -p user.debug "sudo dnf install -y perl ${_package_install_pkgs}"
+
+        elif echo "${OS_NAME}" | grep -q -i -e "debian" -e "ubuntu"; then
+            if ! sudo apt install -y "${_package_install_pkgs}"; then
+                logger -t "${TAG}" -p user.err "Failed sudo apt install -y perl ${_package_install_pkgs}"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "sudo apt install -y perl ${_package_install_pkgs}"
+
         else
-            logger -t ${TAG} -p user.err "OS_NAME should be debian, ubuntu, fedora, centos not ${OS_NAME}"
+            logger -t "${TAG}" -p user.err "OS_NAME should be debian, ubuntu, fedora, centos not ${OS_NAME}"
             return 1
         fi
     else
-        logger -t ${TAG} -p user.warn "package_install_pkgs is not defined"
+        logger -t "${TAG}" -p user.warn "_package_install_pkgs is not defined"
     fi
     return 0
 }
 
+#
 # Configure a *.conf
 #
 # Params::
@@ -333,37 +344,52 @@ setup_install_os_packages() {
 #   0 on success
 #   1 on failure
 #
-configure_conf_file() {
-    _conf_file="${1:?"conf file should not be zero"}"
-    _varname="${2:?"varname should not be zero"}"
-    _varname_prefix="${3-}"
+configure_conf_file()
+{
+	if [ $# -gt 0 ]; then
+	    _conf_file="$1"
+		shift
+	else
+	    _conf_file="conf file should not be zero"
+	fi
+	if [ $# -gt 0 ]; then
+	    _varname="$1"
+		shift
+	else
+	    _varname="varname should not be zero"
+	fi
+	if [ $# -gt 0 ]; then
+	    _varname_prefix="$1"
+		shift
+	else
+	    _varname_prefix=""
+	fi
+    logger -t "${TAG}" -p user.debug "configure_conf_file _conf_file=${_conf_file} _varname=${_varname} _varname_prefix=${_varname_prefix}"
 
-    logger -t ${TAG} -p user.debug "configure_conf_file _conf_file=${_conf_file} _varname=${_varname} _varname_prefix=${_varname_prefix}"
-
-    if test -f "${_conf_file}"; then
-        if test -n "${_varname_prefix}"; then
+    if [ -f "${_conf_file}" ]; then
+        if [ -n "${_varname_prefix}" ]; then
             varval=$(eval echo "\${${_varname_prefix}${_varname}}"|perl -nle 's/@/\\@/g; print $_')
         else
             varval=$(eval echo "\${$_varname}"|perl -nle 's/@/\\@/g; print $_')
         fi
-        if test -n "${varval}"; then
-            logger -t ${TAG} -p user.debug "perl -pi -e \"s|^${_varname}.*|${_varname} = ${varval}|g\" ${_conf_file}"
-            perl -pi -e "s|^${_varname}.*|${_varname} = ${varval}|g" ${_conf_file}
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+
+        if [ -n "${varval}" ]; then
+            if ! perl -pi -e "s|^${_varname}.*|${_varname} = ${varval}|g" "${_conf_file}"; then
+                logger -t "${TAG}" -p user.err "Failed perl -pi -e \"s|^${_varname}.*|${_varname} = ${varval}|g\" ${_conf_file}"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "perl -pi -e \"s|^${_varname}.*|${_varname} = ${varval}|g\" ${_conf_file}"
         else
-            logger -t ${TAG} -p user.warn "${_varname} should be nonzero, ${varval}"
+            logger -t "${TAG}" -p user.warn "${_varname} should be nonzero, ${varval}"
         fi
     else
-        logger -t ${TAG} -p user.err "${_conf_file} should exist"
+        logger -t "${TAG}" -p user.err "${_conf_file} should exist"
         return 1
     fi
     return 0
 }
 
+#
 # Configure a *.ini
 #
 # Params::
@@ -374,32 +400,42 @@ configure_conf_file() {
 #   0 on success
 #   1 on failure
 #
-configure_ini_file() {
-    _conf_file="${1:?"conf file should not be zero"}"
-    _varname="${2:?"varname should not be zero"}"
+configure_ini_file()
+{
+	if [ $# -gt 0 ]; then
+	    _conf_file="$1"
+		shift
+	else
+	    _conf_file="conf file should not be zero"
+	fi
+	if [ $# -gt 0 ]; then
+	    _varname="$1"
+		shift
+	else
+	    _varname="varname should not be zero"
+	fi
+    logger -t "${TAG}" -p user.debug "configure_ini_file _conf_file=${_conf_file} _varname=${_varname}"
 
-    logger -t ${TAG} -p user.debug "configure_ini_file _conf_file=${_conf_file} _varname=${_varname}"
-
-    if test -f "${_conf_file}"; then
+    if [ -f "${_conf_file}" ]; then
         varval=$(eval echo "\${$_varname}"|perl -nle 's/@/\\@/g; print $_')
-        if test -n "${varval}"; then
-            logger -t ${TAG} -p user.debug "perl -pi -e \"s|^${_varname}.*|${_varname}=${varval}|g\" ${_conf_file}"
-            perl -pi -e "s|^${_varname}.*|${_varname}=${varval}|g" ${_conf_file}
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+
+        if [ -n "${varval}" ]; then
+            if ! perl -pi -e "s|^${_varname}.*|${_varname}=${varval}|g" "${_conf_file}"; then
+                logger -t "${TAG}" -p user.err "Failed perl -pi -e \"s|^${_varname}.*|${_varname}=${varval}|g\" ${_conf_file}"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "perl -pi -e \"s|^${_varname}.*|${_varname}=${varval}|g\" ${_conf_file}"
         else
-            logger -t ${TAG} -p user.warn "${_varname} should be nonzero, ${varval}"
+            logger -t "${TAG}" -p user.warn "${_varname} should be nonzero, ${varval}"
         fi
     else
-        logger -t ${TAG} -p user.err "${_conf_file} should exist"
+        logger -t "${TAG}" -p user.err "${_conf_file} should exist"
         return 1
     fi
     return 0
 }
 
+#
 # Installs *.conf
 #
 # Params::
@@ -410,31 +446,41 @@ configure_ini_file() {
 #   0 on success
 #   1 on failure
 #
-install_conf() {
-    _src_conf_file="${1:?"_src_conf_file should be nonzero"}"
-    _dst_conf_file="${2:?"_dst_conf_file should be nonzero"}"
+install_conf()
+{
+	if [ $# -gt 0 ]; then
+	    _src_conf_file="$1"
+		shift
+	else
+	    _src_conf_file="_src_conf_file should be nonzero"
+	fi
+	if [ $# -gt 0 ]; then
+	    _dst_conf_file="$1"
+		shift
+	else
+	    _dst_conf_file="_dst_conf_file should be nonzero"
+	fi
+    logger -t "${TAG}" -p user.debug "install_conf _src_conf_file=${_src_conf_file} _dst_conf_file=${_dst_conf_file}"
 
-    logger -t ${TAG} -p user.debug "install_conf _src_conf_file=${_src_conf_file} _dst_conf_file=${_dst_conf_file}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
-    if test -n "${_dst_conf_file}" -a -n "${_src_conf_file}"; then
-        logger -t ${TAG} -p user.debug "sudo install -CD -m 0644 -o root -v ${_src_conf_file} ${_dst_conf_file}"
-        sudo install -CD -m 0644 -o root -v ${_src_conf_file} ${_dst_conf_file}
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+    if [ -n "${_dst_conf_file}" ] && [ -n "${_src_conf_file}" ]; then
+        if ! sudo install -CD -m 0644 -o root -v "${_src_conf_file}" "${_dst_conf_file}"; then
+            logger -t "${TAG}" -p user.err "Failed sudo install -CD -m 0644 -o root -v ${_src_conf_file} ${_dst_conf_file}"
             return 1
         fi
+        logger -t "${TAG}" -p user.debug "sudo install -CD -m 0644 -o root -v ${_src_conf_file} ${_dst_conf_file}"
     else
-        logger -t ${TAG} -p user.err "${_dst_conf_file} and ${_src_conf_file} should be nonzero, ${_dst_conf_file}, ${_src_conf_file}"
+        logger -t "${TAG}" -p user.err "${_dst_conf_file} and ${_src_conf_file} should be nonzero, ${_dst_conf_file}, ${_src_conf_file}"
         return 1
     fi
     return 0
 }
 
+#
 # Enables the scl's python path
 #
 # Params::
@@ -449,30 +495,23 @@ install_conf() {
 #   This function must be called after installing the scl's python package.
 #   Python version is hardcoding.
 #
-enable_scl_python_path() {
+enable_scl_python_path()
+{
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
-    if test "${OS_NAME}" = "centos"; then
-        if test "${OS_VERSION}" = "7"; then
-            if test -f "/opt/rh/rh-python36/enable"; then
-                logger -t ${TAG} -p user.debug "source /opt/rh/rh-python36/enable"
-                set +u
-                source /opt/rh/rh-python36/enable
-                set -u
-            else
-                logger -t ${TAG} -p user.warn "/opt/rh/rh-python36/enable not found"
-            fi
-        else
-            logger -t ${TAG} -p user.err "OS_VERSION should be 7, not ${OS_VERSION}"
+    if echo "${OS_NAME}" | grep -q -i "centos"; then
+        if [ "${OS_VERSION}" -ne 8 ]; then
+            logger -t "${TAG}" -p user.warn "OS_VERSION should be 8, not ${OS_VERSION}."
             return 1
         fi
     fi
     return 0
 }
 
+#
 # Installs a service manager conf
 #
 # Params::
@@ -484,49 +523,63 @@ enable_scl_python_path() {
 #   0 on success
 #   1 on failure
 #
-install_service_manager_conf() {
-    _service_manager="${1:?"service_manager should be nonzero"}"
-    _service_name="${2:?"service_name should be nonzero"}"
-    _is_timer=${3:-}
+install_service_manager_conf()
+{
+	if [ $# -gt 0 ]; then
+	    _service_manager="$1"
+		shift
+	else
+	    _service_manager="service_manager should be nonzero"
+	fi
+	if [ $# -gt 0 ]; then
+	    _service_name="$1"
+		shift
+	else
+	    _service_name="service_name should be nonzero"
+	fi
+	if [ $# -gt 0 ]; then
+	    _is_timer="$1"
+		shift
+	else
+	    _is_timer=""
+	fi
+    logger -t "${TAG}" -p user.debug "install_service_manager_conf _service_manager=${_service_manager} _service_name=${_service_name} _is_timer=${_is_timer}"
 
-    logger -t ${TAG} -p user.debug "install_service_manager_conf _service_manager=${_service_manager} _service_name=${_service_name} _is_timer=${_is_timer}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
     file_ext="service"
-    if test "${_is_timer}" = "1"; then
+    if [ "${_is_timer}" -eq 1 ]; then
         file_ext="timer"
     fi
 
-    if test "${_service_manager}" = "systemd"; then
-        if test -f "${SERVICE_MANAGER_DIR}/${_service_name}.${file_ext}"; then
-            logger -t ${TAG} -p user.debug "sudo install -C -m 0644 -o root -v ${_service_manager} /lib/systemd/system/${_service_name}.${file_ext}"
-            sudo install -C -m 0644 -o root -v ${SERVICE_MANAGER_DIR}/${_service_name}.${file_ext} /lib/systemd/system/${_service_name}.${file_ext}
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+    if [ "${_service_manager}" = "systemd" ]; then
+        if [ -f "${SERVICE_MANAGER_DIR}/${_service_name}.${file_ext}" ]; then
+            if ! sudo install -C -m 0644 -o root -v "${SERVICE_MANAGER_DIR}/${_service_name}.${file_ext}" "/lib/systemd/system/${_service_name}.${file_ext}"; then
+                logger -t "${TAG}" -p user.err "Failed sudo install -C -m 0644 -o root -v ${_service_manager} /lib/systemd/system/${_service_name}.${file_ext}"
                 return 1
             fi
-            logger -t ${TAG} -p user.debug "sudo systemctl daemon-reload"
-            sudo systemctl daemon-reload
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            logger -t "${TAG}" -p user.debug "sudo install -C -m 0644 -o root -v ${_service_manager} /lib/systemd/system/${_service_name}.${file_ext}"
+
+            if ! sudo systemctl daemon-reload; then
+                logger -t "${TAG}" -p user.err "Failed sudo systemctl daemon-reload"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "sudo systemctl daemon-reload"
         else
-            logger -t ${TAG} -p user.err "${SERVICE_MANAGER_DIR}/${_service_name}.${file_ext} should exist"
+            logger -t "${TAG}" -p user.err "${SERVICE_MANAGER_DIR}/${_service_name}.${file_ext} should exist"
             return 1
         fi
     else
-        logger -t ${TAG} -p user.err "SERVICE_MANAGER is systemd, not ${SERVICE_MANAGER}"
+        logger -t "${TAG}" -p user.err "SERVICE_MANAGER is systemd, not ${SERVICE_MANAGER}"
         return 1
     fi
     return 0
 }
 
+#
 # Enables a service manager conf
 #
 # Params::
@@ -537,36 +590,45 @@ install_service_manager_conf() {
 #   0 on success
 #   1 on failure
 #
-enable_service_manager() {
-    _service_manager="${1:?"service_manager should be nonzero"}"
-    _service_name="${2:?"service_name should be nonzero"}"
+enable_service_manager()
+{
+	if [ $# -gt 0 ]; then
+	    _service_manager="$1"
+		shift
+	else
+	    _service_manager="service_manager should be nonzero"
+	fi
+	if [ $# -gt 0 ]; then
+	    _service_name="$1"
+		shift
+	else
+	    _service_name="service_name should be nonzero"
+	fi
+    logger -t "${TAG}" -p user.debug "enable_service_manager _service_manager=${_service_manager} _service_name=${_service_name}"
 
-    logger -t ${TAG} -p user.debug "enable_service_manager _service_manager=${_service_manager} _service_name=${_service_name}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
-    if test "${_service_manager}" = "systemd"; then
-        logger -t ${TAG} -p user.debug "sudo systemctl is-active ${_service_name}.service"
-        sudo systemctl is-active ${_service_name}.service
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.debug "sudo systemctl enable ${_service_name}.service"
-            sudo systemctl enable ${_service_name}.service
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+    if [ "${_service_manager}" = "systemd" ]; then
+        logger -t "${TAG}" -p user.debug "sudo systemctl is-active ${_service_name}.service"
+
+        if ! sudo systemctl is-active "${_service_name}.service"; then
+            if ! sudo systemctl enable "${_service_name}.service"; then
+                logger -t "${TAG}" -p user.err "Failed sudo systemctl enable ${_service_name}.service"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "sudo systemctl enable ${_service_name}.service"
         fi
     else
-        logger -t ${TAG} -p user.err "SERVICE_MANAGER is systemd, not ${SERVICE_MANAGER}"
+        logger -t "${TAG}" -p user.err "SERVICE_MANAGER is systemd, not ${SERVICE_MANAGER}"
         return 1
     fi
     return 0
 }
 
+#
 # Adds packagecloud.io as a new package repository
 #
 # Params::
@@ -579,71 +641,72 @@ enable_service_manager() {
 # Uses globals::
 #   OS_NAME
 #
-enable_packagecloud_io_repository() {
-    _package_script_base_url=${1-}
+enable_packagecloud_io_repository()
+{
+	if [ $# -gt 0 ]; then
+	    _package_script_base_url="$1"
+		shift
+	else
+	    _package_script_base_url=""
+	fi
+    logger -t "${TAG}" -p user.debug "enable_packagecloud_io_repository _package_script_base_url=${_package_script_base_url}"
 
-    logger -t ${TAG} -p user.debug "enable_packagecloud_io_repository _package_script_base_url=${_package_script_base_url}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
-    if test -n "${_package_script_base_url}"; then
-        if test "${OS_NAME}" = "fedora"; then
-            package_script_url=${_package_script_base_url}/script.rpm.sh
-            sudo dnf install -q -y curl
-            RESULT=$?
-            logger -t ${TAG} -p user.debug "sudo dnf install -y curl, RESULT=${RESULT}"
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+    if [ -n "${_package_script_base_url}" ]; then
+        if echo "${OS_NAME}" | grep -q -i "fedora"; then
+            package_script_url="${_package_script_base_url}/script.rpm.sh"
+
+            if ! sudo dnf install -q -y curl; then
+	            logger -t "${TAG}" -p user.debug "Failed sudo dnf install -y curl"
+                return 1
+			fi
+            logger -t "${TAG}" -p user.debug "sudo dnf install -y curl"
+
+        elif echo "${OS_NAME}" | grep -q -i "centos"; then
+            if [ "${OS_VERSION}" -ne 8 ]; then
+                logger -t "${TAG}" -p user.err "centos version should be 8. Unsupported version: ${OS_VERSION}"
                 return 1
             fi
-        elif test "${OS_NAME}" = "centos"; then
-            if test "${OS_VERSION}" = "8"; then
-                package_script_url=${_package_script_base_url}/script.rpm.sh
-                sudo dnf install -q -y curl
-            elif test "${OS_VERSION}" = "7"; then
-                package_script_url=${_package_script_base_url}/script.rpm.sh
-                sudo yum install -q -y curl
-            else
-                logger -t ${TAG} -p user.err "centos version should be 7 or 8. Unsupported version: ${OS_VERSION}"
+			package_script_url="${_package_script_base_url}/script.rpm.sh"
+
+			if ! sudo dnf install -q -y curl; then
+                logger -t "${TAG}" -p user.err "Failed sudo dnf install -y curl"
                 return 1
             fi
-            RESULT=$?
-            logger -t ${TAG} -p user.debug "sudo dnf(yum) install -y curl, RESULT=${RESULT}"
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            logger -t "${TAG}" -p user.debug "sudo dnf install -y curl"
+
+        elif echo "${OS_NAME}" | grep -q -i -e "debian" -e "ubuntu"; then
+            package_script_url="${_package_script_base_url}/script.deb.sh"
+
+            if ! sudo apt install -q -y curl; then
+                logger -t "${TAG}" -p user.err "Failed sudo apt install -q -y curl"
                 return 1
             fi
-        elif test "${OS_NAME}" = "debian" -o "${OS_NAME}" = "ubuntu"; then
-            package_script_url=${_package_script_base_url}/script.deb.sh
-            logger -t ${TAG} -p user.debug "sudo apt install -q -y curl"
-            sudo apt install -q -y curl
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-                return 1
-            fi
+            logger -t "${TAG}" -p user.debug "sudo apt install -q -y curl"
         else
-            logger -t ${TAG} -p user.err "OS_NAME should be debian, ubuntu, fedora, centos not ${OS_NAME}"
+            logger -t "${TAG}" -p user.err "OS_NAME should be debian, ubuntu, fedora, centos not ${OS_NAME}"
             return 1
         fi
-        if test -n "${package_script_url}"; then
-            logger -t ${TAG} -p user.debug "curl -S -s ${package_script_url} | sudo bash"
-            curl -S -s "${package_script_url}" | sudo bash
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+
+        if [ -n "${package_script_url}" ]; then
+            if ! curl -S -s "${package_script_url}" | sudo bash; then
+                logger -t "${TAG}" -p user.err "Failed curl -S -s ${package_script_url} | sudo bash"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "curl -S -s ${package_script_url} | sudo bash"
         else
-            logger -t ${TAG} -p user.err "package_script_url must be nonzero"
+            logger -t "${TAG}" -p user.err "package_script_url must be nonzero"
             return 1
         fi
     fi
     return 0
 }
 
+#
 # Adds nodesource.com as a new package repository
 #
 # Params::
@@ -656,40 +719,44 @@ enable_packagecloud_io_repository() {
 # Uses globals::
 #   OS_NAME
 #
-enable_nodesource_repository() {
-    _nodesource_url=${1-}
+enable_nodesource_repository()
+{
+	if [ $# -gt 0 ]; then
+	    _nodesource_url="$1"
+		shift
+	else
+	    _nodesource_url=""
+	fi
+    logger -t "${TAG}" -p user.debug "enable_nodesource_repository _nodesource_url=${_nodesource_url}"
 
-    logger -t ${TAG} -p user.debug "enable_nodesource_repository _nodesource_url=${_nodesource_url}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
-    if test -n "${_nodesource_url}"; then
-        if test "${OS_NAME}" = "fedora" -o "${OS_NAME}" = "centos"; then
-            logger -t ${TAG} -p user.debug "curl -S -sL ${_nodesource_url} | sudo bash -"
-            curl -S -sL "${_nodesource_url}" | sudo bash -
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+    if [ -n "${_nodesource_url}" ]; then
+        if echo "${OS_NAME}" | grep -q -i -e "fedora" -e "centos"; then
+            if ! curl -S -sL "${_nodesource_url}" | sudo bash -; then
+                logger -t "${TAG}" -p user.err "Failed curl -S -sL ${_nodesource_url} | sudo bash -"
                 return 1
             fi
-        elif test "${OS_NAME}" = "debian" -o "${OS_NAME}" = "ubuntu"; then
-            logger -t ${TAG} -p user.debug "curl -S -sL ${_nodesource_url} | sudo bash -"
-            curl -S -sL "${_nodesource_url}" | sudo bash -
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            logger -t "${TAG}" -p user.debug "curl -S -sL ${_nodesource_url} | sudo bash -"
+
+        elif echo "${OS_NAME}" | grep -q -i -e "debian" -e "ubuntu"; then
+            if ! curl -S -sL "${_nodesource_url}" | sudo bash -; then
+                logger -t "${TAG}" -p user.err "Failed curl -S -sL ${_nodesource_url} | sudo bash -"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "curl -S -sL ${_nodesource_url} | sudo bash -"
         else
-            logger -t ${TAG} -p user.info "No repository from nodesource, ${OS_NAME}"
+            logger -t "${TAG}" -p user.info "No repository from nodesource, ${OS_NAME}"
             return 1
         fi
     fi
     return 0
 }
 
+#
 # Enables PowerTools repository
 #
 # Params::
@@ -702,32 +769,42 @@ enable_nodesource_repository() {
 # Uses globals::
 #   OS_NAME
 #
-enable_dnf_repository() {
-    _reponame=${1-}
+enable_dnf_repository()
+{
+	if [ $# -gt 0 ]; then
+	    _reponame="$1"
+		shift
+	else
+	    _reponame=""
+	fi
+    logger -t "${TAG}" -p user.debug "enable_dnf_repository _reponame=${_reponame}"
 
-    logger -t ${TAG} -p user.debug "enable_dnf_repository _reponame=${_reponame}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
-    if test -n "${_reponame}"; then
-        if test "${OS_NAME}" = "centos" -a "${OS_VERSION}" = "8"; then
-            logger -t ${TAG} -p user.debug "sudo dnf config-manager --set-enabled ${_reponame}"
-            sudo dnf config-manager --set-enabled ${_reponame}
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
-                return 1
-            fi
+    if [ -n "${_reponame}" ]; then
+        if echo "${OS_NAME}" | grep -q -i "centos"; then
+        	if [ "${OS_VERSION}" -eq 8 ]; then
+	            if ! sudo dnf config-manager --set-enabled "${_reponame}"; then
+	                logger -t "${TAG}" -p user.err "Failed sudo dnf config-manager --set-enabled ${_reponame}"
+	                return 1
+	            fi
+	            logger -t "${TAG}" -p user.debug "sudo dnf config-manager --set-enabled ${_reponame}"
+			else
+	            logger -t "${TAG}" -p user.info "No need to enable repos"
+    	        return 0
+			fi
         else
-            logger -t ${TAG} -p user.info "No need to enable repos"
+            logger -t "${TAG}" -p user.info "No need to enable repos"
             return 0
         fi
     fi
     return 0
 }
 
+#
 # Installs k2hr3 node module local.json
 #
 # Params::
@@ -737,51 +814,54 @@ enable_dnf_repository() {
 #   0 on success
 #   1 on failure
 #
-install_npm_local_json() {
-    _npm_default_user=${1:?"npm_default_user should be nonzero"}
+install_npm_local_json()
+{
+	if [ $# -gt 0 ]; then
+	    _npm_default_user="$1"
+		shift
+	else
+	    _npm_default_user="npm_default_user should be nonzero"
+	fi
+    npm_user_home=$(eval echo ~"${_npm_default_user}")
 
-    npm_user_home=$(eval echo "~${npm_default_user}")
+    logger -t "${TAG}" -p user.debug "install_npm_local_json _npm_default_user=${_npm_default_user} npm_user_home=${npm_user_home}"
 
-    logger -t ${TAG} -p user.debug "install_npm_local_json _npm_default_user=${_npm_default_user} npm_user_home=${npm_user_home}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
-    if ! test -d "${npm_user_home}/etc/k2hr3-${COMPONENT}"; then
-        logger -t ${TAG} -p user.debug "install -o \"${npm_default_user}\" -d \"${npm_user_home}/etc/k2hr3-${COMPONENT}\""
-        install -o "${npm_default_user}" -d "${npm_user_home}/etc/k2hr3-${COMPONENT}"
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+    if [ ! -d "${npm_user_home}/etc/k2hr3-${COMPONENT}" ]; then
+        if ! install -o "${_npm_default_user}" -d "${npm_user_home}/etc/k2hr3-${COMPONENT}"; then
+            logger -t "${TAG}" -p user.err "Failed install -o \"${_npm_default_user}\" -d \"${npm_user_home}/etc/k2hr3-${COMPONENT}\""
             return 1
         fi
+        logger -t "${TAG}" -p user.debug "install -o \"${_npm_default_user}\" -d \"${npm_user_home}/etc/k2hr3-${COMPONENT}\""
     fi
-    if ! test -h "${npm_user_home}/etc/k2hr3-${COMPONENT}/default.json"; then
-        logger -t ${TAG} -p user.debug "ln -s ${npm_user_home}/node_modules/k2hr3-${COMPONENT}/config/default.json ${npm_user_home}/etc/k2hr3-${COMPONENT}"
-        ln -s ${npm_user_home}/node_modules/k2hr3-${COMPONENT}/config/default.json ${npm_user_home}/etc/k2hr3-${COMPONENT}/default.json
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+
+    if [ ! -h "${npm_user_home}/etc/k2hr3-${COMPONENT}/default.json" ]; then
+        if ! ln -s "${npm_user_home}/node_modules/k2hr3-${COMPONENT}/config/default.json" "${npm_user_home}/etc/k2hr3-${COMPONENT}/default.json"; then
+            logger -t "${TAG}" -p user.err "Failed ln -s ${npm_user_home}/node_modules/k2hr3-${COMPONENT}/config/default.json ${npm_user_home}/etc/k2hr3-${COMPONENT}"
             return 1
         fi
+        logger -t "${TAG}" -p user.debug "ln -s ${npm_user_home}/node_modules/k2hr3-${COMPONENT}/config/default.json ${npm_user_home}/etc/k2hr3-${COMPONENT}"
     else
-        logger -t ${TAG} -p user.debug "${npm_user_home}/etc/k2hr3-${COMPONENT}/default.json exists, skip installing."
+        logger -t "${TAG}" -p user.debug "${npm_user_home}/etc/k2hr3-${COMPONENT}/default.json exists, skip installing."
     fi
-    if test -f "./local_${COMPONENT}.json"; then
-        logger -t ${TAG} -p user.debug "install -C -D -m 0644 -o ${_npm_default_user} -v ./local_${COMPONENT}.json ${npm_user_home}/etc/k2hr3-${COMPONENT}/local.json"
-        install -C -D -m 0644 -o "${_npm_default_user}" -v ./local_${COMPONENT}.json "${npm_user_home}"/etc/k2hr3-${COMPONENT}/local.json
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+
+    if [ -f "./local_${COMPONENT}.json" ]; then
+        if ! install -C -D -m 0644 -o "${_npm_default_user}" -v "./local_${COMPONENT}.json" "${npm_user_home}/etc/k2hr3-${COMPONENT}/local.json"; then
+            logger -t "${TAG}" -p user.err "Failed install -C -D -m 0644 -o ${_npm_default_user} -v ./local_${COMPONENT}.json ${npm_user_home}/etc/k2hr3-${COMPONENT}/local.json"
             return 1
         fi
+        logger -t "${TAG}" -p user.debug "install -C -D -m 0644 -o ${_npm_default_user} -v ./local_${COMPONENT}.json ${npm_user_home}/etc/k2hr3-${COMPONENT}/local.json"
     else
-        logger -t ${TAG} -p user.debug "no ./local_${COMPONENT}.json, skip installing."
+        logger -t "${TAG}" -p user.debug "no ./local_${COMPONENT}.json, skip installing."
     fi
     return 0
 }
 
+#
 # Find the node path
 #
 # Params::
@@ -794,49 +874,57 @@ install_npm_local_json() {
 # Uses globals::
 #   OS_NAME, OS_VERSION
 #
-find_node_path() {
-    _package_install_pkgs=${1-}
+find_node_path()
+{
+	if [ $# -gt 0 ]; then
+	    _package_install_pkgs="$1"
+		shift
+	else
+	    _package_install_pkgs=""
+	fi
+    logger -t "${TAG}" -p user.debug "find_node_path _package_install_pkgs=${_package_install_pkgs}"
 
-    logger -t ${TAG} -p user.debug "find_node_path _package_install_pkgs=${_package_install_pkgs}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
-    if test "${OS_NAME}" = "centos" -a "${OS_VERSION}" != "6"; then
-        logger -t ${TAG} -p user.debug  'Checks rh-nodejs? only if rh-nodejs? exists in the package_install_pkgs directive.'
-        if test -n "_package_install_pkgs"; then
+    if echo "${OS_NAME}" | grep -q -i "centos"; then
+        logger -t "${TAG}" -p user.debug  'Checks rh-nodejs? only if rh-nodejs? exists in the package_install_pkgs directive.'
+
+        if [ -n "${_package_install_pkgs}" ]; then
             for rhnode in rh-nodejs10 rh-nodejs8 rh-nodejs6 rh-nodejs4; do
-                logger -t ${TAG} -p user.debug "echo ${package_install_pkgs} | grep ${rhnode}"
-                echo ${_package_install_pkgs} | grep ${rhnode} > /dev/null 2>&1
-                RESULT=$?
-                if test "${RESULT}" -eq 0; then
-                    if test -f "/opt/rh/${rhnode}/enable"; then
-                        logger -t ${TAG} -p user.debug "source /opt/rh/${rhnode}/enable"
+                logger -t "${TAG}" -p user.debug "echo ${_package_install_pkgs} | grep ${rhnode}"
+
+                if echo "${_package_install_pkgs}" | grep -q "${rhnode}"; then
+                    if [ -f "/opt/rh/${rhnode}/enable" ]; then
+                        logger -t "${TAG}" -p user.debug "source /opt/rh/${rhnode}/enable"
 
                         set +u
-                        source /opt/rh/${rhnode}/enable
+						# shellcheck disable=SC1090
+                        . "/opt/rh/${rhnode}/enable"
                         set -u
                         break
                     fi
                 fi
-                # No rhnode exists in ${package_install_pkgs} is not a fatal error,
+                # No rhnode exists in ${_package_install_pkgs} is not a fatal error,
                 # because users could select the "nodejs" package, not rh-nodejs.
             done
         else
-            logger -t ${TAG} -p user.warn "_package_install_pkgs is zero, but no problem because rh-node is not always required"
+            logger -t "${TAG}" -p user.warn "_package_install_pkgs is zero, but no problem because rh-node is not always required"
         fi
     fi
 
     # Empty result of $(which node) is a fatal error.
     NODE_PATH=$(which node)
-    if test "${NODE_PATH}" = ""; then
-        logger -t ${TAG} -p user.err "[NO] no node found"
+    if [ -z "${NODE_PATH}" ]; then
+        logger -t "${TAG}" -p user.err "[NO] no node found"
         return 1
     fi
     return 0
 }
 
+#
 # Configures npm environment
 #
 # Params::
@@ -846,45 +934,49 @@ find_node_path() {
 #   0 on success
 #   1 on failure
 #
-setup_npm_environment() {
-    _npm_global_dir=${1:?"npm_global_dir should be nonzero"}
+setup_npm_environment()
+{
+	if [ $# -gt 0 ]; then
+	    _npm_global_dir="$1"
+		shift
+	else
+	    _npm_global_dir="npm_global_dir should be nonzero"
+	fi
+    logger -t "${TAG}" -p user.debug "setup_npm_environment _npm_global_dir=${_npm_global_dir}"
 
-    logger -t ${TAG} -p user.debug "setup_npm_environment _npm_global_dir=${_npm_global_dir}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
+    logger -t "${TAG}" -p user.debug "npm config get prefix"
 
-    logger -t ${TAG} -p user.debug "npm config get prefix"
     NPM_PREFIX=$(npm config get prefix)
-    if test "${NPM_PREFIX}" != "${_npm_global_dir}"; then
-        if ! test -d "${_npm_global_dir}"; then
-            logger -t ${TAG} -p user.debug "install -d ${_npm_global_dir}"
-            install -d "${_npm_global_dir}"
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+    if [ "${NPM_PREFIX}" != "${_npm_global_dir}" ]; then
+        if [ ! -d "${_npm_global_dir}" ]; then
+            if ! install -d "${_npm_global_dir}"; then
+                logger -t "${TAG}" -p user.err "Failed install -d ${_npm_global_dir}"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "install -d ${_npm_global_dir}"
         fi
-        logger -t ${TAG} -p user.debug "npm config set prefix ${_npm_global_dir}"
-        npm config set prefix "${_npm_global_dir}"
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+
+        if ! npm config set prefix "${_npm_global_dir}"; then
+            logger -t "${TAG}" -p user.err "Failed npm config set prefix ${_npm_global_dir}"
             return 1
         fi
+        logger -t "${TAG}" -p user.debug "npm config set prefix ${_npm_global_dir}"
     fi
-    logger -t ${TAG} -p user.debug "npm config set python /usr/bin/python3"
-    npm config set python /usr/bin/python3
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+
+    if ! npm config set python /usr/bin/python3; then
+        logger -t "${TAG}" -p user.err "Failed npm config set python /usr/bin/python3"
         return 1
     fi
+    logger -t "${TAG}" -p user.debug "npm config set python /usr/bin/python3"
+
     return 0
 }
 
+#
 # A workaround for root owner logs in the ${npm_run_user} directory
 #
 # Description on the problem::
@@ -901,79 +993,77 @@ setup_npm_environment() {
 #   0 on success
 #   1 on failure
 #
-patch_for_change_logdir_owner() {
-    _npm_default_user=${1:?"npm_default_user should be nonzero"}
+patch_for_change_logdir_owner()
+{
+	if [ $# -gt 0 ]; then
+	    _npm_default_user="$1"
+		shift
+	else
+	    _npm_default_user="npm_default_user should be nonzero"
+	fi
+    logger -t "${TAG}" -p user.debug "patch_for_change_logdir_owner npm_default_user=${_npm_default_user}"
 
-    logger -t ${TAG} -p user.debug "patch_for_change_logdir_owner npm_default_user=${_npm_default_user}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
-    service_log_dir=${NPM_USER_HOME}/node_modules/k2hr3-${COMPONENT}/log
+
+    service_log_dir="${NPM_USER_HOME}/node_modules/k2hr3-${COMPONENT}/log"
     if ! sudo test -d "${service_log_dir}"; then
-        logger -t ${TAG} -p user.debug "sudo -u ${_npm_default_user} mkdir -p ${service_log_dir}"
-        sudo -u ${_npm_default_user} mkdir -p ${service_log_dir}
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+        if ! sudo -u "${_npm_default_user}" mkdir -p "${service_log_dir}"; then
+            logger -t "${TAG}" -p user.err "Failed sudo -u ${_npm_default_user} mkdir -p ${service_log_dir}"
             return 1
         fi
+        logger -t "${TAG}" -p user.debug "sudo -u ${_npm_default_user} mkdir -p ${service_log_dir}"
     else
-        logger -t ${TAG} -p user.warn "sudo chown ${_npm_default_user} ${service_log_dir}"
-        sudo chown ${_npm_default_user} ${service_log_dir}
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+        if ! sudo chown "${_npm_default_user}" "${service_log_dir}"; then
+            logger -t "${TAG}" -p user.err "Failed sudo chown ${_npm_default_user} ${service_log_dir}"
             return 1
         fi
+        logger -t "${TAG}" -p user.warn "sudo chown ${_npm_default_user} ${service_log_dir}"
     fi
+
     for _log_file in access.log error.log; do
         if sudo test -f "${service_log_dir}/${_log_file}"; then
-            logger -t ${TAG} -p user.debug "chown ${_npm_default_user} ${service_log_dir}/${_log_file}"
-            sudo chown ${npm_default_user} ${service_log_dir}/${_log_file}
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            if ! sudo chown "${_npm_default_user}" "${service_log_dir}/${_log_file}"; then
+                logger -t "${TAG}" -p user.err "Failed chown ${_npm_default_user} ${service_log_dir}/${_log_file}"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "chown ${_npm_default_user} ${service_log_dir}/${_log_file}"
         else
-            logger -t ${TAG} -p user.debug "sudo -u ${_npm_default_user} touch ${service_log_dir}/${_log_file}"
-            sudo -u ${_npm_default_user} touch ${service_log_dir}/${_log_file}
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            if ! sudo -u "${_npm_default_user}" touch "${service_log_dir}/${_log_file}"; then
+                logger -t "${TAG}" -p user.err "Failed sudo -u ${_npm_default_user} touch ${service_log_dir}/${_log_file}"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "sudo -u ${_npm_default_user} touch ${service_log_dir}/${_log_file}"
         fi
     done
 
-    if test "${DEBUG}" -eq 0; then
-        # Remove copied files which run by ${npm_default_user}
+    if [ "${DEBUG}" -eq 0 ]; then
+        # Remove copied files which run by ${_npm_default_user}
         for file_ext in json ini sh; do
-            for ff in "$(ls ${COMPONENT}/*.${file_ext} 2>/dev/null)"; do
-                if ! test -z "$ff"; then
-                    sudo cp ${ff} ${NPM_USER_HOME}
-                    RESULT=$?
-                    if test "${RESULT}" -ne 0; then
-                        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            for ff in "${COMPONENT}"/*."${file_ext}"; do
+                if [ -n "${ff}" ]; then
+                    if ! sudo cp "${ff}" "${NPM_USER_HOME}"; then
+                        logger -t "${TAG}" -p user.err "Failed sudo cp ${ff} ${NPM_USER_HOME}"
                         return 1
                     fi
                 fi
             done
         done
-        # Remove copied local*.json files which used by ${npm_default_user}.
-        # Note we should not remove /home/${npm_default_user}/package-lock.json if exists.
-        logger -t ${TAG} -p user.debug "sudo sh -c \"rm -f ${NPM_USER_HOME}/local_*.json\""
-        sudo sh -c "rm -f ${NPM_USER_HOME}/local_*.json"
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+
+        # Remove copied local*.json files which used by ${_npm_default_user}.
+        # Note we should not remove /home/${_npm_default_user}/package-lock.json if exists.
+        if ! sudo sh -c "rm -f ${NPM_USER_HOME}/local_*.json"; then
+            logger -t "${TAG}" -p user.err "Failed sudo sh -c \"rm -f ${NPM_USER_HOME}/local_*.json\""
             return 1
         fi
+        logger -t "${TAG}" -p user.debug "sudo sh -c \"rm -f ${NPM_USER_HOME}/local_*.json\""
     fi
     return 0
 }
 
+#
 # Setup npm user home directory
 #
 # Params::
@@ -983,43 +1073,43 @@ patch_for_change_logdir_owner() {
 #   0 on success
 #   1 on failure
 #
-setup_npm_userhome() {
-    _npm_default_user=${1:?"npm_default_user should be nonzero"}
+setup_npm_userhome()
+{
+	if [ $# -gt 0 ]; then
+	    _npm_default_user="$1"
+		shift
+	else
+	    _npm_default_user="npm_default_user should be nonzero"
+	fi
+    logger -t "${TAG}" -p user.debug "setup_npm_userhome npm_default_user=${_npm_default_user}"
 
-    logger -t ${TAG} -p user.debug "setup_npm_userhome npm_default_user=${_npm_default_user}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
-    # Adds the ${npm_default_user} home directory if it does not exist
+    # Adds the ${_npm_default_user} home directory if it does not exist
     NPM_USER_HOME=$(eval echo "~${_npm_default_user}")
-    if ! test -d "${NPM_USER_HOME}"; then
-        logger -t ${TAG} -p user.debug "sudo mkdir -p ${NPM_USER_HOME}"
-        sudo mkdir -p ${NPM_USER_HOME}
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+    if [ ! -d "${NPM_USER_HOME}" ]; then
+        if ! sudo mkdir -p "${NPM_USER_HOME}"; then
+            logger -t "${TAG}" -p user.err "Failed sudo mkdir -p ${NPM_USER_HOME}"
             return 1
         fi
+        logger -t "${TAG}" -p user.debug "sudo mkdir -p ${NPM_USER_HOME}"
     fi
 
-    logger -t ${TAG} -p user.debug "sudo chown -R ${_npm_default_user} ${NPM_USER_HOME}"
-    sudo chown -R ${_npm_default_user} ${NPM_USER_HOME}
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+    if ! sudo chown -R "${_npm_default_user}" "${NPM_USER_HOME}"; then
+        logger -t "${TAG}" -p user.err "Failed sudo chown -R ${_npm_default_user} ${NPM_USER_HOME}"
         return 1
     fi
+    logger -t "${TAG}" -p user.debug "sudo chown -R ${_npm_default_user} ${NPM_USER_HOME}"
 
-    # Copy files which run by ${npm_default_user} to ${NPM_USER_HOME}
+    # Copy files which run by ${_npm_default_user} to ${NPM_USER_HOME}
     for file_ext in json ini sh; do
-        for ff in "$(ls ${COMPONENT}/*.${file_ext} 2>/dev/null)"; do
-            if ! test -z "$ff"; then
-                sudo cp ${ff} ${NPM_USER_HOME}
-                RESULT=$?
-                if test "${RESULT}" -ne 0; then
-                    logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+        for ff in "${COMPONENT}"/*."${file_ext}"; do
+            if [ -n "${ff}" ]; then
+                if ! sudo cp "${ff}" "${NPM_USER_HOME}"; then
+                    logger -t "${TAG}" -p user.err "Failed sudo cp ${ff} ${NPM_USER_HOME}"
                     return 1
                 fi
             fi
@@ -1027,56 +1117,51 @@ setup_npm_userhome() {
     done
 
     # Copy a library file required by setup_api_node_module.sh
-    if test -f "${SRCDIR}/../cluster_functions"; then
-        logger -t ${TAG} -p user.debug "sudo cp ${SRCDIR}/../cluster_functions ${NPM_USER_HOME}"
-        sudo cp ${SRCDIR}/../cluster_functions ${NPM_USER_HOME}
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+    if [ -f "${SRCDIR}/../cluster_functions" ]; then
+        if ! sudo cp "${SRCDIR}/../cluster_functions" "${NPM_USER_HOME}"; then
+            logger -t "${TAG}" -p user.err "Failed sudo cp ${SRCDIR}/../cluster_functions ${NPM_USER_HOME}"
             return 1
         fi
+        logger -t "${TAG}" -p user.debug "sudo cp ${SRCDIR}/../cluster_functions ${NPM_USER_HOME}"
     else
-        logger -t ${TAG} -p user.err "no ${SRCDIR}/../cluster_functions found"
+        logger -t "${TAG}" -p user.err "no ${SRCDIR}/../cluster_functions found"
         return 1
     fi
 
     # Copies an archive file optionally required by setup_api_node_module.sh
-    if test -n "${NPM_ARCHIVE_FILE}" ; then
-        if test -f "${NPM_ARCHIVE_FILE}"; then
-            logger -t ${TAG} -p user.debug "sudo cp ${NPM_ARCHIVE_FILE} ${NPM_USER_HOME}"
-            sudo cp ${NPM_ARCHIVE_FILE} ${NPM_USER_HOME}
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+    if [ -n "${NPM_ARCHIVE_FILE}" ]; then
+        if [ -f "${NPM_ARCHIVE_FILE}" ]; then
+            if ! sudo cp "${NPM_ARCHIVE_FILE}" "${NPM_USER_HOME}"; then
+                logger -t "${TAG}" -p user.err "Failed sudo cp ${NPM_ARCHIVE_FILE} ${NPM_USER_HOME}"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "sudo cp ${NPM_ARCHIVE_FILE} ${NPM_USER_HOME}"
         else
-            logger -t ${TAG} -p user.warn "${NPM_ARCHIVE_FILE} must be a URL"
+            logger -t "${TAG}" -p user.warn "${NPM_ARCHIVE_FILE} must be a URL"
         fi
     fi
 
     # A workaround for the root owned log file problem.
     #
     # Description on the problem::
-    #   The k2hr3-app's log file owner should be ${npm_default_user}, but currently owner is root!
+    #   The k2hr3-app's log file owner should be ${_npm_default_user}, but currently owner is root!
     #   In this situation, installation will fail.
     #
     # A workaround::
-    #   Changes the file owner to the "right" owner, ${npm_default_user} again.
+    #   Changes the file owner to the "right" owner, ${_npm_default_user} again.
     #
-    service_log_dir=${NPM_USER_HOME}/node_modules/k2hr3-${COMPONENT}/log
+    service_log_dir="${NPM_USER_HOME}/node_modules/k2hr3-${COMPONENT}/log"
     if sudo test -d "${service_log_dir}"; then
-        logger -t ${TAG} -p user.warn "sudo chown -R ${_npm_default_user} ${service_log_dir}"
-        sudo chown -R ${npm_default_user} ${service_log_dir}
-        RESULT=$?
-        if test "${RESULT}" -ne 0; then
-            logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+        if ! sudo chown -R "${_npm_default_user}" "${service_log_dir}"; then
+            logger -t "${TAG}" -p user.err "Failed sudo chown -R ${_npm_default_user} ${service_log_dir}"
             return 1
         fi
+        logger -t "${TAG}" -p user.warn "sudo chown -R ${_npm_default_user} ${service_log_dir}"
     fi
     return 0
 }
 
+#
 # Add a npm user
 #
 # Params::
@@ -1086,43 +1171,45 @@ setup_npm_userhome() {
 #   0 on success
 #   1 on failure
 #
-add_npm_user() {
-    _npm_default_user=${1:?"npm_default_user should be nonzero"}
+add_npm_user()
+{
+	if [ $# -gt 0 ]; then
+	    _npm_default_user="$1"
+		shift
+	else
+	    _npm_default_user="npm_default_user should be nonzero"
+	fi
+    logger -t "${TAG}" -p user.debug "add_npm_user npm_default_user=${_npm_default_user}"
 
-    logger -t ${TAG} -p user.debug "add_npm_user npm_default_user=${_npm_default_user}"
     # A dry run returns 0
-    if test -n "${DRYRUN-}"; then
+    if [ -n "${DRYRUN}" ]; then
         return 0
     fi
 
-    # Adds ${npm_default_user} if it does not exist
-    logger -t ${TAG} -p user.debug "id ${_npm_default_user}"
-    id "${_npm_default_user}"
-    RESULT=$?
-    if test "${RESULT}" -ne 0; then
-        logger -t ${TAG} -p user.warn "RESULT should be zero, not ${RESULT}"
-        if test "${OS_NAME}" = "debian" -o "${OS_NAME}" = "ubuntu"; then
-            logger -t ${TAG} -p user.debug "sudo adduser --disabled-password --gecos \"\" ${_npm_default_user}"
-            sudo adduser --disabled-password --gecos "" "${_npm_default_user}"
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+    # Adds ${_npm_default_user} if it does not exist
+    logger -t "${TAG}" -p user.debug "id ${_npm_default_user}"
+    if ! id "${_npm_default_user}"; then
+        logger -t "${TAG}" -p user.warn "Failed id ${_npm_default_user}"
+
+        if echo "${OS_NAME}" | grep -q -i -e "debian" -e "ubuntu"; then
+            if ! sudo adduser --disabled-password --gecos "" "${_npm_default_user}"; then
+                logger -t "${TAG}" -p user.err "Failed sudo adduser --disabled-password --gecos \"\" ${_npm_default_user}"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "sudo adduser --disabled-password --gecos \"\" ${_npm_default_user}"
         else
-            logger -t ${TAG} -p user.debug "sudo adduser ${_npm_default_user}"
-            sudo adduser "${_npm_default_user}"
-            RESULT=$?
-            if test "${RESULT}" -ne 0; then
-                logger -t ${TAG} -p user.err "RESULT should be zero, not ${RESULT}"
+            if ! sudo adduser "${_npm_default_user}"; then
+                logger -t "${TAG}" -p user.err "Failed sudo adduser ${_npm_default_user}"
                 return 1
             fi
+            logger -t "${TAG}" -p user.debug "sudo adduser ${_npm_default_user}"
         fi
     fi
 
     return 0
 }
 
+#
 # Initialize npm environments
 #
 # Params::
@@ -1132,142 +1219,150 @@ add_npm_user() {
 #   0 on success
 #   1 on failure
 #
-npm_init() {
+npm_init()
+{
+	#
+	# [NOTE]
+	# Is npm_global_dir/package_install_pkgs an externally assigned variable?
+	# If left as is, an error will occur with shellcheck, so we'll just add a check here.
+	#
+	if [ -z "${npm_global_dir}" ]; then
+        logger -t "${TAG}" -p user.err "NOTICE: npm_global_dir is empty"
+        npm_global_dir=""
+	fi
+	if [ -z "${package_install_pkgs}" ]; then
+        logger -t "${TAG}" -p user.err "NOTICE: package_install_pkgs is empty"
+        package_install_pkgs=""
+	fi
+
     # Running this program by root will fail
-    if test "$(id -u)" -eq 0; then
-        logger -t ${TAG} -p user.err "EACCES error. See https://docs.npmjs.com/getting-started/fixing-npm-permissions."
+    if [ "$(id -u)" -eq 0 ]; then
+        logger -t "${TAG}" -p user.err "EACCES error. See https://docs.npmjs.com/getting-started/fixing-npm-permissions."
         return 1
     fi
 
-    ########
-    # 1. Initializes environments.
-    # Detects the OS_NAME of the target host and load deploy configuration for the ${OS_NAME} if exists.
     #
-    logger -t ${TAG} -p user.info "1. Initializes environments"
+    # 1. Initializes environments.
+    #    Detects the OS_NAME of the target host and load deploy configuration for the ${OS_NAME} if exists.
+    #
+    logger -t "${TAG}" -p user.info "1. Initializes environments"
 
     # Determines the current OS and service manager
-    logger -t ${TAG} -p user.debug "setup_os_env"
-    setup_os_env
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "setup_os_env should return zero, not ${RET}"
+    logger -t "${TAG}" -p user.debug "setup_os_env"
+    if ! setup_os_env; then
+        logger -t "${TAG}" -p user.err "Failed setup_os_env"
         return 1
     fi
 
     # Loads default settings
-    logger -t ${TAG} -p user.debug "setup_ini_env"
-    setup_ini_env
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "setup_ini_env should return zero, not ${RET}"
+    logger -t "${TAG}" -p user.debug "setup_ini_env"
+    if ! setup_ini_env; then
+        logger -t "${TAG}" -p user.err "Failed setup_ini_env"
         return 1
     fi
 
     # Check if the node command exists in PATH dirs.
-    logger -t ${TAG} -p user.debug "find_node_path ${package_install_pkgs-}"
-    find_node_path ${package_install_pkgs-}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "find_node_path should return zero, not ${RET}"
+    logger -t "${TAG}" -p user.debug "find_node_path ${package_install_pkgs}"
+    if ! find_node_path "${package_install_pkgs}"; then
+        logger -t "${TAG}" -p user.err "Failed find_node_path ${package_install_pkgs}"
         return 1
     fi
 
     # Setup npm environment
-    logger -t ${TAG} -p user.debug "setup_npm_environment ${npm_global_dir}"
-    setup_npm_environment ${npm_global_dir}
-    RET=$?
-    if test "${RET}" -ne 0; then
-        logger -t ${TAG} -p user.err "setup_npm_environment should return zero, not ${RET}"
+    logger -t "${TAG}" -p user.debug "setup_npm_environment ${npm_global_dir}"
+    if ! setup_npm_environment "${npm_global_dir}"; then
+        logger -t "${TAG}" -p user.err "Failed setup_npm_environment ${npm_global_dir}"
         return 1
     fi
-
     return 0
 }
 
+make_k2hdkc()
+{
+	if [ $# -gt 0 ]; then
+	    _os_name="$1"
+		shift
+	else
+	    _os_name="os_name should be nonzero"
+	fi
 
-make_k2hdkc() {
-
-    _os_name=${1:?"os_name should be nonzero"}
-
-    if test "${_os_name}" = "debian" -o "${_os_name}" = "ubuntu"; then
+    if echo "${_os_name}" | grep -q -i -e "debian" -e "ubuntu"; then
         _configure_opt="--with-gnutls"
         sudo apt-get update -y
         sudo apt-get install -y git curl autoconf autotools-dev gcc g++ make gdb libtool pkg-config libyaml-dev libgnutls28-dev
-    elif test "${_os_name}" = "fedora"; then
+
+    elif echo "${_os_name}" | grep -q -i "fedora"; then
         _configure_opt="--with-nss"
         sudo dnf update -y
         sudo dnf install -y git curl autoconf automake gcc gcc-c++ gdb make libtool pkgconfig libyaml-devel nss-devel
-    elif test "${_os_name}" = "rhel"; then
+
+    elif echo "${_os_name}" | grep -q -i "rhel"; then
         _configure_opt="--with-nss"
         sudo dnf update -y
         sudo dnf install -y git curl autoconf automake gcc gcc-c++ gdb make libtool pkgconfig libyaml-devel nss-devel
-    elif test "${_os_name}" = "centos"; then
-        _configure_opt="--with-nss"
-        if test "${OS_VERSION}" = "8"; then
-            sudo dnf update -y
-            sudo dnf install -y git curl autoconf automake gcc gcc-c++ gdb make libtool pkgconfig libyaml-devel nss-devel
-        elif test "${OS_VERSION}" = "7"; then
-            sudo yum update -y
-            sudo yum install -y git curl autoconf automake gcc gcc-c++ gdb make libtool pkgconfig libyaml-devel nss-devel
-        else
-            logger -t ${TAG} -p user.err "centos version should be 7 or 8. Unsupported version: ${OS_VERSION}"
+
+    elif echo "${_os_name}" | grep -q -i "centos"; then
+        if [ "${OS_VERSION}" -ne 8 ]; then
+            logger -t "${TAG}" -p user.err "centos version should be 8. Unsupported version: ${OS_VERSION}"
             return 1
         fi
+        _configure_opt="--with-nss"
+        sudo dnf update -y
+        sudo dnf install -y git curl autoconf automake gcc gcc-c++ gdb make libtool pkgconfig libyaml-devel nss-devel
     else
-        logger -t ${TAG} -p user.error "OS should be debian, ubuntu, fedora, centos or rhel"
+        logger -t "${TAG}" -p user.error "OS should be debian, ubuntu, fedora, centos or rhel"
         return 1
     fi
 
-    logger -t ${TAG} -p user.debug "git clone https://github.com/yahoojapan/k2hdkc"
+    logger -t "${TAG}" -p user.debug "git clone https://github.com/yahoojapan/k2hdkc"
     git clone https://github.com/yahoojapan/k2hdkc
-    cd k2hdkc
+    cd k2hdkc || exit 1
 
-    logger -t ${TAG} -p user.debug "git clone https://github.com/yahoojapan/fullock"
+    logger -t "${TAG}" -p user.debug "git clone https://github.com/yahoojapan/fullock"
     git clone https://github.com/yahoojapan/fullock
-    logger -t ${TAG} -p user.debug "git clone https://github.com/yahoojapan/k2hash"
+    logger -t "${TAG}" -p user.debug "git clone https://github.com/yahoojapan/k2hash"
     git clone https://github.com/yahoojapan/k2hash
-    logger -t ${TAG} -p user.debug "git clone https://github.com/yahoojapan/chmpx"
+    logger -t "${TAG}" -p user.debug "git clone https://github.com/yahoojapan/chmpx"
     git clone https://github.com/yahoojapan/chmpx
 
-    if ! test -d "fullock"; then
+    if [ ! -d "fullock" ]; then
         echo "no fullock"
         return 1
     fi
-    cd fullock
+    cd fullock || exit 1
     ./autogen.sh
     ./configure --prefix=/usr --libdir=/usr/lib64
     make
     sudo make install
 
-    if ! test -d "../k2hash"; then
+    if [ ! -d "../k2hash" ]; then
         echo "no k2hash"
         return 1
     fi
-    cd ../k2hash
+    cd ../k2hash || exit 1
     ./autogen.sh
-    ./configure --prefix=/usr --libdir=/usr/lib64 ${_configure_opt}
+    /bin/sh -c "./configure --prefix=/usr --libdir=/usr/lib64 ${_configure_opt}"
     make
     sudo make install
 
-    if ! test -d "../chmpx"; then
+    if [ ! -d "../chmpx" ]; then
         echo "no chmpx"
         return 1
     fi
-    cd ../chmpx
+    cd ../chmpx || exit 1
     ./autogen.sh
-    ./configure --prefix=/usr --libdir=/usr/lib64 ${_configure_opt}
+    /bin/sh -c "./configure --prefix=/usr --libdir=/usr/lib64 ${_configure_opt}"
     make
     sudo make install
 
-    cd ..
+    cd .. || exit 1
     ./autogen.sh
-    ./configure --prefix=/usr --libdir=/usr/lib64 ${_configure_opt}
+    /bin/sh -c "./configure --prefix=/usr --libdir=/usr/lib64 ${_configure_opt}"
     make
     sudo make install
 
-    which k2hdkc
-    if test "${?}" != "0"; then
-        logger -t ${TAG} -p user.error "no k2hdkc installed"
+    if ! command -v k2hdkc >/dev/null 2>&1; then
+        logger -t "${TAG}" -p user.error "no k2hdkc installed"
         return 1
     fi
     return 0
