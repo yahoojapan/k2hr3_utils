@@ -1,3 +1,9 @@
+k2hr3-utils (1.0.7) unstable; urgency=low
+
+  * Changed support OSes and Fixed scripts, etc - #34
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Wed, 12 Feb 2025 15:29:46 +0900
+
 k2hr3-utils (1.0.6) unstable; urgency=low
 
   * Updated NodeJS version and CentOS is no longer supported - #32
