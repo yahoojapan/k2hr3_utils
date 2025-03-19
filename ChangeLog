@@ -1,3 +1,10 @@
+k2hr3-utils (1.0.9) unstable; urgency=low
+
+  * Updated and fixed devpack.sh - #39
+  * Added single-host development environment construction tool(devk2hr3.sh) - #38
+
+ -- Takeshi Nakatani <ggtakec@gmail.com>  Wed, 19 Mar 2025 16:36:23 +0900
+
 k2hr3-utils (1.0.8) unstable; urgency=low
 
   * Fixed and cleanup devcluster/cluster_functions - #36
