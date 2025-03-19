@@ -83,28 +83,33 @@ fi
 #--------------------------------------------------------------
 PRNERR()
 {
+	stty icrnl opost isig icanon iexten echo
 	echo ""
 	echo "${CBLD}${CRED}[ERROR]${CDEF} ${CRED}$*${CDEF}"
 }
 
 PRNWARN()
 {
+	stty icrnl opost isig icanon iexten echo
 	echo "    ${CYEL}${CREV}[WARNING]${CDEF} $*"
 }
 
 PRNMSG()
 {
+	stty icrnl opost isig icanon iexten echo
 	echo ""
 	echo "    ${CYEL}${CREV}[MSG]${CDEF} $*"
 }
 
 PRNINFO()
 {
+	stty icrnl opost isig icanon iexten echo
 	echo "    ${CREV}[INFO]${CDEF} $*"
 }
 
 PRNTITLE()
 {
+	stty icrnl opost isig icanon iexten echo
 	echo ""
 	echo "${CGRN}---------------------------------------------------------------------${CDEF}"
 	echo "${CGRN}${CREV}[TITLE]${CDEF} ${CGRN}$*${CDEF}"
@@ -113,6 +118,7 @@ PRNTITLE()
 
 PRNSUCCESS()
 {
+	stty icrnl opost isig icanon iexten echo
 	echo ""
 	echo "${CGRN}[SUCCESS]${CDEF} $*"
 }
@@ -988,7 +994,7 @@ elif echo "${_OS_ID}" | grep -q -i 'rocky'; then
 	# Update package cache
 	#
 	PRNMSG "Update package cache"
-	if ({ /bin/sh -c "${SUDO_PREFIX_CMD} ${PKG_INSTALLER} update -y -q" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+	if ({ /bin/sh -c "${SUDO_PREFIX_CMD} ${PKG_INSTALLER} update -y --nobest --skip-broken -q" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
 		PRNERR "Failed to update package cache"
 		exit 1
 	fi
@@ -1039,6 +1045,13 @@ elif echo "${_OS_ID}" | grep -q -i 'rocky'; then
 	PRNINFO "Succeed to setup OS package repositories(epel/CRB/powrtools)"
 
 elif echo "${_OS_ID}" | grep -q -i 'ubuntu'; then
+	# [NOTE]
+	# This DEBIAN_FRONTEND variable is required when the TZ initial setting has
+	# not been made, so we set it before apt-get update.
+	#
+	DEBIAN_FRONTEND=noninteractive
+	export DEBIAN_FRONTEND
+
 	PKG_INSTALLER="apt-get"
 	PACKAGECLOUD_URL="https://packagecloud.io/install/repositories/antpickax/stable/script.deb.sh"
 	NODJS_SETUP_URL="https://deb.nodesource.com/setup_22.x"
