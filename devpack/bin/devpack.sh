@@ -83,33 +83,28 @@ fi
 #--------------------------------------------------------------
 PRNERR()
 {
-	stty icrnl opost isig icanon iexten echo
 	echo ""
 	echo "${CBLD}${CRED}[ERROR]${CDEF} ${CRED}$*${CDEF}"
 }
 
 PRNWARN()
 {
-	stty icrnl opost isig icanon iexten echo
 	echo "    ${CYEL}${CREV}[WARNING]${CDEF} $*"
 }
 
 PRNMSG()
 {
-	stty icrnl opost isig icanon iexten echo
 	echo ""
 	echo "    ${CYEL}${CREV}[MSG]${CDEF} $*"
 }
 
 PRNINFO()
 {
-	stty icrnl opost isig icanon iexten echo
 	echo "    ${CREV}[INFO]${CDEF} $*"
 }
 
 PRNTITLE()
 {
-	stty icrnl opost isig icanon iexten echo
 	echo ""
 	echo "${CGRN}---------------------------------------------------------------------${CDEF}"
 	echo "${CGRN}${CREV}[TITLE]${CDEF} ${CGRN}$*${CDEF}"
@@ -118,7 +113,6 @@ PRNTITLE()
 
 PRNSUCCESS()
 {
-	stty icrnl opost isig icanon iexten echo
 	echo ""
 	echo "${CGRN}[SUCCESS]${CDEF} $*"
 }
