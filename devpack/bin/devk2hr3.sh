@@ -1801,7 +1801,8 @@ setup_repositories_packages_for_rocky_fedora()
 			if [ -n "${_ADDITIONAL_REPO_NAME}" ]; then
 				_ADDITIONAL_REPO_NAME=",${_ADDITIONAL_REPO_NAME}"
 			else
-				PRNERR "Not found crb repository, so skip to enable it. but maybe fail to install some packages."
+				PRNWARN "Not found crb repository, so try to specify \"crb\" repository directly."
+				_ADDITIONAL_REPO_NAME=",crb"
 			fi
 		elif [ "${_OS_MAJOR_VERSION}" -gt 9 ]; then
 			PRNERR "OS version ${K2HR3_NODE_OS_VERSION} is too high to support."
