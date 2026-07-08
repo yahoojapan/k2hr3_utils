@@ -62,11 +62,11 @@ DEFAULT_K2HFILE_SUFFIX="_k2hdkc_${DEFAULT_K2HFILE_SUFFIX_NODENO_KEY}.k2h"
 DEFAULT_MQ_QMAX=1024
 DEFAULT_MQ_MSGMAX=1024
 
-DEFAULT_RESERVED_IMAGE_ALPINE="alpine:3.21"
-DEFAULT_RESERVED_IMAGE_FEDORA="fedora:41"
-DEFAULT_RESERVED_IMAGE_ROCKY="rockylinux:9"
-DEFAULT_RESERVED_IMAGE_UBUNTU="ubuntu:22.04"
-DEFAULT_RESERVED_IMAGE_DEBIAN="debian:12"
+DEFAULT_RESERVED_IMAGE_ALPINE="alpine:3.24"
+DEFAULT_RESERVED_IMAGE_FEDORA="fedora:44"
+DEFAULT_RESERVED_IMAGE_ROCKY="rockylinux/rockylinux:10"
+DEFAULT_RESERVED_IMAGE_UBUNTU="ubuntu:26.04"
+DEFAULT_RESERVED_IMAGE_DEBIAN="debian:13"
 
 CHMPX_SERVER_NODE_0_PIDFILE="chmpx_server_node_0.pid"
 CHMPX_SERVER_NODE_1_PIDFILE="chmpx_server_node_1.pid"
@@ -149,7 +149,7 @@ K2HR3_API_URL=""
 IS_INTERACTIVE=1
 IS_USE_PACKAGECLOUD=1
 
-NODEJS_VERSION="22"
+NODEJS_VERSION="24"
 REPO_K2HR3_API=""
 REPO_K2HR3_APP=""
 
@@ -598,7 +598,6 @@ builtin_addition_interactive_options()
 		# Already setup value, so nothing to do.
 		return 0
 	fi
-
 
 	if [ "$1" -eq 1 ]; then
 		_IS_LOOP=1
@@ -2065,6 +2064,11 @@ setup_working_directries()
 		cd "${CURRENT_DIR}" || exit 1
 		return 1
 	fi
+	if ({ /bin/sh -c "npm run build 2>&1" || echo > "${PIPEFAILURE_FILE}"; } | sed -e 's|^|    |g') && rm "${PIPEFAILURE_FILE}" >/dev/null 2>&1; then
+		PRNERR "Failed to build K2HR3 API."
+		cd "${CURRENT_DIR}" || exit 1
+		return 1
+	fi
 	cd "${CURRENT_DIR}" || exit 1
 	PRNINFO "Succeed to install K2HR3 API node packages."
 
@@ -3345,7 +3349,7 @@ func_usage()
 	echo "[Options: start]"
 	echo "   --not_use_pckagecloud(-nopc)    Not use packages on packagecloud repository. (default: use packagecloud repository)"
 	echo ""
-	echo "   --nodejs_version(-node) [ver]   Specify NodeJS version like as \"18\", \"20\", \"22\". (default: 22)"
+	echo "   --nodejs_version(-node) [ver]   Specify NodeJS version like as \"22\", \"24\". (default: 24)"
 	echo "                                   In the case of ALPINE, it is automatically determined depending on the OS version."
 	echo ""
 	echo "   --repo_k2hr3_api(-repo_api)     Specify K2HR3 API repository url for cloning. (default: https://<github domain>/<org>/k2hr3_api.git)"
@@ -3370,7 +3374,7 @@ func_usage()
 	echo "   For ALPINE OS, the --nodejs_version (-node) option is ignored."
 	echo "   This is because it depends on the version of the nodejs package present in the ALPINE"
 	echo "   package repository."
-	echo "   In ALPINE 3.19, it is v18, in 3.20 it is v20, and in 3.21 it is v22."
+	echo "   In ALPINE 3.21 it is v22, in 3.22 it is v22, in 3.23/3.24 it is v24."
 	echo ""
 	echo "[Environments]"
 	echo "   You can change the log levels for CHMPX, K2HDKC processes, etc. by setting the following"
@@ -3509,7 +3513,7 @@ while [ $# -ne 0 ]; do
 			exit 1
 		fi
 		if echo "$1" | grep -q "[^0-9]"; then
-			PRNERR "The parameter($1) of --nodejs_version(-node) option must be number(ex. 18, 20, 22, ...)."
+			PRNERR "The parameter($1) of --nodejs_version(-node) option must be number(ex. 22, 24...)."
 			exit 1
 		fi
 		OPT_NODEJS_VERSION="$1"
@@ -3834,8 +3838,7 @@ if [ "${RUN_MODE}" = "start" ]; then
 		else
 			_IS_LOOP=1
 			while [ "${_IS_LOOP}" -eq 1 ]; do
-				input_interaction "NodeJS version for other than ALPINE - 18, 20, 22, ... (empty is use default: \"22\")" "yes"
-
+				input_interaction "NodeJS version for other than ALPINE - 22, 24... (empty is use default: \"24\")" "yes"
 				if [ -z "${INTERACTION_RESULT}" ]; then
 					# use default value
 					_IS_LOOP=0
@@ -4418,29 +4421,34 @@ if echo "${K2HR3_NODE_OS_NAME}" | grep -q -i "alpine"; then
 	if [ "${_OS_MAJOR_VERSION}" -lt 3 ]; then
 		PRNERR "ALPINE OS version ${K2HR3_NODE_OS_VERSION} is too low to support."
 		exit 1
-	elif [ "${_OS_MINOR_VERSION}" -lt 19 ]; then
+	elif [ "${_OS_MINOR_VERSION}" -lt 21 ]; then
 		PRNERR "ALPINE OS version ${K2HR3_NODE_OS_VERSION} is too low to support."
 		exit 1
-	elif [ "${_OS_MINOR_VERSION}" -gt 21 ]; then
+	elif [ "${_OS_MINOR_VERSION}" -gt 24 ]; then
 		PRNERR "ALPINE OS version ${K2HR3_NODE_OS_VERSION} is too high to support."
 		exit 1
 	fi
 
-	if [ "${_OS_MINOR_VERSION}" -eq 19 ]; then
-		if [ "${NODEJS_VERSION}" -ne 18 ]; then
-			PRNWARN "NodeJS v${NODEJS_VERSION} was specified, but only NodeJS v18 can be used in ALPINE ${K2HR3_NODE_OS_VERSION}. This value will be ignored and v18 will be used."
-		fi
-		NODEJS_VERSION=18
-	elif [ "${_OS_MINOR_VERSION}" -eq 20 ]; then
-		if [ "${NODEJS_VERSION}" -ne 20 ]; then
-			PRNWARN "NodeJS v${NODEJS_VERSION} was specified, but only NodeJS v20 can be used in ALPINE ${K2HR3_NODE_OS_VERSION}. This value will be ignored and v20 will be used."
-		fi
-		NODEJS_VERSION=20
-	elif [ "${_OS_MINOR_VERSION}" -eq 21 ]; then
+	if [ "${_OS_MINOR_VERSION}" -eq 21 ]; then
 		if [ "${NODEJS_VERSION}" -ne 22 ]; then
 			PRNWARN "NodeJS v${NODEJS_VERSION} was specified, but only NodeJS v22 can be used in ALPINE ${K2HR3_NODE_OS_VERSION}. This value will be ignored and v22 will be used."
 		fi
 		NODEJS_VERSION=22
+	elif [ "${_OS_MINOR_VERSION}" -eq 22 ]; then
+		if [ "${NODEJS_VERSION}" -ne 22 ]; then
+			PRNWARN "NodeJS v${NODEJS_VERSION} was specified, but only NodeJS v22 can be used in ALPINE ${K2HR3_NODE_OS_VERSION}. This value will be ignored and v22 will be used."
+		fi
+		NODEJS_VERSION=22
+	elif [ "${_OS_MINOR_VERSION}" -eq 23 ]; then
+		if [ "${NODEJS_VERSION}" -ne 24 ]; then
+			PRNWARN "NodeJS v${NODEJS_VERSION} was specified, but only NodeJS v24 can be used in ALPINE ${K2HR3_NODE_OS_VERSION}. This value will be ignored and v24 will be used."
+		fi
+		NODEJS_VERSION=24
+	elif [ "${_OS_MINOR_VERSION}" -eq 24 ]; then
+		if [ "${NODEJS_VERSION}" -ne 24 ]; then
+			PRNWARN "NodeJS v${NODEJS_VERSION} was specified, but only NodeJS v24 can be used in ALPINE ${K2HR3_NODE_OS_VERSION}. This value will be ignored and v24 will be used."
+		fi
+		NODEJS_VERSION=24
 	fi
 	PRNINFO "Decided NodeJS version is v${NODEJS_VERSION} for AlPINE ${K2HR3_NODE_OS_VERSION}"
 fi
