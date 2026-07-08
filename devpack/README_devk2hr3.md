@@ -18,13 +18,13 @@ The following components(programs) will be started:
 This is the minimum processes for the **K2HR3 System**.  
 
 ## Supported OS
-The supported OS for this tool creating the **K2HR3 System** are shown below:  
+The supported OS for this tool creating the **K2HR3 System** (recommended) are shown below:  
 
-- ubuntu ( 22.04 recommended )
-- debian ( 12 recommended )
-- fedora ( 41 recommended )
-- rockylinux ( 9 recommended )
-- alpine ( 3.21 recommended )
+- ubuntu ( 26.04 recommended )
+- debian ( 13 recommended )
+- fedora ( 44 recommended )
+- rockylinux ( 10 recommended )
+- alpine ( 3.24 recommended )
 
 If you are creating **K2HR3 System** on a host, run this tool on a host with one of the above OS installed.  
 If you are creating it in a container, prepare the `Docker Service` and specify one of the above OS to this tool.  
